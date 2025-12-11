@@ -64,54 +64,204 @@ Esta categoría incluye instrucciones para organizar la información generada, d
 5. *"Dame esta informacion en markdown listo para copiar"*
 
 ## Fase de analisis de Arquitectura del Sistema
-### 🧠 Categoría 1: Ingeniería de Prompts y Metodología
+### 🧠 Categoría 4: Ingeniería de Prompts y Metodología
 1. *"Como experto en prompt enginner, generame un prompt para un experto en arquitectura de sistemas, especialmente en arquitectura microservicios. Donde detecte los servicios principales del producto. Debe solicitarme el analisis del producto y realice una breve descripcion de la arquitectura, lista de servicios (Microservicios). Aplica este prompt con las mejores practicas y solicitame todo lo necesario para tener completo el prompt."*
 
 `Meta Prompt`
 ```
-**Rol:**
-Actúa como un **Arquitecto de Soluciones Senior** (Senior Solution Architect) especializado en sistemas distribuidos, patrones de diseño de microservicios y *Domain-Driven Design (DDD)*. Tu enfoque debe priorizar la escalabilidad, la tolerancia a fallos y el bajo acoplamiento.
+# ROLE
+Actúa como un Arquitecto de Soluciones Senior y experto en Arquitectura de Microservicios con más de 15 años de experiencia. Tienes un profundo conocimiento en Domain-Driven Design (DDD), patrones de escalabilidad y sistemas distribuidos.
 
-**Contexto:**
-Estoy en la fase de diseño técnico de un nuevo producto digital y necesito definir los "Bounded Contexts" (Contextos Delimitados) para establecer una arquitectura de microservicios sólida.
+# CONTEXT
+Estoy diseñando un nuevo producto digital (o refactorizando uno existente) y necesito descomponer la lógica de negocio en una arquitectura de microservicios desacoplada y escalable.
 
-**Tu Tarea:**
-Analiza la información del producto proporcionada al final de este prompt. Basándote en ese análisis, genera una propuesta de arquitectura técnica siguiendo estrictamente estos pasos:
+# INPUT DATA
+Aquí tienes el análisis funcional del producto:
+[Contenido Investigacion]
 
-1.  **Análisis del Dominio y Entidades:**
-    * Identifica los dominios principales del negocio.
-    * Lista las entidades de datos críticas (Core Entities).
+# TASKS
+1.  **Análisis de Dominio:** Analiza la descripción del producto e identifica los "Bounded Contexts" (Contextos Delimitados) principales.
+2.  **Diseño de Arquitectura:** Define una arquitectura de alto nivel adecuada para este producto.
+3.  **Definición de Servicios:** Desglosa el sistema en microservicios específicos.
 
-2.  **Estilo Arquitectónico:**
-    * Describe brevemente el estilo arquitectónico recomendado (ej. Event-Driven, Hexagonal, Layered, etc.) y justifica por qué es el adecuado para este caso de uso específico.
+# OUTPUT FORMAT
+Tu respuesta debe usar formato Markdown y seguir estrictamente esta estructura:
 
-3.  **Definición de Microservicios (El Núcleo):**
-    * Genera una lista detallada de los microservicios necesarios. Para cada uno, utiliza el siguiente formato:
-        * **Nombre del Servicio:** (Debe ser representativo del dominio).
-        * **Responsabilidad Única:** ¿Qué función de negocio resuelve exclusivamente este servicio?
-        * **Datos/Entidades:** ¿De qué datos es "dueño" (System of Record)?
-        * **Comunicación:** ¿Qué eventos publica y a qué otros servicios necesita llamar (Síncrono vs Asíncrono)?
+## 1. Resumen de la Arquitectura
+Describe brevemente el estilo arquitectónico (ej. Event-Driven, Hexagonal, etc.) y por qué es ideal para este producto específico. Menciona los patrones de comunicación principales (REST, gRPC, Message Queues).
 
-4.  **Diagrama de Flujo (Mermaid):**
-    * Genera un bloque de código con sintaxis `mermaid` (graph TD) que visualice las relaciones y dependencias entre estos servicios y bases de datos.
+## 2. Identificación de Bounded Contexts
+Explica brevemente cómo has agrupado las funcionalidades en dominios lógicos antes de separarlos en servicios.
 
----
+## 3. Listado de Microservicios
+Genera una tabla o lista detallada con los siguientes campos para CADA microservicio identificado:
+* **Nombre del Servicio:** (Ej. `OrderService`)
+* **Responsabilidad Principal:** Qué hace y qué NO hace.
+* **Datos que maneja:** (Entidades principales, ej. Usuarios, Carrito, Inventario).
+* **Dependencias:** Con qué otros servicios necesita comunicarse.
+* **Justificación:** Por qué esto debe ser un microservicio separado y no parte de otro.
 
-**Información del Producto (INPUT):**
+## 4. Diagrama Conceptual (Mermaid)
+Genera el código para un diagrama de secuencia o diagrama de arquitectura usando sintaxis Mermaid que muestre la interacción crítica entre los 3 servicios más importantes.
 
-* **Nombre del Producto:** [INSERTA AQUÍ EL NOMBRE]
-* **Descripción del Problema/Solución:** [DESCRIBE AQUÍ QUÉ HACE EL PRODUCTO, QUÉ PROBLEMA RESUELVE Y CÓMO FUNCIONA A GRANDES RASGOS]
-* **Usuarios Principales:** [LISTA LOS TIPOS DE USUARIOS: EJ. ADMIN, CLIENTE FINAL, PROVEEDOR]
-* **Funcionalidades Clave (Core Features):**
-    * [FEATURE 1: Ej. Registro de usuarios y login social]
-    * [FEATURE 2: Ej. Carrito de compras y checkout]
-    * [FEATURE 3: Ej. Procesamiento de pagos recurrentes]
-    * [FEATURE 4: Ej. Generación de reportes en PDF]
-* **Requisitos No Funcionales Críticos:** [EJ. ALTA DISPONIBILIDAD, BAJA LATENCIA, SEGURIDAD HIPAA/GDPR, SOPORTE PARA 100K USUARIOS CONCURRENTES]
-* **Integraciones Externas:** [EJ. STRIPE, GOOGLE MAPS, SAP]
+# CONSTRAINTS
+* Prioriza la alta cohesión y el bajo acoplamiento.
+* Evita crear "nano-servicios" (servicios demasiado pequeños) o "monolitos distribuidos".
+* Si detectas ambigüedad en el producto, asume el estándar de la industria para ese tipo de negocio pero anótalo como una suposición.
+```
 
----
+### 🔶 Categoría 5: Meta-prompts y Prompt Engineering
+**Prompts incluidos:**
+- P1: “Como experto en prompt engineer, generame un meta prompt…”
+- P2: “Agrega en este meta prompt el uso de tecnologías…”
 
-**Formato de Salida:**
-Responde en formato Markdown bien estructurado. Sé técnico, crítico y profesional.
+`Meta prompt`
+```
+Meta-Prompt para Documentación de Arquitectura del Sistema
+Organiza y desarrolla el contenido de forma clara, profesional y exhaustiva siguiendo los apartados indicados. Utiliza lenguaje técnico preciso y explica los conceptos de manera accesible pero rigurosa. Incluye siempre justificaciones arquitectónicas, beneficios, limitaciones, patrones, diagramas y ejemplos.
+
+Este meta-prompt asume como stack base:
+
+Frontend: React + TypeScript
+Backend: Spring Boot (Java)
+Bases de datos: MySQL y/o MongoDB (según el servicio)
+Otros servicios: Añade aquellos que, según buenas prácticas, deberían existir (API Gateway, Load Balancer, Auth service, Cache, CI/CD, Observabilidad, etc.).
+
+## Arquitectura del Sistema
+### 1. Diagrama de Arquitectura
+Incluye un diagrama (preferiblemente Mermaid o ASCII) representando:
+
+Frontend en React + TypeScript
+Backend en Spring Boot (uno o múltiples microservicios)
+Bases de datos MySQL/MongoDB según el caso
+Servicios adicionales por mejores prácticas (API Gateway, servicio de autenticación, CDN, cache Redis, message broker, etc.)
+Infraestructura (contenedores, nube, redes, balanceadores…)
+Explica si sigue un patrón como microservicios, arquitectura hexagonal, Clean Architecture, N-tier, etc.
+
+Justifica por qué se eligió esta arquitectura.
+
+Destaca beneficios clave y compromisos/sacrificios asociados.
+
+### 2. Componentes Principales
+Para cada componente del sistema, describe:
+
+* Función y responsabilidades.
+* Tecnología utilizada y justificación:
+* React + TypeScript para frontend.
+* Spring Boot para backend.
+* MySQL para servicios transaccionales.
+* MongoDB para servicios documentales o de alto volumen.
+* Otros servicios sugeridos según buenas prácticas (cache, mensajería, gateway, monitorización…).
+* Cómo interactúa con otros componentes.
+* Patrones aplicados si corresponde (repositorio, controlador, DTO, servicios, etc.).
+
+### 3. Descripción de Alto Nivel del Proyecto y Estructura de Ficheros
+Proporciona una descripción resumida del proyecto.
+
+Muestra un árbol de directorios (código) tanto para el frontend como para el backend:
+
+* Estructura típica de React + TypeScript (src/components, hooks, context, services...).
+* Estructura típica de Spring Boot (controllers, services, repositories, config…).
+* Explica la función de cada carpeta principal.
+
+Indica si obedece a un patrón específico como Clean Architecture, DDD, monorepo o multirepo.
+
+4. Infraestructura y Despliegue
+Describe la infraestructura del proyecto, incluyendo:
+
+* Contenedores Docker
+* Orquestación (Kubernetes o alternativa)
+* API Gateway / Ingress
+* Balanceadores de carga
+* CDN para el frontend
+* Sistemas de logs y monitorización (Prometheus, Grafana, ELK, etc.)
+* Secret management (Vault, AWS Secrets Manager, etc.)
+* Incluye un diagrama (Mermaid recomendado).
+
+Explica el proceso de despliegue (CI/CD):
+
+* Commit → Build → Tests → Docker Images → Deploy a entornos.
+
+Menciona herramientas típicas (GitHub Actions, GitLab CI, Jenkins, ArgoCD, etc.).
+
+### 5. Seguridad
+Enumera y explica medidas de seguridad aplicadas:
+
+* Control de acceso y autenticación (JWT, OAuth2, Keycloak, Auth0...).
+* Sanitización y validación de datos.
+* Uso de HTTPS y política de CORS.
+* Gestión segura de secretos.
+* Hardening de contenedores.
+* Rules de firewall, VPC, IAM, RBAC en Kubernetes.
+* Prevención de ataques comunes (SQLi, XSS, CSRF).
+* Incluye ejemplos concretos cuando corresponda.
+
+### 6. Tests
+Resume los tipos de tests implementados:
+
+* Frontend: unit tests (React Testing Library), e2e (Cypress).
+* Backend: unit tests (JUnit), integración, contract tests.
+* Infraestructura: tests de pipelines, escaneos de seguridad.
+* Describe algunos casos relevantes.
+
+Menciona herramientas utilizadas.
+
+### Formato de Respuesta
+* Usa Markdown correctamente estructurado.
+* Incluye diagramas en Mermaid cuando sea apropiado.
+* Añade tablas si aportan claridad.
+* Asegura coherencia entre secciones.
+* Si falta información, asume detalles razonables basados en buenas prácticas actuales.
+```
+
+```
+Nombre del Servicio,Responsabilidad Principal,Datos que maneja,Dependencias,Justificación
+Identity Service (IAM),"Autenticación (OAuth2/OIDC), gestión de usuarios, roles, permisos y ciclo de vida de API Keys. Emisión de tokens JWT.","Usuarios, Roles, Permisos, API Keys, Tenants.",Ninguna (Es fundacional).,"Centraliza la seguridad. Al ser Zero-Trust, todos los demás servicios validarán tokens contra las llaves públicas de este servicio, evitando duplicar lógica de auth."
+Document Core Service,"Gestión del ciclo de vida del documento (CRUD), versionado lineal, estructura de carpetas, bloqueo de archivos y orquestación del cifrado/descifrado (E2E). Inyección de Marcas de Agua.","Metadatos de Archivos (no el binario), Versiones, Carpetas, Bloqueos.","Identity Service (para validar propiedad), Object Storage (S3/Blob).",La lógica de versionado y jerarquía es compleja. Separarlo permite cambios en la lógica de negocio documental sin afectar la búsqueda o la auditoría.
+Search & Intelligence Service,"Ingesta de contenido, OCR, generación de vectores (embeddings), ejecución de búsquedas semánticas (RAG) y filtrado de resultados según permisos.","Índices de búsqueda, Vectores, Texto extraído.",Document Core (para obtener el binario a procesar).,"El procesamiento de IA requiere hardware específico (GPUs) y librerías pesadas. Si este servicio se satura o cae, la gestión documental básica debe seguir funcionando."
+Audit Log Service,Ingesta de eventos de todos los servicios para crear un registro forense inmutable. Provee APIs para consulta de cumplimiento.,"Logs de auditoría, Trazas de eventos.",Message Broker (Escucha eventos de todos).,Requiere una base de datos optimizada para escritura masiva (Time-series o Ledger). Desacoplarlo asegura que la auditoría nunca bloquee la operación del usuario.
+Integrations Service,Gestión y disparo de Webhooks hacia sistemas terceros. Reintentos de entrega y gestión de fallos en comunicaciones externas.,"Configuración de Webhooks, Logs de entrega, Colas de reintento.",Message Broker (Escucha eventos de dominio).,"Aislar la integración protege al sistema core de la latencia o caídas de sistemas externos (ERPs, CRMs)."
+```
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Usuario/API Client
+    participant API as API Gateway
+    participant IAM as Identity Service
+    participant Doc as Document Core Service
+    participant Broker as Event Bus (RabbitMQ)
+    participant Search as Search & Intelligence Service
+    participant Audit as Audit Log Service
+
+    Note over User, API: Flujo Síncrono (Alta Prioridad)
+
+    User->>API: POST /documents (File + Metadata)
+    API->>IAM: Validar Token & Permisos
+    IAM-->>API: Token OK (User ID, Roles)
+
+    API->>Doc: Crear Documento (Stream)
+    activate Doc
+    Doc->>Doc: Cifrar archivo (AES-256)
+    Doc->>Doc: Guardar Binario en Object Storage
+    Doc->>Doc: Guardar Metadatos (v1.0) DB
+    Doc->>Broker: Publicar Evento: "DocumentCreated"
+    Doc-->>User: 201 Created (DocID)
+    deactivate Doc
+
+    Note over Broker, Audit: Flujo Asíncrono (Eventual Consistency)
+
+    par Procesamiento de Auditoría
+        Broker->>Audit: Consumir "DocumentCreated"
+        Audit->>Audit: Escribir Log Inmutable
+    and Procesamiento de Inteligencia
+        Broker->>Search: Consumir "DocumentCreated"
+        activate Search
+        Search->>Doc: Solicitar archivo (Internal API)
+        Doc-->>Search: Retorna archivo cifrado
+        Search->>Search: Descifrar en memoria -> OCR -> Vectorizar
+        Search->>Search: Indexar Vectores + Permisos(ACL)
+        Search->>Broker: Publicar Evento: "DocumentIndexed"
+        deactivate Search
+    end
 ```
