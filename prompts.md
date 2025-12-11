@@ -6,6 +6,7 @@ Analiza todos los prompts generados en esta sesión y clasifícalos en categorí
 ```
 ---
 ***Estos prompt se ejecutaron con Gemini 3 PRO***
+
 ## Fase de analisis del producto
 ### 🧠 Categoría 1: Ingeniería de Prompts y Metodología
 1. *"Como experto en prompt enginner, generame un meta prompt para un experto de productos en software, donde tenga espacios donde indicarle que tipo de producto y contenga las mejores practicas para el conocimiento e investigacion de un producto. Aplica este prompt con las mejores practicas."*
@@ -117,7 +118,6 @@ Genera el código para un diagrama de secuencia o diagrama de arquitectura usand
 
 `Meta prompt`
 ```
-Meta-Prompt para Documentación de Arquitectura del Sistema
 Organiza y desarrolla el contenido de forma clara, profesional y exhaustiva siguiendo los apartados indicados. Utiliza lenguaje técnico preciso y explica los conceptos de manera accesible pero rigurosa. Incluye siempre justificaciones arquitectónicas, beneficios, limitaciones, patrones, diagramas y ejemplos.
 
 Este meta-prompt asume como stack base:
@@ -129,10 +129,10 @@ Otros servicios: Añade aquellos que, según buenas prácticas, deberían existi
 
 ## Arquitectura del Sistema
 ### 1. Diagrama de Arquitectura
-Incluye un diagrama (preferiblemente Mermaid o ASCII) representando:
+Incluye un diagrama Mermaid representando:
 
 Frontend en React + TypeScript
-Backend en Spring Boot (uno o múltiples microservicios)
+Backend en Spring Boot (múltiples microservicios)
 Bases de datos MySQL/MongoDB según el caso
 Servicios adicionales por mejores prácticas (API Gateway, servicio de autenticación, CDN, cache Redis, message broker, etc.)
 Infraestructura (contenedores, nube, redes, balanceadores…)
@@ -176,13 +176,7 @@ Describe la infraestructura del proyecto, incluyendo:
 * CDN para el frontend
 * Sistemas de logs y monitorización (Prometheus, Grafana, ELK, etc.)
 * Secret management (Vault, AWS Secrets Manager, etc.)
-* Incluye un diagrama (Mermaid recomendado).
-
-Explica el proceso de despliegue (CI/CD):
-
-* Commit → Build → Tests → Docker Images → Deploy a entornos.
-
-Menciona herramientas típicas (GitHub Actions, GitLab CI, Jenkins, ArgoCD, etc.).
+* Incluye un diagrama Mermaid.
 
 ### 5. Seguridad
 Enumera y explica medidas de seguridad aplicadas:
@@ -212,56 +206,4 @@ Menciona herramientas utilizadas.
 * Añade tablas si aportan claridad.
 * Asegura coherencia entre secciones.
 * Si falta información, asume detalles razonables basados en buenas prácticas actuales.
-```
-
-```
-Nombre del Servicio,Responsabilidad Principal,Datos que maneja,Dependencias,Justificación
-Identity Service (IAM),"Autenticación (OAuth2/OIDC), gestión de usuarios, roles, permisos y ciclo de vida de API Keys. Emisión de tokens JWT.","Usuarios, Roles, Permisos, API Keys, Tenants.",Ninguna (Es fundacional).,"Centraliza la seguridad. Al ser Zero-Trust, todos los demás servicios validarán tokens contra las llaves públicas de este servicio, evitando duplicar lógica de auth."
-Document Core Service,"Gestión del ciclo de vida del documento (CRUD), versionado lineal, estructura de carpetas, bloqueo de archivos y orquestación del cifrado/descifrado (E2E). Inyección de Marcas de Agua.","Metadatos de Archivos (no el binario), Versiones, Carpetas, Bloqueos.","Identity Service (para validar propiedad), Object Storage (S3/Blob).",La lógica de versionado y jerarquía es compleja. Separarlo permite cambios en la lógica de negocio documental sin afectar la búsqueda o la auditoría.
-Search & Intelligence Service,"Ingesta de contenido, OCR, generación de vectores (embeddings), ejecución de búsquedas semánticas (RAG) y filtrado de resultados según permisos.","Índices de búsqueda, Vectores, Texto extraído.",Document Core (para obtener el binario a procesar).,"El procesamiento de IA requiere hardware específico (GPUs) y librerías pesadas. Si este servicio se satura o cae, la gestión documental básica debe seguir funcionando."
-Audit Log Service,Ingesta de eventos de todos los servicios para crear un registro forense inmutable. Provee APIs para consulta de cumplimiento.,"Logs de auditoría, Trazas de eventos.",Message Broker (Escucha eventos de todos).,Requiere una base de datos optimizada para escritura masiva (Time-series o Ledger). Desacoplarlo asegura que la auditoría nunca bloquee la operación del usuario.
-Integrations Service,Gestión y disparo de Webhooks hacia sistemas terceros. Reintentos de entrega y gestión de fallos en comunicaciones externas.,"Configuración de Webhooks, Logs de entrega, Colas de reintento.",Message Broker (Escucha eventos de dominio).,"Aislar la integración protege al sistema core de la latencia o caídas de sistemas externos (ERPs, CRMs)."
-```
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Usuario/API Client
-    participant API as API Gateway
-    participant IAM as Identity Service
-    participant Doc as Document Core Service
-    participant Broker as Event Bus (RabbitMQ)
-    participant Search as Search & Intelligence Service
-    participant Audit as Audit Log Service
-
-    Note over User, API: Flujo Síncrono (Alta Prioridad)
-
-    User->>API: POST /documents (File + Metadata)
-    API->>IAM: Validar Token & Permisos
-    IAM-->>API: Token OK (User ID, Roles)
-
-    API->>Doc: Crear Documento (Stream)
-    activate Doc
-    Doc->>Doc: Cifrar archivo (AES-256)
-    Doc->>Doc: Guardar Binario en Object Storage
-    Doc->>Doc: Guardar Metadatos (v1.0) DB
-    Doc->>Broker: Publicar Evento: "DocumentCreated"
-    Doc-->>User: 201 Created (DocID)
-    deactivate Doc
-
-    Note over Broker, Audit: Flujo Asíncrono (Eventual Consistency)
-
-    par Procesamiento de Auditoría
-        Broker->>Audit: Consumir "DocumentCreated"
-        Audit->>Audit: Escribir Log Inmutable
-    and Procesamiento de Inteligencia
-        Broker->>Search: Consumir "DocumentCreated"
-        activate Search
-        Search->>Doc: Solicitar archivo (Internal API)
-        Doc-->>Search: Retorna archivo cifrado
-        Search->>Search: Descifrar en memoria -> OCR -> Vectorizar
-        Search->>Search: Indexar Vectores + Permisos(ACL)
-        Search->>Broker: Publicar Evento: "DocumentIndexed"
-        deactivate Search
-    end
 ```
