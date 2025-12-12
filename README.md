@@ -1,40 +1,35 @@
 
 # 📂 Ficha del proyecto
-## Nombre: Eduardo Guardado Ruiz
-### 📌 Nombre del proyecto:
-**SafeDocs Manager** (Document Management Security)
+* 📌**Nombre:** Eduardo Guardado Ruiz
+* 📌**Nombre del proyecto:** DocFlow
+* 📌**Descripción breve:**
+Proyecto de software modular de gestión documental (DMS) con enfoque **API-First**, que incluye control de versiones lineal y un motor de búsqueda semántica basado en Inteligencia Artificial como plugin opcional, priorizando usabilidad, integración y accesibilidad para empresas de diversos tamaños.
 
-### 📌 Descripción breve:
-Plataforma de gestión documental de alta seguridad con enfoque **API-First**, que integra cifrado, control de versiones lineal y un motor de búsqueda semántica basado en Inteligencia Artificial.
-
-### 📌 Descripción general del producto:
-SafeDocs Manager es una solución SaaS B2B diseñada como una **infraestructura documental inteligente**. No solo funciona como un repositorio seguro para sectores regulados (Legal, Fintech, Salud, RRHH), sino que actúa como un motor "backend" que permite a otros sistemas (ERPs, CRMs) heredar capacidades de seguridad avanzada. Combina una arquitectura **Zero-Trust** con accesibilidad programática mediante APIs RESTful, permitiendo la gestión del ciclo de vida del documento desde su creación y versionado hasta su recuperación mediante IA.
+# Descripción general del producto:
+DocFlow es un proyecto de software modular diseñado como una **infraestructura documental inteligente**. Funciona como un repositorio central para gestión documental, actuando como un motor "backend" que permite a otros sistemas heredar capacidades de gestión documental avanzada. Combina una arquitectura **RBAC** (Role-Based Access Control) con accesibilidad programática mediante APIs RESTful, permitiendo la gestión del ciclo de vida del documento desde su creación y versionado hasta su recuperación. El núcleo del producto es un DMS eficiente y escalable, con la IA como un plugin opcional para búsqueda semántica, permitiendo a empresas con recursos limitados operar sin sobrecarga computacional.
 
 ## Objetivo del producto
 
-El propósito principal de SafeDocs Manager DMS es resolver la dicotomía entre **seguridad extrema y facilidad de uso operativa**.
+El propósito principal de DocFlow es resolver la dicotomía entre **seguridad básica y facilidad de uso operativa**.
 
-* **Propósito:** Mitigar el riesgo de fugas de información (Data Leaks) y eliminar el "Shadow IT" (uso de herramientas no autorizadas) causado por la complejidad de los sistemas tradicionales.
-* **Problema que resuelve:** Permite la colaboración segura y la integración fluida entre sistemas aislados sin comprometer el cumplimiento normativo.
+* **Propósito:** Facilitar la colaboración segura y la recuperación rápida mediante IA (opcional), eliminando el "Shadow IT" causado por la complejidad de los sistemas tradicionales.
+* **Problema que resuelve:** Permite la colaboración eficiente y la integración fluida entre sistemas aislados con control de acceso granular, ofreciendo un DMS accesible para empresas de cualquier tamaño, con IA como complemento.
 * **Segmentos de Usuario:**
-    * **Administradores/CISO:** Responsables de seguridad y cumplimiento.
-    * **Desarrolladores:** Integradores de sistemas terceros.
-    * **Usuarios Finales (Ej. Abogados, RRHH):** Profesionales que requieren acceso rápido y fiable.
-* **Valor Estratégico:** Provee seguridad de nivel gubernamental "invisible" para el usuario, potenciada por IA para la productividad y trazabilidad forense inmutable.
+    * **Administradores:** Responsables de configuración, roles y monitoreo del sistema.
+    * **Desarrolladores o Sistemas:** Integradores que usan APIs para conectar con otros sistemas (ERPs, CRMs).
+    * **Usuarios Finales (Ej. RH):** Profesionales operativos que suben, buscan y gestionan documentos diariamente.
 
 ## Características y funcionalidades principales
 
 ### A. Seguridad y Control de Acceso (Core)
-* **Cifrado E2E & Zero-Trust:** Cifrado AES-256 de extremo a extremo; el sistema asume "cero confianza" por defecto.
 * **RBAC Granular:** Control de acceso basado en roles (Ver, Editar, Descargar, Admin) aplicable a UI y API.
 * **Audit Trails Inmutables:** Registro forense inalterable de cada acción (quién, cuándo, qué) sobre un archivo.
-* **Marcas de Agua Dinámicas:** Inserción automática de identidad del usuario y fecha al visualizar documentos para prevenir fugas visuales.
 
 ### B. Gestión Documental Técnica
 * **Control de Versiones Lineal:** Versionado (`v1.0` -> `v1.1`) con capacidad de "Rollback" y bloqueo (Check-in/Check-out) para edición segura.
 * **Estructura de Carpetas Dinámica:** Organización jerárquica gestionable vía Web y API.
 
-### C. Inteligencia Artificial y Búsqueda
+### C. Inteligencia Artificial y Búsqueda (Plugin)
 * **Búsqueda Semántica (RAG/Vectorial):** Motor IA que entiende contexto y significado, no solo palabras clave exactas.
 * **OCR Automático:** Extracción de texto de documentos escaneados e imágenes al subir.
 * **Filtro de Seguridad en IA:** La IA respeta estrictamente los permisos RBAC; nunca revela datos restringidos en los resultados.
@@ -46,11 +41,11 @@ El propósito principal de SafeDocs Manager DMS es resolver la dicotomía entre 
 
 ## Diseño y experiencia de usuario
 
-### Perfil: Administrador / CISO
+### Perfil: Administradores
 * **Entrada:** Dashboard centralizado con métricas de seguridad, consumo y alertas de actividad anómala.
 * **Gestión:** Interfaz "Drag & Drop" para asignación de roles y permisos. Panel de control de API Keys con revocación instantánea.
 
-### Perfil: Desarrollador
+### Perfil: Desarrolladores o Sistemas
 * **Onboarding:** Portal de documentación con Swagger UI interactivo.
 * **Uso:** Estructuras JSON predecibles y códigos de error estándar para facilitar la integración.
 
@@ -59,10 +54,10 @@ El propósito principal de SafeDocs Manager DMS es resolver la dicotomía entre 
 * **Interacción Principal:** Búsqueda en lenguaje natural ("contratos de junio") con resultados contextuales y previsualización segura.
 * **Alertas:** Avisos claros sobre versiones obsoletas con redirección a la versión vigente.
 
-Esta es una propuesta arquitectónica detallada y profesional para **SafeDocs Manager**, diseñada por un Arquitecto de Soluciones Senior. Se ha priorizado la seguridad (Zero-Trust), la escalabilidad (patrones asíncronos para IA) y la mantenibilidad (Clean Architecture).
+Esta es una propuesta arquitectónica detallada y profesional para **DocFlow**. Se ha priorizado la modularidad (DMS core con IA opcional), la seguridad (RBAC y auditoría), la escalabilidad (patrones asíncronos) y la mantenibilidad (Clean Architecture).
 
 ## Arquitectura del Sistema
-### Diagrama de Arquitectura (Nivel Alto)
+### Diagrama de Arquitectura Nube (Nivel Alto)
 El siguiente diagrama ilustra la interacción entre el cliente (SPA), el Edge (CDN/WAF), el clúster de Kubernetes y los servicios de soporte.
 
 ```mermaid
@@ -78,7 +73,7 @@ graph TD
         LB[Load Balancer]
     end
 
-    subgraph Kubernetes_Cluster [K8s Cluster - SafeDocs Backend]
+    subgraph Kubernetes_Cluster [K8s Cluster - DocFlow Backend]
         Ingress[Ingress Controller / Nginx]
         
         subgraph Service_Mesh [Service Mesh / Internal Network]
@@ -99,7 +94,7 @@ graph TD
     end
 
     subgraph Infrastructure_Services [Servicios de Infraestructura]
-        S3[(Object Storage / S3 / MinIO / Archivos Cifrados)]
+        S3[(Object Storage / S3 / MinIO / Archivos)]
         Kafka[Message Broker / Kafka / RabbitMQ]
         Vault[HashiCorp Vault / Secrets Management]
     end
@@ -134,7 +129,68 @@ graph TD
     %% Gestión de Secretos
     DocCore -.-> Vault
 ```
-### Diagrama de Secuencia: Flujo de Carga, Cifrado, Auditoría e Indexación Asíncrona de Documentos
+
+### Diagrama de Arquitectura Local (Docker Compose)
+
+Para entornos de desarrollo y pruebas locales, se utiliza Docker Compose para orquestar los servicios en una máquina local, simplificando la infraestructura.
+
+```mermaid
+graph TD
+    subgraph Client_Side [Cliente]
+        Browser[Navegador Web / React + TS]
+        ExternalSys[Sistemas Externos / ERP/CRM]
+    end
+
+    subgraph Local_Host [Máquina Local / Docker Compose]
+        subgraph Containers [Contenedores Docker]
+            APIG[API Gateway / Spring Cloud Gateway]
+            
+            %% Microservicios Core
+            IAM[Identity Service - Keycloak Wrapper]
+            DocCore[Document Core Service / Spring Boot]
+            SearchAI[Search & Intelligence Service AI / Python]
+            Audit[Audit Log Service / Spring Boot]
+            
+            %% Persistencia y Caché Local
+            Redis[(Redis Cache)]
+            SQL[(MySQL / Metadata & Relational)]
+            NoSQL[(MongoDB / Logs & Unstructured)]
+            VectorDB[(Vector DB / Embeddings)]
+            
+            %% Servicios de Infraestructura Local
+            MinIO[(Object Storage / MinIO / Archivos)]
+            Kafka[Message Broker / Kafka / RabbitMQ]
+            Vault[HashiCorp Vault / Secrets Management]
+        end
+    end
+
+    %% Conexiones
+    Browser --> APIG
+    ExternalSys --> APIG
+    
+    APIG --> IAM
+    APIG --> DocCore
+    APIG --> SearchAI
+    APIG --> Audit
+
+    %% Interacciones Internas
+    DocCore -- Graba Eventos --> Kafka
+    SearchAI -- Lee Eventos --> Kafka
+    Audit -- Lee Eventos --> Kafka
+
+    DocCore --> SQL
+    DocCore --> MinIO
+    DocCore --> Redis
+    
+    SearchAI --> VectorDB
+    Audit --> NoSQL
+    
+    IAM --> SQL
+    
+    %% Gestión de Secretos
+    DocCore -.-> Vault
+```
+### Diagrama de Secuencia: Flujo de Carga, Auditoría e Indexación Asíncrona de Documentos
 ```mermaid
 sequenceDiagram
     autonumber
@@ -154,7 +210,6 @@ sequenceDiagram
 
     API->>Doc: Crear Documento (Stream)
     activate Doc
-    Doc->>Doc: Cifrar archivo (AES-256)
     Doc->>Doc: Guardar Binario en Object Storage
     Doc->>Doc: Guardar Metadatos (v1.0) DB
     Doc->>Broker: Publicar Evento: "DocumentCreated"
@@ -170,8 +225,8 @@ sequenceDiagram
         Broker->>Search: Consumir "DocumentCreated"
         activate Search
         Search->>Doc: Solicitar archivo (Internal API)
-        Doc-->>Search: Retorna archivo cifrado
-        Search->>Search: Descifrar en memoria -> OCR -> Vectorizar
+        Doc-->>Search: Retorna archivo
+        Search->>Search: Ejecutar OCR -> Vectorizar
         Search->>Search: Indexar Vectores + Permisos(ACL)
         Search->>Broker: Publicar Evento: "DocumentIndexed"
         deactivate Search
@@ -184,9 +239,8 @@ Se ha seleccionado una **Arquitectura de Microservicios orientada a Eventos (Eve
 
 ### Justificación
 
-1.  **Event-Driven (Asincronía):** El procesamiento de IA (OCR, Vectorización) y la Auditoría inmutable son operaciones costosas. Desacoplarlas mediante un bus de eventos (Kafka) permite que la subida del documento sea rápida para el usuario, mientras el procesamiento pesado ocurre en segundo plano ("Eventual Consistency").
+1.  **Event-Driven (Asincronía):** El procesamiento de IA (OCR, Vectorización) y la Auditoría inmutable son operaciones costosas. Desacoplarlas mediante un bus de eventos (Kafka) permite que la subida del documento sea rápida para el usuario, mientras el procesamiento pesado ocurre en segundo plano ("Eventual Consistency"). La IA es opcional, permitiendo despliegues ligeros sin este servicio.
 2.  **Hexagonal:** Permite aislar la lógica de dominio (reglas de negocio documental) de la infraestructura (frameworks, bases de datos). Esto es crucial para un producto que podría cambiar de proveedor de almacenamiento (AWS S3 a Azure Blob) o de motor de base de datos sin reescribir la lógica core.
-3.  **Seguridad Zero-Trust:** La separación física de servicios permite aplicar políticas de red estrictas (Network Policies en K8s). Si el servicio de "Búsqueda" (que procesa inputs externos) es comprometido, no tiene acceso directo a las llaves de cifrado gestionadas por el "Document Core".
 
 ### Beneficios vs. Compromisos
 
@@ -220,16 +274,16 @@ Todos los microservicios implementan **Spring Boot** por su robustez, inyección
 #### 2. Document Core Service
 
   * **Tecnología:** Spring Boot Java.
-  * **Datos:** MySQL (Metadatos: nombre, tamaño, carpetas, dueños), S3 (Blobs cifrados).
-  * **Responsabilidad:** Lógica transaccional fuerte (ACID). Gestiona la jerarquía de carpetas y versiones. Orquesta el cifrado: solicita llaves a Vault, cifra el stream y lo envía a S3.
+  * **Datos:** MySQL (Metadatos: nombre, tamaño, carpetas, dueños), S3 (Blobs).
+  * **Responsabilidad:** Lógica transaccional fuerte (ACID). Gestiona la jerarquía de carpetas y versiones.
   * **Patrón:** **CQRS (Command side)**.
 
-#### 3. Search & Intelligence Service
+#### 3. Search & Intelligence Service (Plugin IA)
 
   * **Tecnología:** Spring Boot (o Python FastAPI si el modelo IA lo requiere, comunicado vía gRPC).
   * **Datos:** Base de datos Vectorial (ej. Milvus o pgvector) y ElasticSearch.
   * **Responsabilidad:** Escucha eventos `DOCUMENT_CREATED`. Descarga el archivo, ejecuta OCR, genera embeddings y los indexa.
-  * **Justificación:** Separado porque consume mucha CPU/Memoria y sus patrones de escalado son distintos.
+  * **Justificación:** Separado porque consume mucha CPU/Memoria y sus patrones de escalado son distintos. Como plugin opcional, permite despliegues sin IA para entornos con recursos limitados.
 
 #### 4. Audit Log Service
 
@@ -245,7 +299,7 @@ Todos los microservicios implementan **Spring Boot** por su robustez, inyección
 
 ## Descripción de Alto Nivel y Estructura de Ficheros
 
-**SafeDocs Manager** es una plataforma distribuida donde el frontend actúa como un consumidor de APIs REST. El backend no es un monolito, sino un ecosistema de servicios autónomos que colaboran. Se utiliza **Clean Architecture** para garantizar que la lógica de negocio (Dominio) no dependa de frameworks o librerías externas.
+**DocFlow** es una plataforma distribuida modular donde el frontend actúa como un consumidor de APIs REST. El backend no es un monolito, sino un ecosistema de servicios autónomos que colaboran, con la IA como plugin. Se utiliza **Clean Architecture** para garantizar que la lógica de negocio (Dominio) no dependa de frameworks o librerías externas.
 
 ### Estructura de Directorios: Frontend (React + TS)
 
@@ -277,7 +331,7 @@ Sigue una estructura basada en "features" o dominios funcionales, en lugar de ag
 Cada microservicio tendrá esta estructura interna para proteger el dominio.
 
 ```text
-/src/main/java/com/safedocs/documentservice
+/src/main/java/com/docflow/documentservice
   /application              # Casos de Uso (Orquestación)
     /dto                    # Data Transfer Objects (Input/Output)
     /ports                  # Interfaces (Input Ports / Output Ports)
@@ -331,7 +385,7 @@ graph TD
         subgraph Managed_Services [Servicios Gestionados]
             RDS[(DB: MySQL Multi-AZ)]
             MongoAtlas[(DB: MongoDB Atlas)]
-            S3Bucket[(S3 Bucket + Versioning)]
+            S3Bucket[(S3 Bucket)]
         end
     end
     
@@ -352,15 +406,13 @@ graph TD
 
 1.  **Orquestación (Kubernetes):** Maneja el ciclo de vida de los contenedores, escalado automático (HPA) basado en CPU/Memoria y recuperación ante fallos (Self-healing).
 2.  **API Gateway / Ingress:** Un Ingress Controller (ej. NGINX o Traefik) maneja el tráfico HTTP/S entrante al clúster y lo dirige al API Gateway de aplicación.
-3.  **Secret Management (HashiCorp Vault):** **Crítico para SafeDocs.** No guardamos contraseñas ni llaves de cifrado en variables de entorno planas. Los servicios se autentican con Vault al iniciar para recuperar sus credenciales dinámicamente.
+3.  **Secret Management (HashiCorp Vault):** **Crítico para DocFlow.** No guardamos contraseñas ni credenciales en variables de entorno planas. Los servicios se autentican con Vault al iniciar para recuperar sus credenciales dinámicamente.
 4.  **Observabilidad:**
       * **Logs:** EFK Stack (Elasticsearch, Fluentd, Kibana) para centralizar logs de todos los pods.
       * **Métricas:** Prometheus (recolección) + Grafana (visualización).
       * **Tracing:** Jaeger o Zipkin para seguir una petición a través de los microservicios (Distributed Tracing).
 
 ## Seguridad
-
-Dado que es un sistema "SafeDocs", la seguridad no es un añadido, es el núcleo.
 
 ### Medidas Implementadas
 
@@ -370,7 +422,6 @@ Dado que es un sistema "SafeDocs", la seguridad no es un añadido, es el núcleo
       * **API Keys:** Para integraciones de terceros, gestionadas con rotación automática y scopes limitados.
 2.  **Cifrado (Data Protection):**
       * **En tránsito (Data in Motion):** TLS 1.3 forzado en todas las conexiones externas. mTLS (Mutual TLS) dentro del clúster (vía Service Mesh como Istio/Linkerd) para que los servicios se autentiquen entre sí.
-      * **En reposo (Data at Rest):** Bases de datos cifradas a nivel de volumen. Archivos en S3 cifrados con **Envelope Encryption** (una llave única por archivo, cifrada a su vez por una Master Key en Vault/KMS).
 3.  **Seguridad de Aplicación:**
       * **Input Sanitization:** Validación estricta de DTOs en Spring Boot (`@Valid`, `@NotNull`) para prevenir inyecciones.
       * **Scan de Virus:** Los archivos subidos pasan a una zona de cuarentena y son escaneados (ej. ClamAV) antes de ser accesibles.

@@ -8,7 +8,7 @@ Analiza todos los prompts generados en esta sesión y clasifícalos en categorí
 ***Estos prompt se ejecutaron con Gemini 3 PRO***
 
 ## Fase de analisis del producto
-### 🧠 Categoría 1: Ingeniería de Prompts y Metodología
+### 🧠 Ingeniería de Prompts y Metodología
 1. *"Como experto en prompt enginner, generame un meta prompt para un experto de productos en software, donde tenga espacios donde indicarle que tipo de producto y contenga las mejores practicas para el conocimiento e investigacion de un producto. Aplica este prompt con las mejores practicas."*
 
 `Meta Prompt`
@@ -52,20 +52,20 @@ Debes desarrollar una respuesta estructurada que cubra las siguientes 5 dimensio
 Usa encabezados claros, tablas para la priorización y viñetas para facilitar la lectura. Mantén un tono profesional, objetivo y orientado a negocios.
 ```
 
-### 💡 Categoría 2: Definición y Refinamiento de Producto
+### 💡 Definición y Refinamiento de Producto
 Aquí están los prompts enfocados en la ideación, especificación de requisitos y evolución de las funcionalidades del software.
 
 2. *"Quiero un producto Document Management Security (DMS)"*
 3. *"Quiero que este producto aparte de seguridad tambien contenga control de versiones... APIs Rest... IA..."*
 
-### 📝 Categoría 3: Documentación, Estructura y Formato
+### 📝 Documentación, Estructura y Formato
 Esta categoría incluye instrucciones para organizar la información generada, definir roles de salida específicos y solicitar formatos de archivo.
 
 4. *"**Rol** Actúa como un analista experto... **Objetivo**... **Instrucciones**..."* (Prompt estructurado para la estructura del documento).
 5. *"Dame esta informacion en markdown listo para copiar"*
 
 ## Fase de analisis de Arquitectura del Sistema
-### 🧠 Categoría 4: Ingeniería de Prompts y Metodología
+### 🧠 Ingeniería de Prompts y Metodología
 1. *"Como experto en prompt enginner, generame un prompt para un experto en arquitectura de sistemas, especialmente en arquitectura microservicios. Donde detecte los servicios principales del producto. Debe solicitarme el analisis del producto y realice una breve descripcion de la arquitectura, lista de servicios (Microservicios). Aplica este prompt con las mejores practicas y solicitame todo lo necesario para tener completo el prompt."*
 
 `Meta Prompt`
@@ -111,7 +111,7 @@ Genera el código para un diagrama de secuencia o diagrama de arquitectura usand
 * Si detectas ambigüedad en el producto, asume el estándar de la industria para ese tipo de negocio pero anótalo como una suposición.
 ```
 
-### 🔶 Categoría 5: Meta-prompts y Prompt Engineering
+### 🔶 Meta-prompts y Prompt Engineering
 **Prompts incluidos:**
 - P1: “Como experto en prompt engineer, generame un meta prompt…”
 - P2: “Agrega en este meta prompt el uso de tecnologías…”
