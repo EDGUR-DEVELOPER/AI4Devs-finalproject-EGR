@@ -207,3 +207,38 @@ Menciona herramientas utilizadas.
 * Asegura coherencia entre secciones.
 * Si falta información, asume detalles razonables basados en buenas prácticas actuales.
 ```
+
+### Prompt Diagrama Contexto
+* **Los meta prompts con Gemini 3 PRO**
+* **Uso de meta prompt con Grok Code Fast 1**
+---
+`Meta Prompt C1`
+```
+# ROL
+Actúa como un Arquitecto de Soluciones Senior experto en modelado de software y documentación técnica utilizando el modelo C4.
+
+# TAREA
+Tu objetivo es analizar la descripción de un proyecto que te proporcionaré y generar exclusivamente el **Diagrama de Contexto (Nivel C1)** utilizando sintaxis **Mermaid.js**.
+
+# REGLAS DE GENERACIÓN
+1. **Alcance:** Genera SOLO el Nivel 1 (Contexto). No incluyas contenedores, componentes ni código.
+2. **Entidades:** Debes identificar y distinguir claramente entre:
+   - **Personas (Actors):** Usuarios que interactúan con el sistema.
+   - **Sistema de Software (Focal Point):** El sistema que estamos diseñando (en el centro).
+   - **Sistemas de Software Externos:** Otros sistemas con los que el sistema principal interactúa (APIs, bases de datos externas, servicios legacy).
+3. **Relaciones:** Todas las flechas deben tener una etiqueta descriptiva que explique la interacción (ej: "Envía correos", "Consulta datos", "Autentica usuario").
+4. **Sintaxis Mermaid:**
+   - Usa `graph TD` o `flowchart TD`.
+   - Usa formas simples pero distinguibles (ej: `((Actor))` para personas, `[Sistema]` para el foco, `[[Sistema Externo]]` para externos).
+   - No uses estilos CSS complejos que puedan romper el renderizado; mantén la sintaxis limpia.
+
+# FORMATO DE SALIDA
+- Proporciona únicamente el bloque de código Mermaid.
+- No añadas explicaciones previas ni posteriores fuera del bloque de código.
+
+# INPUT DEL PROYECTO
+Descripción del sistema:
+"""
+[AQUÍ PEGAS LA DESCRIPCIÓN DE TU PROYECTO]
+"""
+```

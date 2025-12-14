@@ -1,4 +1,3 @@
-
 # 📂 Ficha del proyecto
 * 📌**Nombre:** Eduardo Guardado Ruiz
 * 📌**Nombre del proyecto:** DocFlow
@@ -57,6 +56,31 @@ El propósito principal de DocFlow es resolver la dicotomía entre **seguridad b
 Esta es una propuesta arquitectónica detallada y profesional para **DocFlow**. Se ha priorizado la modularidad (DMS core con IA opcional), la seguridad (RBAC y auditoría), la escalabilidad (patrones asíncronos) y la mantenibilidad (Clean Architecture).
 
 ## Arquitectura del Sistema
+
+### Diagrama de contexto
+```mermaid
+flowchart TD
+    subgraph Personas
+        Admin[Administrador]
+        Dev[Desarrollador]
+        User[Usuario Final]
+    end
+
+    subgraph Sistema_Principal
+        DocFlow[DocFlow]
+    end
+
+    subgraph Sistemas_Externos
+        ExtSys[Sistema Externo ERP/CRM]
+    end
+
+    Admin -->|Configura roles y permisos| DocFlow
+    Dev -->|Integra vía APIs| DocFlow
+    User -->|Sube y busca documentos| DocFlow
+    DocFlow -->|Envía notificaciones vía webhooks| ExtSys
+    ExtSys -->|Sube, busca y consulta documentos vía APIs| DocFlow
+```
+
 ### Diagrama de Arquitectura Nube (Nivel Alto)
 El siguiente diagrama ilustra la interacción entre el cliente (SPA), el Edge (CDN/WAF), el clúster de Kubernetes y los servicios de soporte.
 
