@@ -477,3 +477,115 @@ Usando `TestContainers`, al probar el `DocumentService`:
 3.  Verifica que el registro existe en MySQL.
 4.  Verifica que el archivo binario está en MinIO.
 5.  Destruye los contenedores al finalizar.
+
+## Modelo de Datos
+```mermaid
+erDiagram
+    Usuario {
+        int id PK
+        string nombre
+        string correo
+        string contraseña_hash
+        int rol_id FK
+        int tenant_id FK
+        datetime fecha_creacion
+        boolean activo
+        datetime deleted_at "Para 'Derecho al Olvido' y eliminación lógica de PII"
+        boolean consent_given "Rastreo de consentimiento para procesamiento de datos personales"
+    }
+    Rol {
+        int id PK
+        string nombre
+        string descripcion
+    }
+    Tenant {
+        int id PK
+        string nombre
+        string dominio
+        datetime fecha_creacion
+        string politica_privacidad "Referencia a políticas de privacidad aplicadas por tenant"
+    }
+    Carpeta {
+        int id PK
+        string nombre
+        int carpeta_padre_id FK
+        int propietario_id FK
+        int tenant_id FK
+        datetime fecha_creacion
+        boolean activa
+        datetime deleted_at "Eliminación lógica para proteger jerarquía de datos"
+    }
+    Documento {
+        int id PK
+        string nombre
+        string descripcion
+        int carpeta_id FK
+        int propietario_id FK
+        int tenant_id FK
+        datetime fecha_creacion
+        datetime fecha_modificacion
+        string estado "activo/archivado"
+        int version_actual_id FK
+        int retention_period_days "Define duración de retención para ciclo de vida documental"
+        datetime deleted_at "Eliminación lógica para cumplimiento de privacidad"
+    }
+    Version {
+        int id PK
+        int documento_id FK
+        string numero_version "ej. v1.0"
+        string ruta_archivo "path en S3"
+        int tamaño_bytes
+        string tipo_mime
+        int creador_id FK
+        datetime fecha_creacion
+        boolean bloqueado "check-in/check-out"
+        boolean encriptado "Indica si el archivo está cifrado en almacenamiento"
+    }
+    Permiso {
+        int id PK
+        int usuario_id FK
+        string tipo_recurso "documento/carpeta"
+        int recurso_id FK
+        string tipo_permiso "ver/editar/descargar/admin"
+        datetime fecha_asignacion
+        datetime fecha_expiracion "Expiración automática para acceso mínimo"
+    }
+    LogAuditoria {
+        int id PK
+        int usuario_id FK
+        string accion "crear/editar/eliminar/ver"
+        string tipo_recurso "documento/carpeta/version"
+        int recurso_id FK
+        datetime timestamp
+        text detalles_encriptados "Detalles encriptados para proteger datos sensibles en logs"
+        string clave_encriptacion "Clave o referencia para desencriptar (gestionada externamente)"
+    }
+    Evento {
+        int id PK
+        string tipo "DocumentCreated/DocumentIndexed"
+        int documento_id FK
+        int usuario_id FK
+        datetime timestamp
+        string payload "JSON con datos del evento"
+        boolean encriptado "Indica si el payload contiene datos sensibles encriptados"
+    }
+
+    Rol ||--o{ Usuario : asignado_a
+    Tenant ||--o{ Usuario : pertenece_a
+    Tenant ||--o{ Carpeta : contiene
+    Tenant ||--o{ Documento : contiene
+    Usuario ||--o{ Carpeta : posee
+    Usuario ||--o{ Documento : posee
+    Usuario ||--o{ Version : crea
+    Usuario ||--o{ LogAuditoria : realiza
+    Usuario ||--o{ Evento : genera
+    Carpeta ||--o{ Carpeta : contiene "jerarquia opcional"
+    Carpeta ||--o{ Documento : contiene
+    Documento ||--o{ Version : tiene
+    Documento ||--|| Version : version_actual "uno a uno con version actual"
+    Usuario }o--o{ Permiso : tiene_permiso_sobre
+    Documento ||--o{ Permiso : tiene_permiso_sobre
+    Carpeta }o--o{ Permiso : tiene_permiso_sobre
+    Documento ||--o{ Evento : genera
+    Documento ||--o{ LogAuditoria : auditado_en
+```

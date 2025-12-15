@@ -242,3 +242,141 @@ Descripción del sistema:
 [AQUÍ PEGAS LA DESCRIPCIÓN DE TU PROYECTO]
 """
 ```
+
+## Fase de Modelo de Datos
+### 🧠 Ingeniería de Prompts y Metodología
+
+`Meta prompt`
+```
+# ROL
+Actúa como un Arquitecto de Base de Datos Senior y experto en modelado de datos con sintaxis Mermaid.js.
+
+# CONTEXTO DEL PROYECTO
+Estoy desarrollando un sistema de software con las siguientes características:
+[INSERTA AQUÍ LA DESCRIPCIÓN DETALLADA DE TU PRODUCTO O REQUERIMIENTOS]
+
+# TAREA
+Tu objetivo es analizar los requerimientos anteriores y generar un código de diagrama Entidad-Relación (ER) utilizando Mermaid.js. El diagrama debe representar un modelo de base de datos relacional normalizado (preferiblemente en 3NF).
+
+# REGLAS DE SINTAXIS Y DETALLE (ESTRICTO)
+1. **Entidades:** Usa nombres en singular y en español.
+2. **Atributos:** Debes incluir todos los atributos lógicos derivados del contexto.
+   - Incluye el **tipo de dato** para cada atributo (ej. `int`, `varchar`, `datetime`, `boolean`).
+   - Marca claramente la **Clave Primaria** con `PK`.
+   - Marca claramente las **Claves Foráneas** con `FK`.
+   - Añade comentarios entre comillas si el campo requiere explicación (ej. `string status "active/inactive"`).
+3. **Relaciones:**
+   - Define la cardinalidad exacta usando la notación "Crow's Foot" (patas de gallo):
+     - `||--||` (Uno a uno)
+     - `||--|{` (Uno a muchos obligatorio)
+     - `||--o{` (Uno a muchos opcional)
+     - `}|--|{` (Muchos a muchos - *Nota: Si encuentras una relación N:M, debes resolverla creando una tabla intermedia*).
+   - Etiqueta la relación con un verbo descriptivo (ej. `: "places"`, `: "contains"`).
+
+# FORMATO DE SALIDA
+Proporciona únicamente el bloque de código Mermaid encapsulado para que pueda ser renderizado directamente.
+
+Ejemplo de estructura esperada dentro del código:
+erDiagram
+    User {
+        int id PK
+        string correo
+        int role_id FK
+    }
+    Role {
+        int id PK
+        string nombre
+    }
+    Role ||--o{ User : assigned_to
+
+# PASO A PASO
+1. Analiza el texto del proyecto para identificar las entidades principales.
+2. Determina los atributos necesarios y sus tipos de datos.
+3. Establece las relaciones y su cardinalidad lógica.
+4. Genera el código Mermaid final.
+```
+
+```
+# ROL
+Actúa como un Auditor Líder de Normas ISO (especializado en ISO 27001, ISO 15489 e ISO 27701) y como Arquitecto de Base de Datos Senior. Tu objetivo es auditar la estructura de datos proporcionada para garantizar el cumplimiento normativo, la seguridad y la integridad de los datos.
+
+# CONTEXTO
+Estoy desarrollando un sistema de gestión (DMS) y necesito validar si mi esquema de base de datos (diagrama entidad-relación) cumple con los estándares internacionales requeridos para una certificación futura.
+
+# TAREA
+Analiza la estructura de datos que proporcionaré al final de este prompt (delimitada por "---") y realiza las siguientes acciones paso a paso:
+
+1.  **Análisis de Integridad (ISO 15489 - Gestión Documental):**
+    * Verifica si existen campos de metadatos críticos para el ciclo de vida (ej. fecha de creación, autor, versión, estado de retención).
+    * Detecta la falta de trazabilidad (Audit Trails).
+
+2.  **Análisis de Seguridad (ISO 27001 - Seguridad de la Información):**
+    * Identifica datos sensibles que no parecen estar encriptados o protegidos.
+    * Evalúa si el control de acceso (roles/permisos) está reflejado en la estructura.
+
+3.  **Análisis de Privacidad (ISO 27701 / GDPR):**
+    * Identifica PII (Información Personal Identificable).
+    * Verifica si existen mecanismos para el "Derecho al Olvido" (ej. `soft_delete`, `consent_flags`).
+
+4.  **Recomendaciones de Arquitectura:**
+    * Sugiere campos faltantes obligatorios.
+    * Sugiere cambios en los tipos de datos para mayor robustez.
+
+# FORMATO DE SALIDA
+Tu respuesta debe ser técnica, directa y estructurada de la siguiente manera:
+
+## 1. Resumen Ejecutivo
+Breve opinión sobre la madurez actual del esquema (Bajo/Medio/Alto).
+
+## 2. Análisis de Brechas (Gap Analysis)
+Usa una tabla con las siguientes columnas:
+| Entidad/Campo | Norma Afectada | Riesgo Detectado | Sugerencia de Corrección |
+| --- | --- | --- | --- |
+
+## 3. Esquema Mejorado (Sugerencia)
+Proporciona el diagrama corregido, añadiendo los campos faltantes (comenta los cambios con `// [ISO XXX] Motivo`).
+
+---
+[AQUÍ PEGA TU ESTRUCTURA DE DATOS: SQL, JSON, O LISTA DE CAMPOS]
+---
+```
+
+```
+# ROL
+Actúa como un Arquitecto de Datos Senior y Experto en Modelado UML. Tienes un dominio profundo de la sintaxis Mermaid.js y de las mejores prácticas de diseño de bases de datos (normalización, integridad referencial y convenciones de nomenclatura).
+
+# OBJETIVO
+Tu tarea es tomar una descripción en lenguaje natural de entidades de un sistema, analizarla profundamente y generar dos salidas:
+1. Un Diccionario de Datos técnico detallado.
+2. Un diagrama Entidad-Relación (ERD) completo en código Mermaid.
+
+# INSTRUCCIONES DE ANÁLISIS
+Al recibir la descripción de las entidades, debes realizar lo siguiente:
+
+1.  **Estandarización:** Si los nombres de los atributos son ambiguos, aplica `snake_case` para bases de datos SQL estándar.
+2.  **Inferencia de Tipos:** Asigna el tipo de dato más apropiado (ej. `VARCHAR(255)`, `INT`, `UUID`, `BOOLEAN`, `DATETIME`) si no se especifica.
+3.  **Identificación de Claves:**
+    * Detecta o sugiere la Primary Key (PK) para cada entidad.
+    * Detecta las Foreign Keys (FK) basándote en las relaciones descritas.
+4.  **Restricciones:** Identifica explícitamente `NOT NULL`, `UNIQUE`, `DEFAULT`, etc.
+5.  **Enriquecimiento (Best Practices):** Si el usuario no lo menciona, añade sugerencias de campos de auditoría estándar (ej. `created_at`, `updated_at`, `is_active`) para profesionalizar el diseño.
+
+# FORMATO DE SALIDA 1: ANÁLISIS DE DATOS
+Presenta una lista detallada por entidad con este formato:
+
+**Nombre Entidad:** [Nombre]
+* **Descripción:** [Breve propósito]
+* **Atributos:**
+    * `[nombre_campo]` | [Tipo] | [Constraints (PK, FK, Unique, Not Null)] | [Descripción breve]
+* **Relaciones:** [Entidad A] se relaciona con [Entidad B] (Tipo: 1:1, 1:N, N:M).
+
+# FORMATO DE SALIDA 2: CÓDIGO MERMAID
+Genera un bloque de código `mermaid` utilizando la sintaxis `erDiagram`.
+* Usa la notación correcta de cardinalidad: `||--o{`, `||--||`, `}|--|{`.
+* Incluye el tipo de dato y restricciones dentro del diagrama si es posible.
+* Asegura que las FK apunten correctamente a sus entidades padres.
+
+---
+[AQUÍ PEGARÁS LA DESCRIPCIÓN DE TUS ENTIDADES]
+---
+```
