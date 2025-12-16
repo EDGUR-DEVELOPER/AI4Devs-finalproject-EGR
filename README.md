@@ -481,111 +481,250 @@ Usando `TestContainers`, al probar el `DocumentService`:
 ## Modelo de Datos
 ```mermaid
 erDiagram
-    Usuario {
+    %% --- GESTIÓN DE ORGANIZACIÓN (TENANT) ---
+    Organizacion {
         int id PK
         string nombre
-        string correo
-        string contraseña_hash
-        int rol_id FK
-        int tenant_id FK
+        string subdominio UK
+        jsonb configuracion
+        string estado
         datetime fecha_creacion
-        boolean activo
-        datetime deleted_at "Para 'Derecho al Olvido' y eliminación lógica de PII"
-        boolean consent_given "Rastreo de consentimiento para procesamiento de datos personales"
-    }
-    Rol {
-        int id PK
-        string nombre
-        string descripcion
-    }
-    Tenant {
-        int id PK
-        string nombre
-        string dominio
-        datetime fecha_creacion
-        string politica_privacidad "Referencia a políticas de privacidad aplicadas por tenant"
-    }
-    Carpeta {
-        int id PK
-        string nombre
-        int carpeta_padre_id FK
-        int propietario_id FK
-        int tenant_id FK
-        datetime fecha_creacion
-        boolean activa
-        datetime deleted_at "Eliminación lógica para proteger jerarquía de datos"
-    }
-    Documento {
-        int id PK
-        string nombre
-        string descripcion
-        int carpeta_id FK
-        int propietario_id FK
-        int tenant_id FK
-        datetime fecha_creacion
-        datetime fecha_modificacion
-        string estado "activo/archivado"
-        int version_actual_id FK
-        int retention_period_days "Define duración de retención para ciclo de vida documental"
-        datetime deleted_at "Eliminación lógica para cumplimiento de privacidad"
-    }
-    Version {
-        int id PK
-        int documento_id FK
-        string numero_version "ej. v1.0"
-        string ruta_archivo "path en S3"
-        int tamaño_bytes
-        string tipo_mime
-        int creador_id FK
-        datetime fecha_creacion
-        boolean bloqueado "check-in/check-out"
-        boolean encriptado "Indica si el archivo está cifrado en almacenamiento"
-    }
-    Permiso {
-        int id PK
-        int usuario_id FK
-        string tipo_recurso "documento/carpeta"
-        int recurso_id FK
-        string tipo_permiso "ver/editar/descargar/admin"
-        datetime fecha_asignacion
-        datetime fecha_expiracion "Expiración automática para acceso mínimo"
-    }
-    LogAuditoria {
-        int id PK
-        int usuario_id FK
-        string accion "crear/editar/eliminar/ver"
-        string tipo_recurso "documento/carpeta/version"
-        int recurso_id FK
-        datetime timestamp
-        text detalles_encriptados "Detalles encriptados para proteger datos sensibles en logs"
-        string clave_encriptacion "Clave o referencia para desencriptar (gestionada externamente)"
-    }
-    Evento {
-        int id PK
-        string tipo "DocumentCreated/DocumentIndexed"
-        int documento_id FK
-        int usuario_id FK
-        datetime timestamp
-        string payload "JSON con datos del evento"
-        boolean encriptado "Indica si el payload contiene datos sensibles encriptados"
     }
 
-    Rol ||--o{ Usuario : asignado_a
-    Tenant ||--o{ Usuario : pertenece_a
-    Tenant ||--o{ Carpeta : contiene
-    Tenant ||--o{ Documento : contiene
-    Usuario ||--o{ Carpeta : posee
-    Usuario ||--o{ Documento : posee
-    Usuario ||--o{ Version : crea
-    Usuario ||--o{ LogAuditoria : realiza
-    Usuario ||--o{ Evento : genera
-    Carpeta ||--o{ Carpeta : contiene "jerarquia opcional"
-    Carpeta ||--o{ Documento : contiene
-    Documento ||--o{ Version : tiene
-    Documento ||--|| Version : version_actual "uno a uno con version actual"
-    Usuario }o--o{ Permiso : tiene_permiso_sobre
-    Documento ||--o{ Permiso : tiene_permiso_sobre
-    Carpeta }o--o{ Permiso : tiene_permiso_sobre
-    Documento ||--o{ Evento : genera
-    Documento ||--o{ LogAuditoria : auditado_en
+    %% --- IAM Y ROLES (MODELO REFACTORIZADO) ---
+    Usuario {
+        bigint id PK
+        string email UK
+        string hash_contrasena
+        string nombre_completo
+        int organizacion_id FK
+        boolean es_admin_organizacion
+        boolean activo
+        boolean mfa_habilitado
+        datetime fecha_eliminacion
+    }
+
+    Rol {
+        int id PK
+        int organizacion_id FK
+        string nombre
+        string descripcion
+        %% JSONB eliminado aquí a favor de relación estricta
+    }
+
+    Permiso_Catalogo {
+        int id PK
+        string slug UK "Ej: usuarios.crear, docs.exportar"
+        string nombre_legible
+        string modulo "Agrupador: Seguridad, Billing, Docs"
+        string descripcion
+    }
+
+    Rol_Tiene_Permiso {
+        int rol_id PK, FK
+        int permiso_id PK, FK
+        datetime fecha_asignacion
+    }
+
+    Usuario_Rol {
+        bigint usuario_id PK, FK
+        int rol_id PK, FK
+    }
+
+    %% --- ESTRUCTURA DOCUMENTAL ---
+    Carpeta {
+        bigint id PK
+        string nombre
+        bigint carpeta_padre_id FK
+        int organizacion_id FK
+        bigint propietario_id FK
+        string ruta_jerarquia "LTREE"
+        datetime fecha_creacion
+        datetime fecha_eliminacion
+    }
+
+    Documento {
+        bigint id PK
+        string nombre
+        string descripcion
+        int organizacion_id FK
+        bigint carpeta_id FK
+        bigint propietario_id FK
+        bigint version_actual_id FK
+        jsonb metadatos_globales
+        boolean en_papelera
+        datetime fecha_creacion
+        datetime fecha_eliminacion
+    }
+
+    Version {
+        bigint id PK
+        bigint documento_id FK
+        int numero_secuencial
+        string etiqueta_version
+        string ruta_almacenamiento
+        string proveedor_almacenamiento
+        string tipo_mime
+        bigint tamano_bytes
+        string hash_sha256
+        bigint creador_id FK
+        jsonb metadatos_version
+        boolean es_actual
+        datetime fecha_creacion
+    }
+
+    %% --- ACL (Permisos sobre objetos) ---
+    Permiso_Carpeta {
+        bigint id PK
+        bigint carpeta_id FK
+        bigint usuario_id FK
+        int rol_asignado_id FK
+        string nivel_acceso "LEER/ESCRIBIR"
+        boolean recursivo
+    }
+
+    Permiso_Documento {
+        bigint id PK
+        bigint documento_id FK
+        bigint usuario_id FK
+        string nivel_acceso
+        datetime fecha_expiracion
+    }
+
+    %% --- AUDITORÍA ---
+    Log_Auditoria {
+        bigint id PK
+        int organizacion_id FK
+        bigint usuario_id FK
+        string codigo_evento
+        jsonb detalles_cambio
+        datetime fecha_evento
+    }
+
+    %% RELACIONES
+    Organizacion ||--o{ Usuario : tiene
+    Organizacion ||--o{ Rol : define
+    
+    %% Relación de Seguridad Refactorizada
+    Rol ||--o{ Rol_Tiene_Permiso : posee
+    Permiso_Catalogo ||--o{ Rol_Tiene_Permiso : asignado_a
+    
+    Usuario ||--o{ Usuario_Rol : tiene
+    Rol ||--o{ Usuario_Rol : asignado
+    
+    Organizacion ||--o{ Carpeta : almacena
+    Carpeta ||--o{ Carpeta : subcarpetas
+    Carpeta ||--o{ Documento : archivos
+    
+    Documento ||--o{ Version : historial
+    Documento ||--o| Version : actual
+    
+    Carpeta ||--o{ Permiso_Carpeta : protege
+    Documento ||--o{ Permiso_Documento : protege
+    
+    Usuario ||--o{ Log_Auditoria : genera
+    Organizacion ||--o{ Log_Auditoria : registra
 ```
+
+## Diccionario de Datos (Especificación Técnica)
+
+### Módulo A: Identidad y Organización (IAM)
+
+#### 1. `Organizacion` (Tenant)
+El contenedor raíz. Define el alcance legal y de configuración del cliente.
+* **id** (`INT`, PK, Auto-increment): Identificador único.
+* **nombre** (`VARCHAR(100)`, Not Null): Nombre comercial de la empresa.
+* **subdominio** (`VARCHAR(50)`, Unique, Not Null): Identificador para acceso URL (ej. `empresa`.dms.com).
+* **configuracion** (`JSONB`, Not Null, Default `{}`): Almacena configuración visual (logo, colores) y técnica (límites de almacenamiento, política de passwords).
+* **estado** (`VARCHAR(20)`, Not Null): Enum: `ACTIVO`, `SUSPENDIDO`, `ARCHIVADO`.
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()).
+
+#### 2. `Usuario`
+El actor autenticado en el sistema.
+* **id** (`BIGINT`, PK, Auto-increment): ID global del usuario.
+* **organizacion_id** (`INT`, FK -> `Organizacion`): Tenant al que pertenece.
+* **email** (`VARCHAR(255)`, Unique Constraint compuesto con organizacion_id): Credencial de acceso.
+* **hash_contrasena** (`VARCHAR(255)`, Not Null): Hash seguro (Bcrypt/Argon2).
+* **nombre_completo** (`VARCHAR(100)`, Not Null).
+* **mfa_habilitado** (`BOOLEAN`, Default False): Bandera para 2FA.
+* **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
+
+#### 3. `Rol`
+Define perfiles funcionales personalizados por la organización.
+* **id** (`INT`, PK, Auto-increment).
+* **organizacion_id** (`INT`, FK -> `Organizacion`).
+* **nombre** (`VARCHAR(50)`, Not Null): Ej. "Administrador Legal", "Auditor Externo".
+* **descripcion** (`TEXT`, Nullable).
+
+#### 4. `Permiso_Catalogo`
+Lista maestra e inmutable de capacidades del sistema (System Capabilities).
+* **id** (`INT`, PK).
+* **slug** (`VARCHAR(60)`, Unique): Identificador técnico (ej. `users.create`, `docs.export`, `billing.view`).
+* **modulo** (`VARCHAR(50)`): Agrupador lógico para UI (ej. "Seguridad", "Gestión Documental").
+
+#### 5. `Rol_Tiene_Permiso`
+Tabla intermedia (Many-to-Many) para asignar capacidades a roles.
+* **rol_id** (`INT`, PK, FK -> `Rol`).
+* **permiso_id** (`INT`, PK, FK -> `Permiso_Catalogo`).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+---
+
+### Módulo B: Núcleo Documental (Core)
+
+#### 6. `Carpeta`
+Estructura jerárquica para organizar la información.
+* **id** (`BIGINT`, PK, Auto-increment).
+* **organizacion_id** (`INT`, FK -> `Organizacion`).
+* **carpeta_padre_id** (`BIGINT`, FK -> `Carpeta`, Nullable): Si es NULL, es una carpeta raíz.
+* **nombre** (`VARCHAR(255)`, Not Null).
+* **ruta_jerarquia** (`LTREE` o `VARCHAR`, Indexado): Materialización del path (ej. `1.5.20`) para consultas de árbol optimizadas sin recursividad profunda.
+* **propietario_id** (`BIGINT`, FK -> `Usuario`).
+* **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
+
+#### 7. `Documento`
+La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
+* **id** (`BIGINT`, PK, Auto-increment).
+* **organizacion_id** (`INT`, FK -> `Organizacion`).
+* **carpeta_id** (`BIGINT`, FK -> `Carpeta`): Ubicación actual.
+* **version_actual_id** (`BIGINT`, FK -> `Version`, Nullable): Puntero de optimización para recuperación rápida.
+* **nombre** (`VARCHAR(255)`, Not Null).
+* **metadatos_globales** (`JSONB`, Default `{}`): Campos definidos por el usuario (Tags, Cliente, Fecha Vencimiento). Indexado con GIN.
+* **en_papelera** (`BOOLEAN`, Default False): Estado de reciclaje.
+
+#### 8. `Version`
+La entidad física. Representa un archivo inmutable en el tiempo.
+* **id** (`BIGINT`, PK, Auto-increment).
+* **documento_id** (`BIGINT`, FK -> `Documento`).
+* **numero_secuencial** (`INT`, Not Null): Contador incremental (1, 2, 3...) por documento.
+* **ruta_almacenamiento** (`VARCHAR(500)`, Not Null): Key o Path en el Object Storage (S3/Azure Blob).
+* **hash_sha256** (`CHAR(64)`, Not Null, Indexado): Checksum para integridad y deduplicación.
+* **tamano_bytes** (`BIGINT`, Not Null).
+* **tipo_mime** (`VARCHAR(100)`): Ej. `application/pdf`.
+* **metadatos_version** (`JSONB`): Metadatos técnicos extraídos (EXIF, número de páginas, autor del PDF).
+* **creador_id** (`BIGINT`, FK -> `Usuario`): Quién subió esta versión específica.
+
+---
+
+### Módulo C: Seguridad Granular (ACL) y Auditoría
+
+#### 9. `Permiso_Carpeta`
+Reglas de acceso explícito sobre carpetas.
+* **id** (`BIGINT`, PK).
+* **carpeta_id** (`BIGINT`, FK -> `Carpeta`).
+* **usuario_id** (`BIGINT`, FK -> `Usuario`, Nullable): Asignación directa.
+* **rol_asignado_id** (`INT`, FK -> `Rol`, Nullable): Asignación por grupo.
+* **nivel_acceso** (`VARCHAR(20)`): Enum: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
+* **recursivo** (`BOOLEAN`, Default True): Define si aplica a hijos.
+
+#### 10. `Log_Auditoria`
+Traza histórica inmutable.
+* **id** (`BIGINT`, PK, BigSerial).
+* **organizacion_id** (`INT`, FK -> `Organizacion`).
+* **usuario_id** (`BIGINT`, FK -> `Usuario`, Nullable): `ON DELETE SET NULL` para preservar historia.
+* **codigo_evento** (`VARCHAR(50)`, Not Null): Ej. `DOC_CREATED`, `DOC_DELETED`, `ACL_CHANGED`.
+* **detalles_cambio** (`JSONB`): Snapshot de los datos. Ej: `{ "antes": { "nombre": "A" }, "despues": { "nombre": "B" } }`.
+* **direccion_ip** (`VARCHAR(45)`): IPv4 o IPv6.
+* **fecha_evento** (`TIMESTAMPTZ`, Default NOW()).
+
+---
