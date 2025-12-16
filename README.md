@@ -111,7 +111,7 @@ graph TD
             
             %% Persistencia y Caché
             Redis[(Redis Cache)]
-            SQL[(MySQL / Metadata & Relational)]
+            SQL[(PostgreSQL / Metadata & Relational)]
             NoSQL[(MongoDB / Logs & Unstructured)]
             VectorDB[(Vector DB / Embeddings)]
         end
@@ -177,7 +177,7 @@ graph TD
             
             %% Persistencia y Caché Local
             Redis[(Redis Cache)]
-            SQL[(MySQL / Metadata & Relational)]
+            SQL[(PostgreSQL / Metadata & Relational)]
             NoSQL[(MongoDB / Logs & Unstructured)]
             VectorDB[(Vector DB / Embeddings)]
             
@@ -292,13 +292,13 @@ Todos los microservicios implementan **Spring Boot** por su robustez, inyección
 #### 1. Identity Service (IAM)
 
   * **Tecnología:** Spring Boot como wrapper de **Keycloak** (o integración directa).
-  * **Datos:** MySQL (Usuarios, Roles, Tenancy).
+  * **Datos:** PostgreSQL (Usuarios, Roles, Tenancy).
   * **Responsabilidad:** Autenticación (OIDC/OAuth2), gestión de sesiones y emisión de tokens. Centraliza el RBAC.
 
 #### 2. Document Core Service
 
   * **Tecnología:** Spring Boot Java.
-  * **Datos:** MySQL (Metadatos: nombre, tamaño, carpetas, dueños), S3 (Blobs).
+  * **Datos:** PostgreSQL (Metadatos: nombre, tamaño, carpetas, dueños), S3 (Blobs).
   * **Responsabilidad:** Lógica transaccional fuerte (ACID). Gestiona la jerarquía de carpetas y versiones.
   * **Patrón:** **CQRS (Command side)**.
 
@@ -407,7 +407,7 @@ graph TD
         Registry[Container Registry]
         
         subgraph Managed_Services [Servicios Gestionados]
-            RDS[(DB: MySQL Multi-AZ)]
+            RDS[(DB: PostgreSQL Multi-AZ)]
             MongoAtlas[(DB: MongoDB Atlas)]
             S3Bucket[(S3 Bucket)]
         end
@@ -463,7 +463,7 @@ La estrategia de pruebas sigue la **Pirámide de Testing** para asegurar calidad
 | :--- | :--- | :--- | :--- |
 | **Unitarios** | Backend | JUnit 5, Mockito | Pruebas aisladas de lógica de dominio y casos de uso. Cobertura mínima del 80%. |
 | **Unitarios** | Frontend | Vitest / Jest, React Testing Library | Verificación de renderizado de componentes y lógica de hooks. |
-| **Integración** | Backend | **TestContainers**, Spring Boot Test | Levanta contenedores reales de MySQL/Kafka/Mongo en Docker efímero para probar repositorios y flujo de mensajes. |
+| **Integración** | Backend | **TestContainers**, Spring Boot Test | Levanta contenedores reales de PostgreSQL/Kafka/Mongo en Docker efímero para probar repositorios y flujo de mensajes. |
 | **Contrato** | API | **Pact** | Verifica que los microservicios cumplan el contrato API acordado entre Consumidor (Frontend/Otros servicios) y Proveedor, evitando rupturas en cambios. |
 | **End-to-End (E2E)** | Sistema | **Cypress** / Playwright | Simula flujos de usuario completos: "Usuario hace login, sube documento y busca documento". Se ejecutan en el pipeline de CI/CD (Stage/QA). |
 | **Seguridad (SAST/DAST)** | Pipeline | SonarQube, OWASP ZAP | Análisis estático de código en busca de vulnerabilidades y escaneo dinámico de la API en ejecución. |
@@ -472,9 +472,9 @@ La estrategia de pruebas sigue la **Pirámide de Testing** para asegurar calidad
 
 Usando `TestContainers`, al probar el `DocumentService`:
 
-1.  El test arranca un contenedor MySQL limpio y un MinIO (S3 mock).
+1.  El test arranca un contenedor PostgreSQL limpio y un MinIO (S3 mock).
 2.  Llama al método `createDocument()`.
-3.  Verifica que el registro existe en MySQL.
+3.  Verifica que el registro existe en PostgreSQL.
 4.  Verifica que el archivo binario está en MinIO.
 5.  Destruye los contenedores al finalizar.
 
@@ -485,7 +485,6 @@ erDiagram
     Organizacion {
         int id PK
         string nombre
-        string subdominio UK
         jsonb configuracion
         string estado
         datetime fecha_creacion
@@ -498,8 +497,6 @@ erDiagram
         string hash_contrasena
         string nombre_completo
         int organizacion_id FK
-        boolean es_admin_organizacion
-        boolean activo
         boolean mfa_habilitado
         datetime fecha_eliminacion
     }
@@ -552,7 +549,6 @@ erDiagram
         bigint propietario_id FK
         bigint version_actual_id FK
         jsonb metadatos_globales
-        boolean en_papelera
         datetime fecha_creacion
         datetime fecha_eliminacion
     }
@@ -563,13 +559,11 @@ erDiagram
         int numero_secuencial
         string etiqueta_version
         string ruta_almacenamiento
-        string proveedor_almacenamiento
         string tipo_mime
         bigint tamano_bytes
         string hash_sha256
         bigint creador_id FK
         jsonb metadatos_version
-        boolean es_actual
         datetime fecha_creacion
     }
 
@@ -634,8 +628,8 @@ erDiagram
 El contenedor raíz. Define el alcance legal y de configuración del cliente.
 * **id** (`INT`, PK, Auto-increment): Identificador único.
 * **nombre** (`VARCHAR(100)`, Not Null): Nombre comercial de la empresa.
-* **subdominio** (`VARCHAR(50)`, Unique, Not Null): Identificador para acceso URL (ej. `empresa`.dms.com).
 * **configuracion** (`JSONB`, Not Null, Default `{}`): Almacena configuración visual (logo, colores) y técnica (límites de almacenamiento, política de passwords).
+    * *Ejemplo:* `{"apariencia": {"logo_url": "..."}, "seguridad": {"mfa_obligatorio": true}}`
 * **estado** (`VARCHAR(20)`, Not Null): Enum: `ACTIVO`, `SUSPENDIDO`, `ARCHIVADO`.
 * **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()).
 
@@ -690,7 +684,7 @@ La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
 * **version_actual_id** (`BIGINT`, FK -> `Version`, Nullable): Puntero de optimización para recuperación rápida.
 * **nombre** (`VARCHAR(255)`, Not Null).
 * **metadatos_globales** (`JSONB`, Default `{}`): Campos definidos por el usuario (Tags, Cliente, Fecha Vencimiento). Indexado con GIN.
-* **en_papelera** (`BOOLEAN`, Default False): Estado de reciclaje.
+    * *Ejemplo:* `{"cliente": "Acme Corp", "tags": ["urgente", "legal"], "numero_factura": "F-2023-001"}`
 
 #### 8. `Version`
 La entidad física. Representa un archivo inmutable en el tiempo.
@@ -702,6 +696,7 @@ La entidad física. Representa un archivo inmutable en el tiempo.
 * **tamano_bytes** (`BIGINT`, Not Null).
 * **tipo_mime** (`VARCHAR(100)`): Ej. `application/pdf`.
 * **metadatos_version** (`JSONB`): Metadatos técnicos extraídos (EXIF, número de páginas, autor del PDF).
+    * *Ejemplo:* `{"paginas": 12, "resolucion": "300dpi", "encriptado": false}`
 * **creador_id** (`BIGINT`, FK -> `Usuario`): Quién subió esta versión específica.
 
 ---
@@ -724,7 +719,13 @@ Traza histórica inmutable.
 * **usuario_id** (`BIGINT`, FK -> `Usuario`, Nullable): `ON DELETE SET NULL` para preservar historia.
 * **codigo_evento** (`VARCHAR(50)`, Not Null): Ej. `DOC_CREATED`, `DOC_DELETED`, `ACL_CHANGED`.
 * **detalles_cambio** (`JSONB`): Snapshot de los datos. Ej: `{ "antes": { "nombre": "A" }, "despues": { "nombre": "B" } }`.
+    * *Ejemplo:* `{"campo": "estado", "valor_anterior": "borrador", "valor_nuevo": "publicado"}`
 * **direccion_ip** (`VARCHAR(45)`): IPv4 o IPv6.
 * **fecha_evento** (`TIMESTAMPTZ`, Default NOW()).
 
----
+## Especificación de la API
+
+## Historias de Usuario
+
+
+## Tickets de Trabajo

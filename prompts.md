@@ -380,3 +380,74 @@ Genera un bloque de código `mermaid` utilizando la sintaxis `erDiagram`.
 [AQUÍ PEGARÁS LA DESCRIPCIÓN DE TUS ENTIDADES]
 ---
 ```
+
+🏗️ Diseño y Modelado de Datos (Database Design)
+
+Esta categoría agrupa las peticiones enfocadas en la creación, modificación y visualización de la estructura de la base de datos (Entidad-Relación).
+
+    Prompts incluidos:
+        "Dame una lista de entidades para crear una estructura de datos para un Document Manager System."
+        "Analízame la siguiente E-R y modifica con las mejores prácticas..."
+        "Modifícalo con este nuevo nombre y también corrige todos los campos a español... Dámelo en diagrama E-R Mermaid."
+        "Dame el diagrama E-R en mermaid con los cambios a refactorizar."
+
+📝 Documentación y Definición de Arquitectura
+
+Prompts orientados a describir textualmente el sistema, explicar la lógica de negocio y generar entregables finales (Diccionario de Datos).
+
+    Prompts incluidos:
+        "Dame una descripción general de la estructura de base de datos como la funcionalidad de cada entidad y sus relaciones."
+        "Descripción de entidades principales: Recuerda incluir el máximo detalle de cada entidad..."
+        "Dame la descripción general de la arquitectura de datos... lo necesito en md para copiar la información."
+
+
+🛠️ Validación Técnica y Mejores Prácticas
+
+Consultas específicas sobre decisiones de ingeniería (SQL vs NoSQL) y justificación de atributos técnicos.
+
+    Prompts incluidos:
+        "Evalúa cada campo definido como JSON/JSONB y determina si está correctamente usado..."
+        "Cuál es la finalidad del calcula su hash de cada versión documento."
+
+## Especificación de la API
+    "Como experto en prompt engineer, genera un prompt para especificaciones de API de un producto en definicion, que describa los endpoints principales (máximo 3) en formato OpenAPI. Opcionalmente puedes añadir un ejemplo de petición y de respuesta para mayor claridad. Solicita la informacion del producto."
+
+`Meta prompt`
+```
+# Rol
+Actúa como un Arquitecto de Software Senior y experto en diseño de APIs RESTful.
+
+# Contexto
+Estamos en la fase de definición de un nuevo producto digital llamado: "[NOMBRE DEL PRODUCTO]".
+Descripción del producto: [BREVE DESCRIPCIÓN DE QUÉ HACE EL PRODUCTO Y SU OBJETIVO PRINCIPAL].
+
+# Tarea
+Genera una especificación técnica preliminar para la API de este producto. Debes entregar el resultado en formato OpenAPI 3.0 (YAML).
+
+# Requisitos Específicos
+1. **Selección de Endpoints:** Define únicamente los 3 endpoints más críticos y esenciales para el funcionamiento del MVP (Producto Mínimo Viable).
+2. **Estándares:** Usa verbos HTTP correctos (GET, POST, PUT, DELETE) y convenciones de nomenclatura de recursos en español (ej. /usuarios, /ordenar).
+3. **Claridad:** Incluye descripciones breves para cada endpoint.
+
+# Formato de Salida
+1. Bloque de código con la especificación OpenAPI (Swagger).
+2. Después del bloque de código, añade una sección de "Ejemplo de Uso" para uno de los endpoints, mostrando:
+   - Un cuerpo de petición (Request Body) en JSON.
+   - Un cuerpo de respuesta (Response Body) exitoso (código 200/201) en JSON.
+```
+
+## Historias de Usuario
+
+    Documenta 3 de las historias de usuario principales utilizadas durante el desarrollo, teniendo en cuenta las buenas prácticas de producto al respecto.
+
+* Historia de Usuario 1
+* Historia de Usuario 2
+* Historia de Usuario 3
+
+## Tickets de Trabajo
+
+    Documenta 3 de los tickets de trabajo principales del desarrollo, uno de backend, uno de frontend, y uno de bases de datos. Da todo el detalle requerido para desarrollar la tarea de inicio a fin teniendo en cuenta las buenas prácticas al respecto.
+
+* Ticket 1
+* Ticket 2
+* Ticket 3
