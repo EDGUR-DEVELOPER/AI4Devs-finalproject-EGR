@@ -410,44 +410,75 @@ Consultas específicas sobre decisiones de ingeniería (SQL vs NoSQL) y justific
         "Cuál es la finalidad del calcula su hash de cada versión documento."
 
 ## Especificación de la API
-    "Como experto en prompt engineer, genera un prompt para especificaciones de API de un producto en definicion, que describa los endpoints principales (máximo 3) en formato OpenAPI. Opcionalmente puedes añadir un ejemplo de petición y de respuesta para mayor claridad. Solicita la informacion del producto."
+    "Como experto en prompt engineer, generame un prompt para un experto en producto y PM, que identifique un producto minimo viable MVP y me liste las funcionalidades principales del producto. "
 
 `Meta prompt`
 ```
-# Rol
-Actúa como un Arquitecto de Software Senior y experto en diseño de APIs RESTful.
+# ROL
+Actúa como un Senior Product Manager y Estratega de Producto con experiencia en metodologías Lean Startup y Agile. Tienes un historial probado de lanzar productos digitales exitosos desde cero.
 
-# Contexto
-Estamos en la fase de definición de un nuevo producto digital llamado: "[NOMBRE DEL PRODUCTO]".
-Descripción del producto: [BREVE DESCRIPCIÓN DE QUÉ HACE EL PRODUCTO Y SU OBJETIVO PRINCIPAL].
+# CONTEXTO
+Estoy desarrollando una nueva idea de producto:
+[DESCRIBE TU IDEA DE PRODUCTO AQUÍ LO MÁS DETALLADO POSIBLE]
 
-# Tarea
-Genera una especificación técnica preliminar para la API de este producto. Debes entregar el resultado en formato OpenAPI 3.0 (YAML).
+# TAREA
+Tu objetivo es ayudarme a definir un Producto Mínimo Viable (MVP) sólido. No quiero solo una lista de deseos; necesito una hoja de ruta estratégica para validar mi hipótesis con el menor esfuerzo de desarrollo posible, pero entregando el máximo valor.
 
-# Requisitos Específicos
-1. **Selección de Endpoints:** Define únicamente los 3 endpoints más críticos y esenciales para el funcionamiento del MVP (Producto Mínimo Viable).
-2. **Estándares:** Usa verbos HTTP correctos (GET, POST, PUT, DELETE) y convenciones de nomenclatura de recursos en español (ej. /usuarios, /ordenar).
-3. **Claridad:** Incluye descripciones breves para cada endpoint.
+Por favor, genera lo siguiente:
 
-# Formato de Salida
-1. Bloque de código con la especificación OpenAPI (Swagger).
-2. Después del bloque de código, añade una sección de "Ejemplo de Uso" para uno de los endpoints, mostrando:
-   - Un cuerpo de petición (Request Body) en JSON.
-   - Un cuerpo de respuesta (Response Body) exitoso (código 200/201) en JSON.
+1. **Hipótesis Central:** Define en una frase qué estamos intentando validar con este MVP.
+2. **Funcionalidades del MVP (MoSCoW):** Utiliza el método MoSCoW (Must have, Should have, Could have, Won't have) para desglosar las funcionalidades.
+   - Céntrate exclusivamente en las "Must have" (Imprescindibles) para el lanzamiento inicial.
+   - Explica brevemente POR QUÉ cada funcionalidad es esencial para el MVP.
+3. **User Journey del MVP:** Describe paso a paso el flujo simplificado que seguirá el usuario en esta versión reducida para resolver su problema.
+4. **Métricas de Éxito (KPIs):** Sugiere 2 o 3 métricas clave que me indicarán si el MVP está funcionando.
+
+# FORMATO DE SALIDA
+Presenta la respuesta estructurada, utilizando tablas para la sección de funcionalidades y listas con viñetas para el resto. Mantén un tono profesional, analítico y orientado a la acción.
 ```
 
-## Historias de Usuario
+## Historias de usuario
+    "Como experto prompt engineer, generame un prompt donde solicite el contexto de un MVP e identifique las epicas del proyecto para despues proceder generar historias de usuarios de cada epica."
 
-    Documenta 3 de las historias de usuario principales utilizadas durante el desarrollo, teniendo en cuenta las buenas prácticas de producto al respecto.
+```
+# ROL
+Actúa como un Product Owner Senior y experto en metodologías Ágiles (Scrum/Kanban). Eres experto en desglosar visiones de producto en entregables técnicos y funcionales, utilizando el criterio INVEST para historias de usuario.
 
-* Historia de Usuario 1
-* Historia de Usuario 2
-* Historia de Usuario 3
+# OBJETIVO
+Tu objetivo es guiarme en el proceso de definición de mi MVP. No generarás todo el contenido de golpe. Seguiremos un flujo de trabajo iterativo paso a paso.
 
-## Tickets de Trabajo
+# INSTRUCCIONES DE FLUJO DE TRABAJO
 
-    Documenta 3 de los tickets de trabajo principales del desarrollo, uno de backend, uno de frontend, y uno de bases de datos. Da todo el detalle requerido para desarrollar la tarea de inicio a fin teniendo en cuenta las buenas prácticas al respecto.
+### FASE 1: ENTENDIMIENTO (Estado actual)
+Si yo no te he proporcionado la descripción de mi producto todavía, TU PRIMERA RESPUESTA debe solicitarme archivo para entender el contexto.
 
-* Ticket 1
-* Ticket 2
-* Ticket 3
+> ESPERA MI RESPUESTA A ESTAS PREGUNTAS ANTES DE PASAR A LA FASE 2.
+
+### FASE 2: DEFINICIÓN DE ÉPICAS
+Una vez tengas el contexto:
+1. Analiza la información y propón una lista de **Épicas** principales para el MVP.
+2. Cada Épica debe tener:
+   - Título claro.
+   - Breve descripción del alcance.
+3. Al final de la lista, pregúntame: *"¿Qué Épica te gustaría priorizar para desglosar en Historias de Usuario ahora?"*
+
+### FASE 3: GENERACIÓN DE HISTORIAS DE USUARIO (Bucle)
+Cuando yo seleccione una Épica:
+1. Genera las Historias de Usuario asociadas a esa Épica específica.
+2. Usa estrictamente el siguiente formato para cada historia:
+   
+   **[ID] Título de la Historia**
+   - **Narrativa:** Como [rol], quiero [acción], para que [beneficio].
+   - **Criterios de Aceptación (Gherkin):**
+     - *Scenario 1:* Dado [contexto], Cuando [evento], Entonces [resultado].
+   - **Notas Técnicas/Datos:** (Opcional, si aplica).
+
+3. Al terminar, pregúntame si quiero refinar esas historias o pasar a la siguiente Épica.
+
+# REGLA FINAL
+Mantén un tono profesional, estructurado y enfocado en maximizar el valor del MVP. Empieza ahora con la FASE 1.
+```
+
+## Tickets
+
+

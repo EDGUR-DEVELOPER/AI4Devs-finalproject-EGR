@@ -496,9 +496,16 @@ erDiagram
         string email UK
         string hash_contrasena
         string nombre_completo
-        int organizacion_id FK
         boolean mfa_habilitado
         datetime fecha_eliminacion
+    }
+
+    Usuario_Organizacion {
+        bigint usuario_id PK, FK
+        int organizacion_id PK, FK
+        string estado
+        boolean es_predeterminada
+        datetime fecha_asignacion
     }
 
     Rol {
@@ -526,6 +533,7 @@ erDiagram
     Usuario_Rol {
         bigint usuario_id PK, FK
         int rol_id PK, FK
+        datetime fecha_asignacion
     }
 
     %% --- ESTRUCTURA DOCUMENTAL ---
@@ -568,21 +576,41 @@ erDiagram
     }
 
     %% --- ACL (Permisos sobre objetos) ---
-    Permiso_Carpeta {
+    %% Separado por sujeto (Usuario vs Rol) para evitar NULLs y ambigüedad
+    Permiso_Carpeta_Usuario {
         bigint id PK
         bigint carpeta_id FK
         bigint usuario_id FK
-        int rol_asignado_id FK
-        string nivel_acceso "LEER/ESCRIBIR"
+        string nivel_acceso
         boolean recursivo
+        datetime fecha_asignacion
     }
 
-    Permiso_Documento {
+    Permiso_Carpeta_Rol {
+        bigint id PK
+        bigint carpeta_id FK
+        int rol_id FK
+        string nivel_acceso
+        boolean recursivo
+        datetime fecha_asignacion
+    }
+
+    Permiso_Documento_Usuario {
         bigint id PK
         bigint documento_id FK
         bigint usuario_id FK
         string nivel_acceso
         datetime fecha_expiracion
+        datetime fecha_asignacion
+    }
+
+    Permiso_Documento_Rol {
+        bigint id PK
+        bigint documento_id FK
+        int rol_id FK
+        string nivel_acceso
+        datetime fecha_expiracion
+        datetime fecha_asignacion
     }
 
     %% --- AUDITORÍA ---
@@ -596,7 +624,8 @@ erDiagram
     }
 
     %% RELACIONES
-    Organizacion ||--o{ Usuario : tiene
+    Organizacion ||--o{ Usuario_Organizacion : tiene
+    Usuario ||--o{ Usuario_Organizacion : pertenece
     Organizacion ||--o{ Rol : define
     
     %% Relación de Seguridad Refactorizada
@@ -613,8 +642,15 @@ erDiagram
     Documento ||--o{ Version : historial
     Documento ||--o| Version : actual
     
-    Carpeta ||--o{ Permiso_Carpeta : protege
-    Documento ||--o{ Permiso_Documento : protege
+    Carpeta ||--o{ Permiso_Carpeta_Usuario : protege
+    Carpeta ||--o{ Permiso_Carpeta_Rol : protege
+    Documento ||--o{ Permiso_Documento_Usuario : protege
+    Documento ||--o{ Permiso_Documento_Rol : protege
+
+    Usuario ||--o{ Permiso_Carpeta_Usuario : recibe
+    Rol ||--o{ Permiso_Carpeta_Rol : recibe
+    Usuario ||--o{ Permiso_Documento_Usuario : recibe
+    Rol ||--o{ Permiso_Documento_Rol : recibe
     
     Usuario ||--o{ Log_Auditoria : genera
     Organizacion ||--o{ Log_Auditoria : registra
@@ -636,12 +672,19 @@ El contenedor raíz. Define el alcance legal y de configuración del cliente.
 #### 2. `Usuario`
 El actor autenticado en el sistema.
 * **id** (`BIGINT`, PK, Auto-increment): ID global del usuario.
-* **organizacion_id** (`INT`, FK -> `Organizacion`): Tenant al que pertenece.
-* **email** (`VARCHAR(255)`, Unique Constraint compuesto con organizacion_id): Credencial de acceso.
+* **email** (`VARCHAR(255)`, Unique): Credencial de acceso global (una identidad puede pertenecer a múltiples organizaciones).
 * **hash_contrasena** (`VARCHAR(255)`, Not Null): Hash seguro (Bcrypt/Argon2).
 * **nombre_completo** (`VARCHAR(100)`, Not Null).
 * **mfa_habilitado** (`BOOLEAN`, Default False): Bandera para 2FA.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
+
+#### 2b. `Usuario_Organizacion` (Membresía multi-tenant)
+Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y permite seleccionar el `organizacion_id` activo en el login.
+* **usuario_id** (`BIGINT`, PK, FK -> `Usuario`): Usuario miembro.
+* **organizacion_id** (`INT`, PK, FK -> `Organizacion`): Organización a la que pertenece.
+* **estado** (`VARCHAR(20)`, Not Null): Enum sugerido: `ACTIVO`, `SUSPENDIDO`.
+* **es_predeterminada** (`BOOLEAN`, Default False): Indica la organización por defecto al iniciar sesión (si aplica).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
 #### 3. `Rol`
 Define perfiles funcionales personalizados por la organización.
@@ -661,6 +704,15 @@ Tabla intermedia (Many-to-Many) para asignar capacidades a roles.
 * **rol_id** (`INT`, PK, FK -> `Rol`).
 * **permiso_id** (`INT`, PK, FK -> `Permiso_Catalogo`).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+#### 5b. `Usuario_Rol` (Asignación de roles por organización)
+Asigna roles a un usuario.
+* **usuario_id** (`BIGINT`, PK, FK -> `Usuario`).
+* **rol_id** (`INT`, PK, FK -> `Rol`).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+Reglas para multi-org (MVP):
+* Un rol solo puede asignarse si el usuario tiene membresía activa en `Usuario_Organizacion` para la organización del rol (`Rol.organizacion_id`).
 
 ---
 
@@ -703,14 +755,41 @@ La entidad física. Representa un archivo inmutable en el tiempo.
 
 ### Módulo C: Seguridad Granular (ACL) y Auditoría
 
-#### 9. `Permiso_Carpeta`
-Reglas de acceso explícito sobre carpetas.
+#### 9. `Permiso_Carpeta_Usuario`
+Permisos explícitos por carpeta asignados directamente a un usuario.
 * **id** (`BIGINT`, PK).
 * **carpeta_id** (`BIGINT`, FK -> `Carpeta`).
-* **usuario_id** (`BIGINT`, FK -> `Usuario`, Nullable): Asignación directa.
-* **rol_asignado_id** (`INT`, FK -> `Rol`, Nullable): Asignación por grupo.
+* **usuario_id** (`BIGINT`, FK -> `Usuario`).
 * **nivel_acceso** (`VARCHAR(20)`): Enum: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
-* **recursivo** (`BOOLEAN`, Default True): Define si aplica a hijos.
+* **recursivo** (`BOOLEAN`, Default True): Define si aplica a subcarpetas.
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+#### 9b. `Permiso_Carpeta_Rol`
+Permisos por carpeta asignados a un rol (se heredan por los usuarios que posean ese rol).
+* **id** (`BIGINT`, PK).
+* **carpeta_id** (`BIGINT`, FK -> `Carpeta`).
+* **rol_id** (`INT`, FK -> `Rol`).
+* **nivel_acceso** (`VARCHAR(20)`): Enum: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
+* **recursivo** (`BOOLEAN`, Default True).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+#### 9c. `Permiso_Documento_Usuario`
+Permisos explícitos por documento asignados directamente a un usuario.
+* **id** (`BIGINT`, PK).
+* **documento_id** (`BIGINT`, FK -> `Documento`).
+* **usuario_id** (`BIGINT`, FK -> `Usuario`).
+* **nivel_acceso** (`VARCHAR(20)`): Enum: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
+* **fecha_expiracion** (`TIMESTAMPTZ`, Nullable).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+
+#### 9d. `Permiso_Documento_Rol`
+Permisos por documento asignados a un rol.
+* **id** (`BIGINT`, PK).
+* **documento_id** (`BIGINT`, FK -> `Documento`).
+* **rol_id** (`INT`, FK -> `Rol`).
+* **nivel_acceso** (`VARCHAR(20)`): Enum: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
+* **fecha_expiracion** (`TIMESTAMPTZ`, Nullable).
+* **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
 #### 10. `Log_Auditoria`
 Traza histórica inmutable.
@@ -725,7 +804,718 @@ Traza histórica inmutable.
 
 ## Especificación de la API
 
+> Alcance MVP: 3 endpoints críticos (login, crear carpeta, subir documento).
+
+```yaml
+openapi: 3.0.3
+info:
+    title: DocFlow API (Mini OpenAPI - MVP)
+    version: 0.1.0
+    description: >
+        Especificación mínima (MVP) para DocFlow enfocada en:
+        autenticación, creación de carpetas y carga de documentos (v1).
+
+servers:
+    - url: https://api.docflow.local
+        description: Entorno local/dev (placeholder)
+
+tags:
+    - name: autenticacion
+        description: Inicio de sesión y emisión de token
+    - name: carpetas
+        description: Gestión mínima de carpetas
+    - name: documentos
+        description: Carga de documentos
+
+paths:
+    /auth/login:
+        post:
+            tags: [autenticacion]
+            summary: Iniciar sesión y obtener token
+            description: >
+                Autentica credenciales.
+                Si el usuario pertenece a múltiples organizaciones y no envía `organizacion_id`,
+                devuelve la lista de organizaciones disponibles para que el cliente seleccione.
+            operationId: login
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginRequest'
+                        examples:
+                            loginConOrganizacion:
+                                value:
+                                    email: admin@acme.com
+                                    contrasena: PasswordSegura123!
+                                    organizacion_id: 1
+                            loginSinOrganizacion:
+                                value:
+                                    email: admin@acme.com
+                                    contrasena: PasswordSegura123!
+            responses:
+                '200':
+                    description: Token emitido correctamente
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginResponse'
+                '300':
+                    description: Múltiples organizaciones disponibles; el cliente debe seleccionar una
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OrgSelectionResponse'
+                '400':
+                    description: Solicitud inválida (campos faltantes/formato inválido)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '401':
+                    description: Credenciales inválidas
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '403':
+                    description: Usuario sin membresía activa o usuario desactivado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /carpetas:
+        post:
+            tags: [carpetas]
+            summary: Crear carpeta
+            description: Crea una carpeta (raíz o hija). Requiere autenticación y permisos.
+            operationId: crearCarpeta
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CrearCarpetaRequest'
+                        examples:
+                            carpetaRaiz:
+                                value:
+                                    nombre: Legal
+                            carpetaHija:
+                                value:
+                                    nombre: Contratos 2025
+                                    carpeta_padre_id: 10
+            responses:
+                '201':
+                    description: Carpeta creada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CarpetaResponse'
+                '400':
+                    description: Solicitud inválida (validación de campos)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '401':
+                    description: No autenticado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '403':
+                    description: Sin permisos para crear carpetas
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /documentos:
+        post:
+            tags: [documentos]
+            summary: Subir documento (crea documento y versión v1)
+            description: >
+                Crea un documento en una carpeta y registra su primera versión.
+                Requiere autenticación y permisos de escritura en la carpeta.
+            operationId: crearDocumento
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            required: [archivo, nombre, carpeta_id]
+                            properties:
+                                archivo:
+                                    type: string
+                                    format: binary
+                                    description: Archivo a subir.
+                                nombre:
+                                    type: string
+                                    description: Nombre lógico del documento.
+                                    example: Contrato_Acme_2025.pdf
+                                carpeta_id:
+                                    type: integer
+                                    format: int64
+                                    description: Identificador de la carpeta destino.
+                                    example: 10
+                                descripcion:
+                                    type: string
+                                    description: Descripción opcional del documento.
+                                    example: Contrato marco con Acme 2025
+                                metadatos:
+                                    type: string
+                                    description: >
+                                        JSON serializado con metadatos globales (tags, cliente, etc.).
+                                        Se define como string para mantener simple el multipart.
+                                    example: '{"cliente":"Acme Corp","tags":["legal","urgente"]}'
+            responses:
+                '201':
+                    description: Documento creado y versión inicial registrada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DocumentoCreadoResponse'
+                '400':
+                    description: Solicitud inválida (faltan campos o formato no válido)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '401':
+                    description: No autenticado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '403':
+                    description: Sin permisos para escribir en la carpeta
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '404':
+                    description: Carpeta no encontrada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+
+    schemas:
+        LoginRequest:
+            type: object
+            required: [email, contrasena]
+            properties:
+                email:
+                    type: string
+                    format: email
+                    example: admin@acme.com
+                contrasena:
+                    type: string
+                    format: password
+                    example: PasswordSegura123!
+                organizacion_id:
+                    type: integer
+                    format: int32
+                    description: Identificador de la organización (tenant) para emitir el token en el contexto correcto.
+                    example: 1
+
+        OrgSelectionResponse:
+            type: object
+            required: [requiere_seleccion, organizaciones]
+            properties:
+                requiere_seleccion:
+                    type: boolean
+                    description: Indica que el usuario debe seleccionar una organización antes de recibir token.
+                    example: true
+                organizaciones:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/OrganizacionDisponible'
+
+        OrganizacionDisponible:
+            type: object
+            required: [organizacion_id, nombre]
+            properties:
+                organizacion_id:
+                    type: integer
+                    format: int32
+                    example: 1
+                nombre:
+                    type: string
+                    example: Acme Corp
+
+        LoginResponse:
+            type: object
+            required: [token, tipo_token, expira_en]
+            properties:
+                token:
+                    type: string
+                    description: Token para usar en Authorization: Bearer <token>
+                tipo_token:
+                    type: string
+                    example: Bearer
+                expira_en:
+                    type: integer
+                    format: int32
+                    description: Segundos hasta expiración del token.
+                    example: 3600
+
+        CrearCarpetaRequest:
+            type: object
+            required: [nombre]
+            properties:
+                nombre:
+                    type: string
+                    minLength: 1
+                    example: Legal
+                carpeta_padre_id:
+                    type: integer
+                    format: int64
+                    nullable: true
+                    description: Si es null, la carpeta es raíz.
+                    example: 10
+
+        CarpetaResponse:
+            type: object
+            required: [carpeta_id, nombre, carpeta_padre_id, creado_en]
+            properties:
+                carpeta_id:
+                    type: integer
+                    format: int64
+                    example: 10
+                nombre:
+                    type: string
+                    example: Legal
+                carpeta_padre_id:
+                    type: integer
+                    format: int64
+                    nullable: true
+                    example: null
+                creado_en:
+                    type: string
+                    format: date-time
+                    example: 2025-12-16T10:15:30Z
+
+        DocumentoCreadoResponse:
+            type: object
+            required: [documento_id, nombre, carpeta_id, version_actual, creado_en]
+            properties:
+                documento_id:
+                    type: integer
+                    format: int64
+                    example: 987
+                nombre:
+                    type: string
+                    example: Contrato_Acme_2025.pdf
+                carpeta_id:
+                    type: integer
+                    format: int64
+                    example: 10
+                version_actual:
+                    type: object
+                    required: [version_id, numero_secuencial, etiqueta_version]
+                    properties:
+                        version_id:
+                            type: integer
+                            format: int64
+                            example: 5551
+                        numero_secuencial:
+                            type: integer
+                            format: int32
+                            example: 1
+                        etiqueta_version:
+                            type: string
+                            example: v1.0
+                creado_en:
+                    type: string
+                    format: date-time
+                    example: 2025-12-16T10:15:30Z
+
+        Error:
+            type: object
+            required: [codigo, mensaje]
+            properties:
+                codigo:
+                    type: string
+                    example: ERROR_VALIDACION
+                mensaje:
+                    type: string
+                    example: El campo 'nombre' es obligatorio.
+                detalle:
+                    type: object
+                    additionalProperties: true
+                    description: Datos adicionales opcionales.
+```
+### Ejemplo de Uso (POST /auth/login)
+
+Request (application/json):
+
+```json
+{
+    "email": "admin@acme.com",
+    "contrasena": "PasswordSegura123!"
+}
+```
+
+Response 300 (application/json) — usuario con múltiples organizaciones:
+
+```json
+{
+    "requiere_seleccion": true,
+    "organizaciones": [
+        {"organizacion_id": 1, "nombre": "Acme Corp"},
+        {"organizacion_id": 2, "nombre": "Contoso Ltd"}
+    ]
+}
+```
+
+Request (application/json) — reintento seleccionando organización:
+
+```json
+{
+    "email": "admin@acme.com",
+    "contrasena": "PasswordSegura123!",
+    "organizacion_id": 1
+}
+```
+
+Response 200 (application/json):
+
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tipo_token": "Bearer",
+    "expira_en": 3600
+}
+```
+
+### Ejemplo de Uso (POST /carpetas)
+
+Request (application/json):
+
+```json
+{
+    "nombre": "Contratos 2025",
+    "carpeta_padre_id": 10
+}
+```
+
+Response 201 (application/json):
+
+```json
+{
+    "carpeta_id": 22,
+    "nombre": "Contratos 2025",
+    "carpeta_padre_id": 10,
+    "creado_en": "2025-12-16T10:15:30Z"
+}
+```
+
+### Ejemplo de Uso (POST /documentos)
+
+Request (multipart/form-data):
+
+```bash
+curl -X POST "https://api.docflow.local/documentos" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "archivo=@Contrato_Acme_2025.pdf" \
+  -F "nombre=Contrato_Acme_2025.pdf" \
+  -F "carpeta_id=10" \
+  -F "descripcion=Contrato marco con Acme 2025" \
+  -F "metadatos={\"cliente\":\"Acme Corp\",\"tags\":[\"legal\",\"urgente\"]}"
+```
+
+Response 201 (application/json):
+
+```json
+{
+    "documento_id": 987,
+    "nombre": "Contrato_Acme_2025.pdf",
+    "carpeta_id": 10,
+    "version_actual": {
+        "version_id": 5551,
+        "numero_secuencial": 1,
+        "etiqueta_version": "v1.0"
+    },
+    "creado_en": "2025-12-16T10:15:30Z"
+}
+```
+
+
 ## Historias de Usuario
 
+### Épicas priorizadas (MVP)
+
+1. **P0 — Autenticación + Tenancy (multi-tenant)**
+    - Alcance: login, token con claims, aislamiento de datos por organización y manejo de sesión.
+2. **P1 — Administración (UI mínima Admin/Usuario)**
+    - Alcance: UI mínima para administrar usuarios/roles dentro de una organización.
+3. **P2 — Permisos granulares (ACL) por carpeta/documento**
+    - Alcance: permisos por objeto, herencia (si aplica) y enforcement en API/UI.
+4. **P3 — Gestión de carpetas (API + UI mínima)**
+    - Alcance: crear/navegar jerarquía de carpetas por tenant.
+5. **P4 — Documentos + versionado lineal (API + UI mínima)**
+    - Alcance: subir documentos, crear nuevas versiones y consultar versión actual.
+6. **P5 — Auditoría (logs inmutables + vista Admin mínima)**
+    - Alcance: registrar eventos críticos y permitir consulta básica.
+7. **P6 — Búsqueda básica (sin IA, respetando permisos)**
+    - Alcance: búsqueda por nombre/metadatos con control de acceso.
+
+---
+
+### P0 — Historias de Usuario (Autenticación + Tenancy)
+
+**[US-AUTH-001] Login multi-tenant (selección de organización)**
+- **Narrativa:** Como usuario, quiero iniciar sesión indicando mi organización, para que el sistema me autentique en el tenant correcto.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado un usuario válido y una organización activa, Cuando envío `POST /auth/login` con credenciales válidas y `organizacion_id`, Entonces recibo `200` con un token.
+    - *Scenario 2:* Dado un usuario válido perteneciente a múltiples organizaciones, Cuando envío `POST /auth/login` solo con credenciales (sin `organizacion_id`), Entonces recibo `300` con la lista de organizaciones disponibles.
+    - *Scenario 3:* Dado credenciales inválidas, Cuando envío `POST /auth/login`, Entonces recibo `401`.
+- **Notas Técnicas/Datos:** `organizacion_id` debe validarse contra pertenencia del usuario.
+
+**[US-AUTH-002] Token con claims de tenant y roles**
+- **Narrativa:** Como sistema, quiero emitir un token con `usuario_id`, `organizacion_id` y roles/permisos, para que la autorización sea consistente en toda la plataforma.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado un login exitoso, Cuando se emite el token, Entonces incluye `usuario_id` y `organizacion_id` y al menos un rol.
+- **Notas Técnicas/Datos:** Definir claim estándar (por ejemplo `org_id`, `roles`).
+
+**[US-AUTH-003] Middleware de autenticación para endpoints protegidos**
+- **Narrativa:** Como sistema, quiero validar el token en cada request protegida, para que solo usuarios autenticados accedan a recursos.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado un request sin token a un endpoint protegido, Cuando se procesa, Entonces recibo `401`.
+  - *Scenario 2:* Dado un token inválido/alterado, Cuando se procesa, Entonces recibo `401`.
+
+**[US-AUTH-004] Aislamiento de datos por organización (tenant isolation)**
+- **Narrativa:** Como organización, quiero que los datos estén aislados entre tenants, para garantizar seguridad y cumplimiento.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado un token del tenant A, Cuando intento acceder/crear recursos en el tenant B, Entonces recibo `404` (o `403`) sin filtrar datos.
+- **Notas Técnicas/Datos:** En queries/escrituras, `organizacion_id` debe venir del token (no del cliente).
+
+**[US-AUTH-005] UI mínima de Login (Admin/Usuario)**
+- **Narrativa:** Como usuario, quiero una pantalla de login simple, para acceder al sistema sin usar herramientas externas.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado credenciales válidas, Cuando inicio sesión desde la UI, Entonces se almacena el token y accedo a la pantalla principal.
+    - *Scenario 1b:* Dado credenciales válidas y múltiples organizaciones, Cuando inicio sesión, Entonces veo un selector de organizaciones y, al elegir una, el sistema obtiene el token y accedo a la pantalla principal.
+  - *Scenario 2:* Dado credenciales inválidas, Cuando inicio sesión, Entonces veo un mensaje de error y permanezco en login.
+
+**[US-AUTH-006] Manejo de sesión expirada**
+- **Narrativa:** Como usuario, quiero que el sistema detecte la expiración de mi sesión, para reautenticarme de forma clara.
+- **Criterios de Aceptación:**
+  - *Scenario 1:* Dado un token expirado, Cuando hago una petición protegida desde la UI, Entonces se redirige a login con un mensaje “sesión expirada”.
+
+---
+
+### P1 — Historias de Usuario (Administración: UI mínima Admin/Usuario)
+
+**[US-ADMIN-001] Crear usuario (API) dentro del tenant**
+- **Narrativa:** Como administrador, quiero crear un usuario en mi organización, para habilitar su acceso a DocFlow.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un administrador autenticado del tenant A, Cuando creo un usuario con email válido, Entonces recibo `201` y el usuario pertenece al tenant A.
+    - *Scenario 2:* Dado un email ya existente, Cuando intento crear el usuario, Entonces recibo `400/409` por duplicidad (email global).
+- **Notas Técnicas/Datos:** Para multi-org, el “pertenece al tenant A” se implementa creando un registro en `Usuario_Organizacion` (membresía). Unicidad por `email`.
+
+**[US-ADMIN-002] Asignar rol a usuario (API) en el tenant**
+- **Narrativa:** Como administrador, quiero asignar un rol a un usuario, para controlar sus capacidades.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario del tenant A, Cuando asigno un rol válido del tenant A, Entonces recibo `200` y el rol queda efectivo.
+    - *Scenario 2:* Dado un usuario de otro tenant, Cuando intento asignar roles, Entonces recibo `404` (o `403`) sin exponer datos.
+
+**[US-ADMIN-003] Listar usuarios (API) del tenant con roles**
+- **Narrativa:** Como administrador, quiero listar los usuarios de mi organización con sus roles, para administrar accesos.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un administrador autenticado, Cuando solicito la lista, Entonces solo veo usuarios del tenant actual.
+
+**[US-ADMIN-004] Desactivar usuario (API) sin borrado**
+- **Narrativa:** Como administrador, quiero desactivar un usuario, para revocar acceso manteniendo historial.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario desactivado, Cuando intenta iniciar sesión, Entonces recibe `403`.
+    - *Scenario 2:* Dado un usuario desactivado, Cuando intento usar endpoints con token previo (si existiera), Entonces recibe `401/403`.
+
+**[US-ADMIN-005] UI mínima de gestión de usuarios**
+- **Narrativa:** Como administrador, quiero una pantalla simple para crear/listar/desactivar usuarios, para operar el sistema sin scripts.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un administrador, Cuando navego a “Usuarios”, Entonces veo una tabla simple con email, estado y roles.
+
+---
+
+### P2 — Historias de Usuario (Permisos granulares: ACL por carpeta/documento)
+
+**[US-ACL-001] Definir niveles de acceso estándar (catálogo mínimo)**
+- **Narrativa:** Como sistema, quiero un conjunto mínimo y consistente de niveles de acceso, para evaluar permisos de forma uniforme.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado el sistema inicializado, Cuando se consultan niveles, Entonces existen al menos `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
+- **Notas Técnicas/Datos:** El nivel controla acciones (ver/listar/descargar vs. subir/modificar vs. administrar permisos).
+
+**[US-ACL-002] Conceder permiso de carpeta a usuario (crear ACL)**
+- **Narrativa:** Como administrador, quiero conceder un permiso sobre una carpeta a un usuario, para controlar acceso por área.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un admin del tenant A, Cuando asigno `LECTURA` a un usuario del tenant A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
+    - *Scenario 2:* Dado un usuario/carpeta de otro tenant, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
+
+**[US-ACL-003] Revocar permiso de carpeta (eliminar ACL)**
+- **Narrativa:** Como administrador, quiero revocar un permiso sobre una carpeta, para retirar accesos.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario con acceso por ACL, Cuando revoco el permiso, Entonces el usuario deja de poder acceder (`403`).
+
+**[US-ACL-004] Permiso recursivo en carpeta (herencia simple)**
+- **Narrativa:** Como administrador, quiero que un permiso de carpeta pueda aplicarse a subcarpetas, para evitar configuraciones repetitivas.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un permiso con `recursivo=true` en una carpeta padre, Cuando el usuario accede a una subcarpeta, Entonces el permiso aplica.
+    - *Scenario 2:* Dado `recursivo=false`, Cuando accede a una subcarpeta, Entonces no aplica.
+
+**[US-ACL-005] Conceder permiso explícito a documento**
+- **Narrativa:** Como administrador, quiero asignar un permiso directamente a un documento, para manejar excepciones de acceso.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un documento en una carpeta, Cuando asigno `LECTURA` explícita a un usuario, Entonces el usuario puede acceder a ese documento.
+
+**[US-ACL-006] Regla de precedencia de permisos (Documento > Carpeta)**
+- **Narrativa:** Como sistema, quiero una regla clara de precedencia, para resolver conflictos de permisos.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un permiso explícito de documento para un usuario, Cuando se evalúa el acceso al documento, Entonces ese permiso explícito se usa como fuente de verdad.
+    - *Scenario 2:* Dado que NO existe permiso explícito de documento, Cuando se evalúa el acceso, Entonces se usa el permiso de carpeta (incluyendo herencia si aplica).
+- **Notas Técnicas/Datos:** Regla simple para MVP: `Permiso_Documento` (si existe) > `Permiso_Carpeta`.
+
+**[US-ACL-007] Enforzar permisos de lectura en endpoints de consulta/descarga**
+- **Narrativa:** Como sistema, quiero bloquear lecturas sin permiso, para proteger información.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario sin `LECTURA`, Cuando lista una carpeta o descarga un documento, Entonces recibe `403`.
+
+**[US-ACL-008] Enforzar permisos de escritura en endpoints de creación/actualización**
+- **Narrativa:** Como sistema, quiero bloquear escrituras sin permiso, para evitar cambios no autorizados.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario sin `ESCRITURA`, Cuando intenta subir documento o crear subcarpeta, Entonces recibe `403`.
+
+**[US-ACL-009] UI muestra capacidades (acciones habilitadas) por carpeta/documento**
+- **Narrativa:** Como usuario, quiero que la UI habilite o deshabilite acciones según mis permisos, para evitar errores.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario con solo `LECTURA`, Cuando navega una carpeta, Entonces la UI deshabilita “Subir” y “Administrar permisos”.
+
+---
+
+### P3 — Historias de Usuario (Gestión de carpetas: API + UI mínima)
+
+**[US-FOLDER-001] Crear carpeta (API) en el tenant actual**
+- **Narrativa:** Como usuario con permisos, quiero crear una carpeta en mi organización, para organizar documentos.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario con `ESCRITURA` (o `ADMINISTRACION`) en la carpeta padre, Cuando crea una carpeta, Entonces recibe `201` y la carpeta pertenece al tenant del token.
+    - *Scenario 2:* Dado un usuario sin permiso en la carpeta padre, Cuando crea una carpeta, Entonces recibe `403`.
+
+**[US-FOLDER-002] Listar contenido de carpeta (API) con visibilidad por permisos**
+- **Narrativa:** Como usuario, quiero listar subcarpetas y documentos visibles, para navegar la estructura documental.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario con `LECTURA`, Cuando lista una carpeta, Entonces solo ve elementos permitidos.
+    - *Scenario 2:* Dado un usuario sin `LECTURA`, Cuando lista una carpeta, Entonces recibe `403`.
+
+**[US-FOLDER-003] Mover documento a otra carpeta (API)**
+- **Narrativa:** Como usuario con permisos, quiero mover un documento entre carpetas, para mantener orden.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado `ESCRITURA` en carpeta origen y destino, Cuando muevo un documento, Entonces su `carpeta_id` se actualiza y la acción queda auditada.
+    - *Scenario 2:* Dado falta de permiso en origen o destino, Cuando muevo un documento, Entonces recibo `403`.
+
+**[US-FOLDER-004] Eliminar carpeta vacía (soft delete) (API)**
+- **Narrativa:** Como administrador, quiero eliminar una carpeta vacía, para mantener higiene sin perder trazabilidad.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado una carpeta sin hijos ni documentos, Cuando la elimino, Entonces queda marcada con `fecha_eliminacion`.
+    - *Scenario 2:* Dado una carpeta con contenido, Cuando la elimino, Entonces recibo `409` (o `400`) indicando que debe vaciarse primero.
+
+**[US-FOLDER-005] UI mínima de navegación por carpetas**
+- **Narrativa:** Como usuario, quiero una vista tipo explorador para entrar/salir de carpetas, para encontrar mis documentos.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario autenticado, Cuando entra a una carpeta desde la UI, Entonces ve su contenido y puede navegar a subcarpetas.
+
+---
+
+### P4 — Historias de Usuario (Documentos + versionado lineal: API + UI mínima)
+
+**[US-DOC-001] Subir documento (API) crea documento + versión 1**
+- **Narrativa:** Como usuario con permisos, quiero subir un documento a una carpeta, para centralizarlo y compartirlo.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado `ESCRITURA` en la carpeta, Cuando subo un archivo, Entonces recibo `201` con `documento_id` y `version_actual` con `numero_secuencial=1`.
+    - *Scenario 2:* Dado sin permisos, Cuando subo, Entonces recibo `403`.
+
+**[US-DOC-002] Descargar versión actual (API)**
+- **Narrativa:** Como usuario con `LECTURA`, quiero descargar la versión actual, para usar el documento.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado `LECTURA`, Cuando descargo, Entonces recibo `200` con el binario.
+    - *Scenario 2:* Dado sin `LECTURA`, Cuando descargo, Entonces recibo `403`.
+
+**[US-DOC-003] Subir nueva versión (API) incrementa secuencia**
+- **Narrativa:** Como usuario con permisos, quiero subir una nueva versión, para mantener historial sin sobrescribir.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un documento existente y `ESCRITURA`, Cuando subo una nueva versión, Entonces se crea una nueva versión con `numero_secuencial` incrementado y pasa a ser `version_actual`.
+
+**[US-DOC-004] Listar versiones (API) ordenadas**
+- **Narrativa:** Como usuario, quiero listar el historial de versiones, para entender la evolución del documento.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un documento, Cuando consulto versiones, Entonces recibo una lista ordenada ascendente por `numero_secuencial`.
+
+**[US-DOC-005] Cambiar versión actual (API) (rollback)**
+- **Narrativa:** Como usuario autorizado, quiero marcar una versión anterior como actual, para revertir cambios.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un documento con múltiples versiones y permiso requerido, Cuando selecciono una versión anterior, Entonces `version_actual_id` cambia y se registra auditoría.
+
+**[US-DOC-006] UI mínima de carga y ver historial**
+- **Narrativa:** Como usuario, quiero subir documentos y ver su historial desde la UI, para operar sin herramientas externas.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado permisos, Cuando subo desde la UI, Entonces el documento aparece en la carpeta.
+    - *Scenario 2:* Dado un documento con versiones, Cuando abro “Versiones”, Entonces veo el listado y cuál es la actual.
+
+---
+
+### P5 — Historias de Usuario (Auditoría: logs inmutables + UI mínima)
+
+**[US-AUDIT-001] Emitir evento de auditoría en acciones críticas**
+- **Narrativa:** Como sistema, quiero emitir un evento/auditoría por cada acción crítica, para tener trazabilidad.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado la acción “crear carpeta”, Cuando se completa, Entonces se genera un evento con `codigo_evento`, `organizacion_id` y `usuario_id`.
+    - *Scenario 2:* Dado la acción “subir documento”, Cuando se completa, Entonces se genera un evento similar.
+
+**[US-AUDIT-002] Persistir auditoría como registro inmutable**
+- **Narrativa:** Como administrador, quiero que la auditoría sea inmutable, para confiar en su integridad.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un evento generado, Cuando se persiste, Entonces queda almacenado con timestamp y no puede editarse por endpoints del MVP.
+
+**[US-AUDIT-003] Consultar auditoría (API) con paginación y fechas**
+- **Narrativa:** Como administrador, quiero consultar la auditoría por rango de fechas, para investigar actividad.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un admin del tenant A, Cuando consulta auditoría con `desde/hasta`, Entonces recibe solo eventos del tenant A.
+    - *Scenario 2:* Dado paginación, Cuando solicita página siguiente, Entonces recibe resultados consistentes.
+
+**[US-AUDIT-004] UI mínima de auditoría**
+- **Narrativa:** Como administrador, quiero una vista simple de auditoría, para revisar eventos sin herramientas externas.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un administrador autenticado, Cuando abre “Auditoría”, Entonces ve una lista/tabla con `codigo_evento`, usuario, fecha y entidad afectada.
+
+---
+
+### P6 — Historias de Usuario (Búsqueda básica sin IA)
+
+**[US-SEARCH-001] Buscar documentos (API) por texto**
+- **Narrativa:** Como usuario, quiero buscar documentos por texto (nombre/metadatos), para encontrarlos rápidamente.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un término de búsqueda, Cuando consulto, Entonces recibo una lista de documentos del tenant actual.
+
+**[US-SEARCH-002] La búsqueda respeta permisos y no filtra existencia**
+- **Narrativa:** Como organización, quiero que la búsqueda no devuelva documentos no autorizados, para evitar filtraciones.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un usuario sin `LECTURA` sobre un documento, Cuando busca términos que coinciden, Entonces el documento no aparece en resultados.
+
+**[US-SEARCH-003] UI mínima de búsqueda**
+- **Narrativa:** Como usuario, quiero una barra de búsqueda y resultados clicables, para abrir documentos sin navegar carpetas.
+- **Criterios de Aceptación:**
+    - *Scenario 1:* Dado un término, Cuando busco desde la UI, Entonces veo resultados y puedo abrir el documento si tengo permisos.
 
 ## Tickets de Trabajo
