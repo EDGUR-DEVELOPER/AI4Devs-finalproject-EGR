@@ -1,10 +1,19 @@
+## Índice
+- [Ficha del proyecto](#-ficha-del-proyecto)
+- [Descripción general del producto](#descripción-general-del-producto)
+- [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Modelo de Datos](#modelo-de-datos)
+- [Especificación de la API](#especificación-de-la-api)
+- [Historias de Usuario](#historias-de-usuario)
+- [Tickets de Trabajo](#tickets-de-trabajo)
+
 # 📂 Ficha del proyecto
 * 📌**Nombre:** Eduardo Guardado Ruiz
 * 📌**Nombre del proyecto:** DocFlow
 * 📌**Descripción breve:**
 Proyecto de software modular de gestión documental (DMS) con enfoque **API-First**, que incluye control de versiones lineal y un motor de búsqueda semántica basado en Inteligencia Artificial como plugin opcional, priorizando usabilidad, integración y accesibilidad para empresas de diversos tamaños.
 
-# Descripción general del producto:
+# Descripción general del producto
 DocFlow es un proyecto de software modular diseñado como una **infraestructura documental inteligente**. Funciona como un repositorio central para gestión documental, actuando como un motor "backend" que permite a otros sistemas heredar capacidades de gestión documental avanzada. Combina una arquitectura **RBAC** (Role-Based Access Control) con accesibilidad programática mediante APIs RESTful, permitiendo la gestión del ciclo de vida del documento desde su creación y versionado hasta su recuperación. El núcleo del producto es un DMS eficiente y escalable, con la IA como un plugin opcional para búsqueda semántica, permitiendo a empresas con recursos limitados operar sin sobrecarga computacional.
 
 ## Objetivo del producto
@@ -55,9 +64,9 @@ El propósito principal de DocFlow es resolver la dicotomía entre **seguridad b
 
 Esta es una propuesta arquitectónica detallada y profesional para **DocFlow**. Se ha priorizado la modularidad (DMS core con IA opcional), la seguridad (RBAC y auditoría), la escalabilidad (patrones asíncronos) y la mantenibilidad (Clean Architecture).
 
-## Arquitectura del Sistema
+# Arquitectura del Sistema
 
-### Diagrama de contexto
+## Diagrama de contexto
 ```mermaid
 flowchart TD
     subgraph Personas
@@ -292,7 +301,7 @@ Todos los microservicios implementan **Spring Boot** por su robustez, inyección
 #### 1. Identity Service (IAM)
 
   * **Tecnología:** Spring Boot como wrapper de **Keycloak** (o integración directa).
-  * **Datos:** PostgreSQL (Usuarios, Roles, Tenancy).
+  * **Datos:** PostgreSQL (Usuarios, Roles, Organizacion).
   * **Responsabilidad:** Autenticación (OIDC/OAuth2), gestión de sesiones y emisión de tokens. Centraliza el RBAC.
 
 #### 2. Document Core Service
@@ -442,7 +451,7 @@ graph TD
 
 1.  **Autenticación y Autorización:**
       * **Protocolo:** OAuth2 / OpenID Connect (OIDC).
-      * **JWT (JSON Web Tokens):** Los tokens son stateless. Contienen los "claims" (roles, tenant\_id).
+      * **JWT (JSON Web Tokens):** Los tokens son stateless. Contienen los "claims" (roles, organizacion_id).
       * **API Keys:** Para integraciones de terceros, gestionadas con rotación automática y scopes limitados.
 2.  **Cifrado (Data Protection):**
       * **En tránsito (Data in Motion):** TLS 1.3 forzado en todas las conexiones externas. mTLS (Mutual TLS) dentro del clúster (vía Service Mesh como Istio/Linkerd) para que los servicios se autentiquen entre sí.
@@ -478,10 +487,10 @@ Usando `TestContainers`, al probar el `DocumentService`:
 4.  Verifica que el archivo binario está en MinIO.
 5.  Destruye los contenedores al finalizar.
 
-## Modelo de Datos
+# Modelo de Datos
 ```mermaid
 erDiagram
-    %% --- GESTIÓN DE ORGANIZACIÓN (TENANT) ---
+    %% --- GESTIÓN DE ORGANIZACIÓN ---
     Organizacion {
         int id PK
         string nombre
@@ -660,7 +669,7 @@ erDiagram
 
 ### Módulo A: Identidad y Organización (IAM)
 
-#### 1. `Organizacion` (Tenant)
+#### 1. `Organizacion`
 El contenedor raíz. Define el alcance legal y de configuración del cliente.
 * **id** (`INT`, PK, Auto-increment): Identificador único.
 * **nombre** (`VARCHAR(100)`, Not Null): Nombre comercial de la empresa.
@@ -678,7 +687,7 @@ El actor autenticado en el sistema.
 * **mfa_habilitado** (`BOOLEAN`, Default False): Bandera para 2FA.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
 
-#### 2b. `Usuario_Organizacion` (Membresía multi-tenant)
+#### 3. `Usuario_Organizacion` (Membresía multi-organizacion)
 Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y resuelve la organización predeterminada usada en el login.
 * **usuario_id** (`BIGINT`, PK, FK -> `Usuario`): Usuario miembro.
 * **organizacion_id** (`INT`, PK, FK -> `Organizacion`): Organización a la que pertenece.
@@ -689,48 +698,36 @@ Define a qué organizaciones pertenece un usuario (incluido un usuario administr
 * Si un usuario tiene 2 organizaciones activas, debe existir exactamente 1 predeterminada (para que `/auth/login` emita token sin selección).
 * Si un usuario tiene más de 2 organizaciones activas, el sistema devuelve error (limitación MVP) y debe corregirse por administración.
 
-Sugerencia de BD (PostgreSQL) para “mejores prácticas”:
-
-```sql
--- Garantiza una sola predeterminada activa por usuario
-CREATE UNIQUE INDEX ux_usuario_org_default_activa
-ON usuario_organizacion (usuario_id)
-WHERE es_predeterminada IS TRUE AND estado = 'ACTIVO';
-```
-
-#### 3. `Rol`
+#### 4. `Rol`
 Define perfiles funcionales personalizados por la organización.
 * **id** (`INT`, PK, Auto-increment).
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
 * **nombre** (`VARCHAR(50)`, Not Null): Ej. "Administrador Legal", "Auditor Externo".
 * **descripcion** (`TEXT`, Nullable).
 
-#### 4. `Permiso_Catalogo`
+#### 5. `Permiso_Catalogo`
 Lista maestra e inmutable de capacidades del sistema (System Capabilities).
 * **id** (`INT`, PK).
 * **slug** (`VARCHAR(60)`, Unique): Identificador técnico (ej. `users.create`, `docs.export`, `billing.view`).
 * **modulo** (`VARCHAR(50)`): Agrupador lógico para UI (ej. "Seguridad", "Gestión Documental").
 
-#### 5. `Rol_Tiene_Permiso`
+#### 6. `Rol_Tiene_Permiso`
 Tabla intermedia (Many-to-Many) para asignar capacidades a roles.
 * **rol_id** (`INT`, PK, FK -> `Rol`).
 * **permiso_id** (`INT`, PK, FK -> `Permiso_Catalogo`).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-#### 5b. `Usuario_Rol` (Asignación de roles por organización)
+#### 7. `Usuario_Rol` (Asignación de roles por organización)
 Asigna roles a un usuario.
 * **usuario_id** (`BIGINT`, PK, FK -> `Usuario`).
 * **rol_id** (`INT`, PK, FK -> `Rol`).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-Reglas para multi-org (MVP):
-* Un rol solo puede asignarse si el usuario tiene membresía activa en `Usuario_Organizacion` para la organización del rol (`Rol.organizacion_id`).
-
 ---
 
 ### Módulo B: Núcleo Documental (Core)
 
-#### 6. `Carpeta`
+#### 8. `Carpeta`
 Estructura jerárquica para organizar la información.
 * **id** (`BIGINT`, PK, Auto-increment).
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
@@ -740,7 +737,7 @@ Estructura jerárquica para organizar la información.
 * **propietario_id** (`BIGINT`, FK -> `Usuario`).
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
 
-#### 7. `Documento`
+#### 9. `Documento`
 La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
 * **id** (`BIGINT`, PK, Auto-increment).
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
@@ -750,7 +747,7 @@ La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
 * **metadatos_globales** (`JSONB`, Default `{}`): Campos definidos por el usuario (Tags, Cliente, Fecha Vencimiento). Indexado con GIN.
     * *Ejemplo:* `{"cliente": "Acme Corp", "tags": ["urgente", "legal"], "numero_factura": "F-2023-001"}`
 
-#### 8. `Version`
+#### 10. `Version`
 La entidad física. Representa un archivo inmutable en el tiempo.
 * **id** (`BIGINT`, PK, Auto-increment).
 * **documento_id** (`BIGINT`, FK -> `Documento`).
@@ -767,7 +764,7 @@ La entidad física. Representa un archivo inmutable en el tiempo.
 
 ### Módulo C: Seguridad Granular (ACL) y Auditoría
 
-#### 9. `Permiso_Carpeta_Usuario`
+#### 11. `Permiso_Carpeta_Usuario`
 Permisos explícitos por carpeta asignados directamente a un usuario.
 * **id** (`BIGINT`, PK).
 * **carpeta_id** (`BIGINT`, FK -> `Carpeta`).
@@ -776,7 +773,7 @@ Permisos explícitos por carpeta asignados directamente a un usuario.
 * **recursivo** (`BOOLEAN`, Default True): Define si aplica a subcarpetas.
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-#### 9b. `Permiso_Carpeta_Rol`
+#### 12. `Permiso_Carpeta_Rol`
 Permisos por carpeta asignados a un rol (se heredan por los usuarios que posean ese rol).
 * **id** (`BIGINT`, PK).
 * **carpeta_id** (`BIGINT`, FK -> `Carpeta`).
@@ -785,7 +782,7 @@ Permisos por carpeta asignados a un rol (se heredan por los usuarios que posean 
 * **recursivo** (`BOOLEAN`, Default True).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-#### 9c. `Permiso_Documento_Usuario`
+#### 13. `Permiso_Documento_Usuario`
 Permisos explícitos por documento asignados directamente a un usuario.
 * **id** (`BIGINT`, PK).
 * **documento_id** (`BIGINT`, FK -> `Documento`).
@@ -794,7 +791,7 @@ Permisos explícitos por documento asignados directamente a un usuario.
 * **fecha_expiracion** (`TIMESTAMPTZ`, Nullable).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-#### 9d. `Permiso_Documento_Rol`
+#### 14. `Permiso_Documento_Rol`
 Permisos por documento asignados a un rol.
 * **id** (`BIGINT`, PK).
 * **documento_id** (`BIGINT`, FK -> `Documento`).
@@ -803,7 +800,7 @@ Permisos por documento asignados a un rol.
 * **fecha_expiracion** (`TIMESTAMPTZ`, Nullable).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
 
-#### 10. `Log_Auditoria`
+#### 15. `Log_Auditoria`
 Traza histórica inmutable.
 * **id** (`BIGINT`, PK, BigSerial).
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
@@ -814,9 +811,7 @@ Traza histórica inmutable.
 * **direccion_ip** (`VARCHAR(45)`): IPv4 o IPv6.
 * **fecha_evento** (`TIMESTAMPTZ`, Default NOW()).
 
-## Especificación de la API
-
-> Alcance MVP: 4 endpoints críticos (login, cambio de organización, crear carpeta, subir documento).
+# Especificación de la API
 
 ```yaml
 openapi: 3.0.3
@@ -892,7 +887,7 @@ paths:
                                 $ref: '#/components/schemas/Error'
 
                 '409':
-                    description: Configuración de tenancy inválida (sin predeterminada o exceso de organizaciones)
+                    description: Configuración de Organizacion inválida (sin predeterminada o exceso de organizaciones)
                     content:
                         application/json:
                             schema:
@@ -1217,7 +1212,7 @@ components:
                     additionalProperties: true
                     description: Datos adicionales opcionales.
 ```
-### Ejemplo de Uso (POST /auth/login)
+## Ejemplo de Uso (POST /auth/login)
 
 Request (application/json):
 
@@ -1255,12 +1250,12 @@ Response 409 (application/json) — configuración inválida (sin predeterminada
 
 ```json
 {
-    "codigo": "TENANCY_CONFIG_INVALIDA",
+    "codigo": "Organizacion_CONFIG_INVALIDA",
     "mensaje": "No es posible resolver la organización predeterminada para el login (falta predeterminada o exceso de organizaciones)."
 }
 ```
 
-### Ejemplo de Uso (POST /auth/switch)
+## Ejemplo de Uso (POST /auth/switch)
 
 Request (application/json) — cambio de organización con token actual:
 
@@ -1284,7 +1279,7 @@ Response 200 (application/json):
 }
 ```
 
-### Ejemplo de Uso (POST /carpetas)
+## Ejemplo de Uso (POST /carpetas)
 
 Request (application/json):
 
@@ -1306,7 +1301,7 @@ Response 201 (application/json):
 }
 ```
 
-### Ejemplo de Uso (POST /documentos)
+## Ejemplo de Uso (POST /documentos)
 
 Request (multipart/form-data):
 
@@ -1336,19 +1331,18 @@ Response 201 (application/json):
 }
 ```
 
+# Historias de Usuario
 
-## Historias de Usuario
+## Épicas priorizadas (MVP)
 
-### Épicas priorizadas (MVP)
-
-1. **P0 — Autenticación + Tenancy (multi-tenant)**
+1. **P0 — Autenticación + Organizacion (multi-organizacion)**
     - Alcance: login, token con claims, aislamiento de datos por organización y manejo de sesión.
 2. **P1 — Administración (UI mínima Admin/Usuario)**
     - Alcance: UI mínima para administrar usuarios/roles dentro de una organización.
 3. **P2 — Permisos granulares (ACL) por carpeta/documento**
     - Alcance: permisos por objeto, herencia (si aplica) y enforcement en API/UI.
 4. **P3 — Gestión de carpetas (API + UI mínima)**
-    - Alcance: crear/navegar jerarquía de carpetas por tenant.
+    - Alcance: crear/navegar jerarquía de carpetas por organizacion.
 5. **P4 — Documentos + versionado lineal (API + UI mínima)**
     - Alcance: subir documentos, crear nuevas versiones y consultar versión actual.
 6. **P5 — Auditoría (logs inmutables + vista Admin mínima)**
@@ -1358,9 +1352,9 @@ Response 201 (application/json):
 
 ---
 
-### P0 — Historias de Usuario (Autenticación + Tenancy)
+### P0 — Historias de Usuario (Autenticación + Organizacion)
 
-**[US-AUTH-001] Login multi-tenant (organización predeterminada)**
+**[US-AUTH-001] Login multi-organizacion (organización predeterminada)**
 - **Narrativa:** Como usuario, quiero iniciar sesión y que el sistema use mi organización predeterminada, para que el acceso sea simple y consistente.
 - **Criterios de Aceptación:**
     - *Scenario 1:* Dado un usuario válido con exactamente una organización activa, Cuando envío `POST /auth/login` con credenciales válidas, Entonces recibo `200` con un token.
@@ -1372,7 +1366,7 @@ Response 201 (application/json):
     - *Scenario 4:* Dado un usuario válido sin organizaciones activas, Cuando envío `POST /auth/login`, Entonces recibo `403` con un error indicando que no pertenece a ninguna organización activa.
 - **Notas Técnicas/Datos:** `organizacion_id` debe validarse contra pertenencia del usuario (y contra organización activa) en `POST /auth/switch`.
 
-**[US-AUTH-002] Token con claims de tenant y roles**
+**[US-AUTH-002] Token con claims de organizacion y roles**
 - **Narrativa:** Como sistema, quiero emitir un token con `usuario_id`, `organizacion_id` y roles/permisos, para que la autorización sea consistente en toda la plataforma.
 - **Criterios de Aceptación:**
   - *Scenario 1:* Dado un login exitoso, Cuando se emite el token, Entonces incluye `usuario_id` y `organizacion_id` y al menos un rol.
@@ -1384,10 +1378,10 @@ Response 201 (application/json):
   - *Scenario 1:* Dado un request sin token a un endpoint protegido, Cuando se procesa, Entonces recibo `401`.
   - *Scenario 2:* Dado un token inválido/alterado, Cuando se procesa, Entonces recibo `401`.
 
-**[US-AUTH-004] Aislamiento de datos por organización (tenant isolation)**
-- **Narrativa:** Como organización, quiero que los datos estén aislados entre tenants, para garantizar seguridad y cumplimiento.
+**[US-AUTH-004] Aislamiento de datos por organización (organizacion isolation)**
+- **Narrativa:** Como organización, quiero que los datos estén aislados entre organizacions, para garantizar seguridad y cumplimiento.
 - **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un token del tenant A, Cuando intento acceder/crear recursos en el tenant B, Entonces recibo `404` (o `403`) sin filtrar datos.
+  - *Scenario 1:* Dado un token del organizacion A, Cuando intento acceder/crear recursos en el organizacion B, Entonces recibo `404` (o `403`) sin filtrar datos.
 - **Notas Técnicas/Datos:** En queries/escrituras, `organizacion_id` debe venir del token (no del cliente).
 
 **[US-AUTH-005] UI mínima de Login (Admin/Usuario)**
@@ -1406,23 +1400,23 @@ Response 201 (application/json):
 
 ### P1 — Historias de Usuario (Administración: UI mínima Admin/Usuario)
 
-**[US-ADMIN-001] Crear usuario (API) dentro del tenant**
+**[US-ADMIN-001] Crear usuario (API) dentro del organizacion**
 - **Narrativa:** Como administrador, quiero crear un usuario en mi organización, para habilitar su acceso a DocFlow.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador autenticado del tenant A, Cuando creo un usuario con email válido, Entonces recibo `201` y el usuario pertenece al tenant A.
+    - *Scenario 1:* Dado un administrador autenticado del organizacion A, Cuando creo un usuario con email válido, Entonces recibo `201` y el usuario pertenece al organizacion A.
     - *Scenario 2:* Dado un email ya existente, Cuando intento crear el usuario, Entonces recibo `400/409` por duplicidad (email global).
-- **Notas Técnicas/Datos:** Para multi-org, el “pertenece al tenant A” se implementa creando un registro en `Usuario_Organizacion` (membresía). Unicidad por `email`.
+- **Notas Técnicas/Datos:** Para multi-org, el “pertenece al organizacion A” se implementa creando un registro en `Usuario_Organizacion` (membresía). Unicidad por `email`.
 
-**[US-ADMIN-002] Asignar rol a usuario (API) en el tenant**
+**[US-ADMIN-002] Asignar rol a usuario (API) en el organizacion**
 - **Narrativa:** Como administrador, quiero asignar un rol a un usuario, para controlar sus capacidades.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario del tenant A, Cuando asigno un rol válido del tenant A, Entonces recibo `200` y el rol queda efectivo.
-    - *Scenario 2:* Dado un usuario de otro tenant, Cuando intento asignar roles, Entonces recibo `404` (o `403`) sin exponer datos.
+    - *Scenario 1:* Dado un usuario del organizacion A, Cuando asigno un rol válido del organizacion A, Entonces recibo `200` y el rol queda efectivo.
+    - *Scenario 2:* Dado un usuario de otro organizacion, Cuando intento asignar roles, Entonces recibo `404` (o `403`) sin exponer datos.
 
-**[US-ADMIN-003] Listar usuarios (API) del tenant con roles**
+**[US-ADMIN-003] Listar usuarios (API) del organizacion con roles**
 - **Narrativa:** Como administrador, quiero listar los usuarios de mi organización con sus roles, para administrar accesos.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador autenticado, Cuando solicito la lista, Entonces solo veo usuarios del tenant actual.
+    - *Scenario 1:* Dado un administrador autenticado, Cuando solicito la lista, Entonces solo veo usuarios del organizacion actual.
 
 **[US-ADMIN-004] Desactivar usuario (API) sin borrado**
 - **Narrativa:** Como administrador, quiero desactivar un usuario, para revocar acceso manteniendo historial.
@@ -1448,8 +1442,8 @@ Response 201 (application/json):
 **[US-ACL-002] Conceder permiso de carpeta a usuario (crear ACL)**
 - **Narrativa:** Como administrador, quiero conceder un permiso sobre una carpeta a un usuario, para controlar acceso por área.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un admin del tenant A, Cuando asigno `LECTURA` a un usuario del tenant A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
-    - *Scenario 2:* Dado un usuario/carpeta de otro tenant, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
+    - *Scenario 1:* Dado un admin del organizacion A, Cuando asigno `LECTURA` a un usuario del organizacion A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
+    - *Scenario 2:* Dado un usuario/carpeta de otro organizacion, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
 
 **[US-ACL-003] Revocar permiso de carpeta (eliminar ACL)**
 - **Narrativa:** Como administrador, quiero revocar un permiso sobre una carpeta, para retirar accesos.
@@ -1493,10 +1487,10 @@ Response 201 (application/json):
 
 ### P3 — Historias de Usuario (Gestión de carpetas: API + UI mínima)
 
-**[US-FOLDER-001] Crear carpeta (API) en el tenant actual**
+**[US-FOLDER-001] Crear carpeta (API) en el organizacion actual**
 - **Narrativa:** Como usuario con permisos, quiero crear una carpeta en mi organización, para organizar documentos.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con `ESCRITURA` (o `ADMINISTRACION`) en la carpeta padre, Cuando crea una carpeta, Entonces recibe `201` y la carpeta pertenece al tenant del token.
+    - *Scenario 1:* Dado un usuario con `ESCRITURA` (o `ADMINISTRACION`) en la carpeta padre, Cuando crea una carpeta, Entonces recibe `201` y la carpeta pertenece al organizacion del token.
     - *Scenario 2:* Dado un usuario sin permiso en la carpeta padre, Cuando crea una carpeta, Entonces recibe `403`.
 
 **[US-FOLDER-002] Listar contenido de carpeta (API) con visibilidad por permisos**
@@ -1577,7 +1571,7 @@ Response 201 (application/json):
 **[US-AUDIT-003] Consultar auditoría (API) con paginación y fechas**
 - **Narrativa:** Como administrador, quiero consultar la auditoría por rango de fechas, para investigar actividad.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un admin del tenant A, Cuando consulta auditoría con `desde/hasta`, Entonces recibe solo eventos del tenant A.
+    - *Scenario 1:* Dado un admin del organizacion A, Cuando consulta auditoría con `desde/hasta`, Entonces recibe solo eventos del organizacion A.
     - *Scenario 2:* Dado paginación, Cuando solicita página siguiente, Entonces recibe resultados consistentes.
 
 **[US-AUDIT-004] UI mínima de auditoría**
@@ -1592,7 +1586,7 @@ Response 201 (application/json):
 **[US-SEARCH-001] Buscar documentos (API) por texto**
 - **Narrativa:** Como usuario, quiero buscar documentos por texto (nombre/metadatos), para encontrarlos rápidamente.
 - **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un término de búsqueda, Cuando consulto, Entonces recibo una lista de documentos del tenant actual.
+    - *Scenario 1:* Dado un término de búsqueda, Cuando consulto, Entonces recibo una lista de documentos del organizacion actual.
 
 **[US-SEARCH-002] La búsqueda respeta permisos y no filtra existencia**
 - **Narrativa:** Como organización, quiero que la búsqueda no devuelva documentos no autorizados, para evitar filtraciones.
@@ -1604,126 +1598,126 @@ Response 201 (application/json):
 - **Criterios de Aceptación:**
     - *Scenario 1:* Dado un término, Cuando busco desde la UI, Entonces veo resultados y puedo abrir el documento si tengo permisos.
 
-## Tickets de Trabajo
+# Tickets de Trabajo
 
-### P0 — Autenticación + Tenancy
+## P0 — Autenticación + Organizacion
 
-#### [US-AUTH-001] Login multi-tenant (organización predeterminada)
-
-###### Base de datos
-
-**Título:** Crear modelo de membresía usuario–organización para login
-**Objetivo:** Persistir pertenencias y predeterminada para resolver el tenant al autenticar.
-**Tipo:** Tarea
-**Descripción corta:** Implementa (o ajusta) tablas/columnas mínimas para `Usuario`, `Organizacion` y `Usuario_Organizacion` con `estado` y `es_predeterminada`. Debe permitir consultar “organizaciones activas” por usuario y su predeterminada.
+### [US-AUTH-001] Login multi-organizacion (organización predeterminada)
+---
+#### Base de datos
+---
+* **Título:** Crear modelo de membresía usuario–organización para login
+* **Objetivo:** Persistir pertenencias y predeterminada para resolver el organizacion al autenticar.
+* **Tipo:** Tarea
+* **Descripción corta:** Implementa (o ajusta) tablas/columnas mínimas para `Usuario`, `Organizacion` y `Usuario_Organizacion` con `estado` y `es_predeterminada`. Debe permitir consultar “organizaciones activas” por usuario y su predeterminada.
+* **Entregables:**
+    - Migración SQL con `Usuario_Organizacion( usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion )`.
+    - Definición de “ACTIVO” para membresía (y organización, si aplica).
+---
+* **Título:** Garantizar unicidad de organización predeterminada activa por usuario
+* **Objetivo:** Evitar configuraciones inválidas (múltiples predeterminadas activas).
+* **Tipo:** Tarea
+* **Descripción corta:** Agrega la restricción/índice único parcial para asegurar como máximo 1 membresía activa marcada como predeterminada por usuario.
+* **Entregables:**
+    - Índice único parcial `ux_usuario_org_default_activa` (o equivalente en tu tecnología de migraciones).
+    - Nota breve en doc técnica de la regla que hace cumplir.
+---
+* **Título:** Datos semilla para probar escenarios de Organizacion (0,1,2,>2 organizaciones)
+* **Objetivo:** Facilitar QA y pruebas automatizadas reproduciendo escenarios del criterio de aceptación.
+* **Tipo:** Tarea
+* **Descripción corta:** Crea datos de ejemplo: usuario sin orgs activas, usuario con 1 org activa, usuario con 2 orgs activas con y sin predeterminada, y usuario con >2 orgs activas.
 **Entregables:**
-- Migración SQL con `Usuario_Organizacion( usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion )`.
-- Definición de “ACTIVO” para membresía (y organización, si aplica).
-
-**Título:** Garantizar unicidad de organización predeterminada activa por usuario
-**Objetivo:** Evitar configuraciones inválidas (múltiples predeterminadas activas).
-**Tipo:** Tarea
-**Descripción corta:** Agrega la restricción/índice único parcial para asegurar como máximo 1 membresía activa marcada como predeterminada por usuario.
-**Entregables:**
-- Índice único parcial `ux_usuario_org_default_activa` (o equivalente en tu tecnología de migraciones).
-- Nota breve en doc técnica de la regla que hace cumplir.
-
-**Título:** Datos semilla para probar escenarios de tenancy (0,1,2,>2 organizaciones)
-**Objetivo:** Facilitar QA y pruebas automatizadas reproduciendo escenarios del criterio de aceptación.
-**Tipo:** Tarea
-**Descripción corta:** Crea datos de ejemplo: usuario sin orgs activas, usuario con 1 org activa, usuario con 2 orgs activas con y sin predeterminada, y usuario con >2 orgs activas.
-**Entregables:**
-- Script de seed (SQL o fixture) para los 5 escenarios.
-- Documentación de credenciales/datos de prueba (solo entorno local).
-
-###### Backend
-
-**Título:** Implementar servicio de validación de credenciales
-**Objetivo:** Autenticar usuario por email/contraseña para habilitar `POST /auth/login`.
-**Tipo:** Tarea
-**Descripción corta:** Implementa lookup por email y verificación segura de contraseña. Debe devolver “credenciales inválidas” sin filtrar detalles.
-**Entregables:**
-- Método/servicio `authenticate(email, contrasena)`.
-- Mapeo de error a `401` para credenciales inválidas.
-
-**Título:** Implementar resolución de organización en login (reglas MVP)
-**Objetivo:** Seleccionar el `organizacion_id` correcto según membresías activas y predeterminada.
-**Tipo:** Tarea
-**Descripción corta:** Dado `usuario_id`, obtiene membresías activas y aplica reglas: 0→403, 1→ok, 2→requiere predeterminada, >2→409. No debe depender de input del cliente.
-**Entregables:**
-- Función/servicio `resolveLoginOrganization(usuario_id)`.
-- Errores normalizados: `SIN_ORGANIZACION` (403) y `TENANCY_CONFIG_INVALIDA` (409).
-
-**Título:** Emitir token en contexto de organización
-**Objetivo:** Generar token “emitido para la organización” seleccionada.
-**Tipo:** Tarea
-**Descripción corta:** Implementa emisión de token incluyendo, como mínimo, `usuario_id` y `organizacion_id` (claim acordado). La expiración debe ser consistente con `expira_en`.
-**Entregables:**
-- Servicio `issueToken({ usuario_id, organizacion_id })`.
-- Configuración de expiración y secreto/llave (por entorno).
-
-**Título:** Implementar endpoint `POST /auth/login` con contrato de respuesta
-**Objetivo:** Cumplir escenarios 1, 1b, 2, 2b, 3 y 4.
-**Tipo:** Historia
-**Descripción corta:** Endpoint que valida credenciales, resuelve organización, emite token y devuelve estructura de respuesta. Debe devolver `401/403/409` según corresponda.
-**Entregables:**
-- Ruta/controlador `POST /auth/login`.
-- Respuesta 200 con `token` (y, si aplica por contrato, `tipo_token`, `expira_en`, `organizaciones`).
-
-**Título:** Implementar autorización mínima para `POST /auth/switch`
-**Objetivo:** Requerir sesión válida para cambiar de organización.
-**Tipo:** Tarea
-**Descripción corta:** Protege el endpoint con verificación de token (mínima para este caso) y extrae `usuario_id` desde el token para validar membresía.
-**Entregables:**
-- Middleware/guard mínimo para token en `/auth/switch`.
-- Extracción de `usuario_id` y `organizacion_id` desde claims.
-
-**Título:** Implementar endpoint `POST /auth/switch` con validación de membresía
-**Objetivo:** Cumplir escenario 2c (cambio de tenant emitiendo nuevo token).
-**Tipo:** Historia
-**Descripción corta:** Valida que `organizacion_id` solicitada pertenece al usuario y está activa. Emite un nuevo token en ese contexto y devuelve `200`.
-**Entregables:**
-- Ruta/controlador `POST /auth/switch`.
-- Validación de pertenencia activa + manejo de errores (`403` o `404` según convención definida).
-
-**Título:** Normalizar errores y códigos de negocio para autenticación/tenancy
-**Objetivo:** Hacer verificables y consistentes las respuestas de error.
-**Tipo:** Tarea
-**Descripción corta:** Centraliza el shape de error (`codigo`, `mensaje`) y asegura que `/auth/login` use `SIN_ORGANIZACION` (403) y `TENANCY_CONFIG_INVALIDA` (409), y credenciales inválidas usen `401`.
-**Entregables:**
-- Mapper/handler de errores para auth.
-- Casos de prueba de serialización de error.
-
-**Título:** Pruebas unitarias de resolución de organización (0/1/2/>2)
-**Objetivo:** Asegurar reglas MVP y prevenir regresiones.
-**Tipo:** QA
-**Descripción corta:** Tests puros sobre `resolveLoginOrganization` cubriendo todos los escenarios de aceptación y bordes (p. ej. 2 activas con 2 predeterminadas → invalida).
-**Entregables:**
-- Suite de unit tests con 5 escenarios mínimos.
-- Reporte de cobertura (si existe en el stack).
-
-**Título:** Pruebas de integración de `POST /auth/login` (200/401/403/409)
-**Objetivo:** Verificar endpoint y contrato HTTP extremo a extremo.
-**Tipo:** QA
-**Descripción corta:** Ejecuta requests reales contra el servidor con datos seed, validando status codes y campos requeridos de la respuesta.
-**Entregables:**
-- Tests de integración para escenarios 1, 1b, 2, 2b, 3, 4.
-- Validación del shape de respuesta 200.
-
-**Título:** Pruebas de integración de `POST /auth/switch` (200 + validación de pertenencia)
-**Objetivo:** Verificar que el cambio de organización solo funciona con membresía activa.
-**Tipo:** QA
-**Descripción corta:** Con token inicial, solicita cambio a otra org válida y verifica nuevo token; intenta cambiar a org no perteneciente/inactiva y verifica rechazo.
-**Entregables:**
-- Tests de integración para escenario 2c y negativos.
-- Verificación de que el nuevo token refleja el `organizacion_id` solicitado.
-
-###### Frontend
-
-**Título:** Sin cambios de UI para US-AUTH-001
-**Objetivo:** Aclarar alcance: esta historia define comportamiento de API, no pantalla.
-**Tipo:** Tarea
-**Descripción corta:** No se implementa UI en esta historia. La pantalla de login corresponde a `US-AUTH-005`.
-**Entregables:**
-- Confirmación de “no aplica” en planning.
-- (Opcional) Colección de requests para probar la API (Postman/HTTP) si el equipo la usa.
+    - Script de seed (SQL o fixture) para los 5 escenarios.
+    - Documentación de credenciales/datos de prueba (solo entorno local).
+---
+#### Backend
+---
+* **Título:** Implementar servicio de validación de credenciales
+* **Objetivo:** Autenticar usuario por email/contraseña para habilitar `POST /auth/login`.
+* **Tipo:** Tarea
+* **Descripción corta:** Implementa lookup por email y verificación segura de contraseña. Debe devolver “credenciales inválidas” sin filtrar detalles.
+* **Entregables:**
+    - Método/servicio `authenticate(email, contrasena)`.
+    - Mapeo de error a `401` para credenciales inválidas.
+---
+* **Título:** Implementar resolución de organización en login (reglas MVP)
+* **Objetivo:** Seleccionar el `organizacion_id` correcto según membresías activas y predeterminada.
+* **Tipo:** Tarea
+* **Descripción corta:** Dado `usuario_id`, obtiene membresías activas y aplica reglas: 0→403, 1→ok, 2→requiere predeterminada, >2→409. No debe depender de input del cliente.
+* **Entregables:**
+    - Función/servicio `resolveLoginOrganization(usuario_id)`.
+    - Errores normalizados: `SIN_ORGANIZACION` (403) y `Organizacion_CONFIG_INVALIDA` (409).
+---
+* **Título:** Emitir token en contexto de organización
+* **Objetivo:** Generar token “emitido para la organización” seleccionada.
+* **Tipo:** Tarea
+* **Descripción corta:** Implementa emisión de token incluyendo, como mínimo, `usuario_id` y `organizacion_id` (claim acordado). La expiración debe ser consistente con `expira_en`.
+* **Entregables:**
+    - Servicio `issueToken({ usuario_id, organizacion_id })`.
+    - Configuración de expiración y secreto/llave (por entorno).
+---
+* **Título:** Implementar endpoint `POST /auth/login` con contrato de respuesta
+* **Objetivo:** Cumplir escenarios 1, 1b, 2, 2b, 3 y 4.
+* **Tipo:** Historia
+* **Descripción corta:** Endpoint que valida credenciales, resuelve organización, emite token y devuelve estructura de respuesta. Debe devolver `401/403/409` según corresponda.
+* **Entregables:**
+    - Ruta/controlador `POST /auth/login`.
+    - Respuesta 200 con `token` (y, si aplica por contrato, `tipo_token`, `expira_en`, `organizaciones`).
+---
+* **Título:** Implementar autorización mínima para `POST /auth/switch`
+* **Objetivo:** Requerir sesión válida para cambiar de organización.
+* **Tipo:** Tarea
+* **Descripción corta:** Protege el endpoint con verificación de token (mínima para este caso) y extrae `usuario_id` desde el token para validar membresía.
+* **Entregables:**
+    - Middleware/guard mínimo para token en `/auth/switch`.
+    - Extracción de `usuario_id` y `organizacion_id` desde claims.
+---
+* **Título:** Implementar endpoint `POST /auth/switch` con validación de membresía
+* **Objetivo:** Cumplir escenario 2c (cambio de organizacion emitiendo nuevo token).
+* **Tipo:** Historia
+* **Descripción corta:** Valida que `organizacion_id` solicitada pertenece al usuario y está activa. Emite un nuevo token en ese contexto y devuelve `200`.
+* **Entregables:**
+    - Ruta/controlador `POST /auth/switch`.
+    - Validación de pertenencia activa + manejo de errores (`403` o `404` según convención definida).
+---
+* **Título:** Normalizar errores y códigos de negocio para autenticación/Organizacion
+* **Objetivo:** Hacer verificables y consistentes las respuestas de error.
+* **Tipo:** Tarea
+* **Descripción corta:** Centraliza el shape de error (`codigo`, `mensaje`) y asegura que `/auth/login` use `SIN_ORGANIZACION` (403) y `Organizacion_CONFIG_INVALIDA` (409), y credenciales inválidas usen `401`.
+* **Entregables:**
+    - Mapper/handler de errores para auth.
+    - Casos de prueba de serialización de error.
+---
+* **Título:** Pruebas unitarias de resolución de organización (0/1/2/>2)
+* **Objetivo:** Asegurar reglas MVP y prevenir regresiones.
+* **Tipo:** QA
+* **Descripción corta:** Tests puros sobre `resolveLoginOrganization` cubriendo todos los escenarios de aceptación y bordes (p. ej. 2 activas con 2 predeterminadas → invalida).
+* **Entregables:**
+    - Suite de unit tests con 5 escenarios mínimos.
+    - Reporte de cobertura (si existe en el stack).
+---
+* **Título:** Pruebas de integración de `POST /auth/login` (200/401/403/409)
+* **Objetivo:** Verificar endpoint y contrato HTTP extremo a extremo.
+* **Tipo:** QA
+* **Descripción corta:** Ejecuta requests reales contra el servidor con datos seed, validando status codes y campos requeridos de la respuesta.
+* **Entregables:**
+    - Tests de integración para escenarios 1, 1b, 2, 2b, 3, 4.
+    - Validación del shape de respuesta 200.
+---
+* **Título:** Pruebas de integración de `POST /auth/switch` (200 + validación de pertenencia)
+* **Objetivo:** Verificar que el cambio de organización solo funciona con membresía activa.
+* **Tipo:** QA
+* **Descripción corta:** Con token inicial, solicita cambio a otra org válida y verifica nuevo token; intenta cambiar a org no perteneciente/inactiva y verifica rechazo.
+* **Entregables:**
+    - Tests de integración para escenario 2c y negativos.
+    - Verificación de que el nuevo token refleja el `organizacion_id` solicitado.
+---
+#### Frontend
+---
+* **Título:** Sin cambios de UI para US-AUTH-001
+* **Objetivo:** Aclarar alcance: esta historia define comportamiento de API, no pantalla.
+* **Tipo:** Tarea
+* **Descripción corta:** No se implementa UI en esta historia. La pantalla de login corresponde a `US-AUTH-005`.
+* **Entregables:**
+    - Confirmación de “no aplica” en planning.
+    - (Opcional) Colección de requests para probar la API (Postman/HTTP) si el equipo la usa.
