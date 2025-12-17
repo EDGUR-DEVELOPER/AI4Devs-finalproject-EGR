@@ -679,12 +679,24 @@ El actor autenticado en el sistema.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
 
 #### 2b. `Usuario_Organizacion` (Membresía multi-tenant)
-Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y permite seleccionar el `organizacion_id` activo en el login.
+Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y resuelve la organización predeterminada usada en el login.
 * **usuario_id** (`BIGINT`, PK, FK -> `Usuario`): Usuario miembro.
 * **organizacion_id** (`INT`, PK, FK -> `Organizacion`): Organización a la que pertenece.
 * **estado** (`VARCHAR(20)`, Not Null): Enum sugerido: `ACTIVO`, `SUSPENDIDO`.
 * **es_predeterminada** (`BOOLEAN`, Default False): Indica la organización por defecto al iniciar sesión (si aplica).
 * **fecha_asignacion** (`TIMESTAMPTZ`, Default NOW()).
+* Debe existir como máximo 1 membresía `es_predeterminada=true` activa por usuario.
+* Si un usuario tiene 2 organizaciones activas, debe existir exactamente 1 predeterminada (para que `/auth/login` emita token sin selección).
+* Si un usuario tiene más de 2 organizaciones activas, el sistema devuelve error (limitación MVP) y debe corregirse por administración.
+
+Sugerencia de BD (PostgreSQL) para “mejores prácticas”:
+
+```sql
+-- Garantiza una sola predeterminada activa por usuario
+CREATE UNIQUE INDEX ux_usuario_org_default_activa
+ON usuario_organizacion (usuario_id)
+WHERE es_predeterminada IS TRUE AND estado = 'ACTIVO';
+```
 
 #### 3. `Rol`
 Define perfiles funcionales personalizados por la organización.
@@ -804,7 +816,7 @@ Traza histórica inmutable.
 
 ## Especificación de la API
 
-> Alcance MVP: 3 endpoints críticos (login, crear carpeta, subir documento).
+> Alcance MVP: 4 endpoints críticos (login, cambio de organización, crear carpeta, subir documento).
 
 ```yaml
 openapi: 3.0.3
@@ -821,7 +833,7 @@ servers:
 
 tags:
     - name: autenticacion
-        description: Inicio de sesión y emisión de token
+        description: Inicio de sesión, cambio de organización y emisión de token
     - name: carpetas
         description: Gestión mínima de carpetas
     - name: documentos
@@ -831,11 +843,16 @@ paths:
     /auth/login:
         post:
             tags: [autenticacion]
-            summary: Iniciar sesión y obtener token
+                        summary: Iniciar sesión y obtener token (organización predeterminada)
             description: >
                 Autentica credenciales.
-                Si el usuario pertenece a múltiples organizaciones y no envía `organizacion_id`,
-                devuelve la lista de organizaciones disponibles para que el cliente seleccione.
+                                La organización activa se resuelve por la membresía marcada como `es_predeterminada=true`.
+                                Reglas MVP:
+                                - Si el usuario tiene 1 organización activa, el sistema emite el token para esa organización.
+                                - Si el usuario tiene 2 organizaciones activas, debe existir exactamente 1 membresía
+                                    con `es_predeterminada=true` y se emite el token para esa organización.
+                                - Si NO hay predeterminada (con 2 activas) o el usuario tiene más de 2 organizaciones activas,
+                                    el sistema devuelve error de configuración (409).
             operationId: login
             requestBody:
                 required: true
@@ -844,12 +861,7 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginRequest'
                         examples:
-                            loginConOrganizacion:
-                                value:
-                                    email: admin@acme.com
-                                    contrasena: PasswordSegura123!
-                                    organizacion_id: 1
-                            loginSinOrganizacion:
+                            login:
                                 value:
                                     email: admin@acme.com
                                     contrasena: PasswordSegura123!
@@ -860,12 +872,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/LoginResponse'
-                '300':
-                    description: Múltiples organizaciones disponibles; el cliente debe seleccionar una
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/OrgSelectionResponse'
                 '400':
                     description: Solicitud inválida (campos faltantes/formato inválido)
                     content:
@@ -880,6 +886,61 @@ paths:
                                 $ref: '#/components/schemas/Error'
                 '403':
                     description: Usuario sin membresía activa o usuario desactivado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+                '409':
+                    description: Configuración de tenancy inválida (sin predeterminada o exceso de organizaciones)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /auth/switch:
+        post:
+            tags: [autenticacion]
+            summary: Cambiar organización activa (emite nuevo token)
+            description: >
+                Emite un nuevo token JWT en el contexto de otra `organizacion_id` a la que el
+                usuario autenticado pertenece (membresía activa + organización activa).
+                La UI de administración muestra este módulo solo si el usuario tiene más de una
+                organización disponible.
+            operationId: cambiarOrganizacion
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SwitchOrgRequest'
+                        examples:
+                            cambiarAOrg2:
+                                value:
+                                    organizacion_id: 2
+            responses:
+                '200':
+                    description: Token emitido correctamente
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginResponse'
+                '400':
+                    description: Solicitud inválida (campos faltantes/formato inválido)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '401':
+                    description: No autenticado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '403':
+                    description: Organización no accesible para el usuario o inactiva
                     content:
                         application/json:
                             schema:
@@ -1026,24 +1087,16 @@ components:
                     type: string
                     format: password
                     example: PasswordSegura123!
+
+        SwitchOrgRequest:
+            type: object
+            required: [organizacion_id]
+            properties:
                 organizacion_id:
                     type: integer
                     format: int32
-                    description: Identificador de la organización (tenant) para emitir el token en el contexto correcto.
-                    example: 1
-
-        OrgSelectionResponse:
-            type: object
-            required: [requiere_seleccion, organizaciones]
-            properties:
-                requiere_seleccion:
-                    type: boolean
-                    description: Indica que el usuario debe seleccionar una organización antes de recibir token.
-                    example: true
-                organizaciones:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/OrganizacionDisponible'
+                    description: Identificador de la organización a la que se desea cambiar.
+                    example: 2
 
         OrganizacionDisponible:
             type: object
@@ -1059,7 +1112,7 @@ components:
 
         LoginResponse:
             type: object
-            required: [token, tipo_token, expira_en]
+            required: [token, tipo_token, expira_en, organizaciones]
             properties:
                 token:
                     type: string
@@ -1072,6 +1125,11 @@ components:
                     format: int32
                     description: Segundos hasta expiración del token.
                     example: 3600
+                organizaciones:
+                    type: array
+                    description: Organizaciones a las que pertenece el usuario (membresías activas).
+                    items:
+                        $ref: '#/components/schemas/OrganizacionDisponible'
 
         CrearCarpetaRequest:
             type: object
@@ -1170,11 +1228,13 @@ Request (application/json):
 }
 ```
 
-Response 300 (application/json) — usuario con múltiples organizaciones:
+Response 200 (application/json) — usuario con múltiples organizaciones (usa `es_predeterminada`):
 
 ```json
 {
-    "requiere_seleccion": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tipo_token": "Bearer",
+    "expira_en": 3600,
     "organizaciones": [
         {"organizacion_id": 1, "nombre": "Acme Corp"},
         {"organizacion_id": 2, "nombre": "Contoso Ltd"}
@@ -1182,13 +1242,31 @@ Response 300 (application/json) — usuario con múltiples organizaciones:
 }
 ```
 
-Request (application/json) — reintento seleccionando organización:
+Response 403 (application/json) — usuario sin organizaciones activas:
 
 ```json
 {
-    "email": "admin@acme.com",
-    "contrasena": "PasswordSegura123!",
-    "organizacion_id": 1
+    "codigo": "SIN_ORGANIZACION",
+    "mensaje": "El usuario no pertenece a ninguna organización activa."
+}
+```
+
+Response 409 (application/json) — configuración inválida (sin predeterminada o > 2 organizaciones activas):
+
+```json
+{
+    "codigo": "TENANCY_CONFIG_INVALIDA",
+    "mensaje": "No es posible resolver la organización predeterminada para el login (falta predeterminada o exceso de organizaciones)."
+}
+```
+
+### Ejemplo de Uso (POST /auth/switch)
+
+Request (application/json) — cambio de organización con token actual:
+
+```json
+{
+    "organizacion_id": 2
 }
 ```
 
@@ -1198,7 +1276,11 @@ Response 200 (application/json):
 {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tipo_token": "Bearer",
-    "expira_en": 3600
+    "expira_en": 3600,
+    "organizaciones": [
+        {"organizacion_id": 1, "nombre": "Acme Corp"},
+        {"organizacion_id": 2, "nombre": "Contoso Ltd"}
+    ]
 }
 ```
 
@@ -1278,13 +1360,17 @@ Response 201 (application/json):
 
 ### P0 — Historias de Usuario (Autenticación + Tenancy)
 
-**[US-AUTH-001] Login multi-tenant (selección de organización)**
-- **Narrativa:** Como usuario, quiero iniciar sesión indicando mi organización, para que el sistema me autentique en el tenant correcto.
+**[US-AUTH-001] Login multi-tenant (organización predeterminada)**
+- **Narrativa:** Como usuario, quiero iniciar sesión y que el sistema use mi organización predeterminada, para que el acceso sea simple y consistente.
 - **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un usuario válido y una organización activa, Cuando envío `POST /auth/login` con credenciales válidas y `organizacion_id`, Entonces recibo `200` con un token.
-    - *Scenario 2:* Dado un usuario válido perteneciente a múltiples organizaciones, Cuando envío `POST /auth/login` solo con credenciales (sin `organizacion_id`), Entonces recibo `300` con la lista de organizaciones disponibles.
+    - *Scenario 1:* Dado un usuario válido con exactamente una organización activa, Cuando envío `POST /auth/login` con credenciales válidas, Entonces recibo `200` con un token.
+    - *Scenario 1b:* Dado un usuario válido perteneciente a múltiples organizaciones activas y con una organización marcada como predeterminada, Cuando envío `POST /auth/login` con credenciales válidas, Entonces recibo `200` con un token emitido para la organización predeterminada.
+    - *Scenario 2:* Dado un usuario válido perteneciente a 2 organizaciones activas y sin una organización predeterminada, Cuando envío `POST /auth/login`, Entonces recibo `409` indicando configuración inválida.
+    - *Scenario 2b:* Dado un usuario válido perteneciente a más de 2 organizaciones activas, Cuando envío `POST /auth/login`, Entonces recibo `409` indicando que el caso no está soportado en el MVP.
+    - *Scenario 2c:* Dado un usuario autenticado con múltiples organizaciones activas, Cuando envío `POST /auth/switch` indicando otra `organizacion_id` válida, Entonces recibo `200` con un nuevo token en el contexto de esa organización.
     - *Scenario 3:* Dado credenciales inválidas, Cuando envío `POST /auth/login`, Entonces recibo `401`.
-- **Notas Técnicas/Datos:** `organizacion_id` debe validarse contra pertenencia del usuario.
+    - *Scenario 4:* Dado un usuario válido sin organizaciones activas, Cuando envío `POST /auth/login`, Entonces recibo `403` con un error indicando que no pertenece a ninguna organización activa.
+- **Notas Técnicas/Datos:** `organizacion_id` debe validarse contra pertenencia del usuario (y contra organización activa) en `POST /auth/switch`.
 
 **[US-AUTH-002] Token con claims de tenant y roles**
 - **Narrativa:** Como sistema, quiero emitir un token con `usuario_id`, `organizacion_id` y roles/permisos, para que la autorización sea consistente en toda la plataforma.
@@ -1308,7 +1394,7 @@ Response 201 (application/json):
 - **Narrativa:** Como usuario, quiero una pantalla de login simple, para acceder al sistema sin usar herramientas externas.
 - **Criterios de Aceptación:**
   - *Scenario 1:* Dado credenciales válidas, Cuando inicio sesión desde la UI, Entonces se almacena el token y accedo a la pantalla principal.
-    - *Scenario 1b:* Dado credenciales válidas y múltiples organizaciones, Cuando inicio sesión, Entonces veo un selector de organizaciones y, al elegir una, el sistema obtiene el token y accedo a la pantalla principal.
+    - *Scenario 1b:* Dado credenciales válidas y múltiples organizaciones, Cuando inicio sesión, Entonces el sistema usa la organización predeterminada y accedo a la pantalla principal (o veo un error claro si falta predeterminada o hay >2 organizaciones activas).
   - *Scenario 2:* Dado credenciales inválidas, Cuando inicio sesión, Entonces veo un mensaje de error y permanezco en login.
 
 **[US-AUTH-006] Manejo de sesión expirada**
@@ -1519,3 +1605,125 @@ Response 201 (application/json):
     - *Scenario 1:* Dado un término, Cuando busco desde la UI, Entonces veo resultados y puedo abrir el documento si tengo permisos.
 
 ## Tickets de Trabajo
+
+### P0 — Autenticación + Tenancy
+
+#### [US-AUTH-001] Login multi-tenant (organización predeterminada)
+
+###### Base de datos
+
+**Título:** Crear modelo de membresía usuario–organización para login
+**Objetivo:** Persistir pertenencias y predeterminada para resolver el tenant al autenticar.
+**Tipo:** Tarea
+**Descripción corta:** Implementa (o ajusta) tablas/columnas mínimas para `Usuario`, `Organizacion` y `Usuario_Organizacion` con `estado` y `es_predeterminada`. Debe permitir consultar “organizaciones activas” por usuario y su predeterminada.
+**Entregables:**
+- Migración SQL con `Usuario_Organizacion( usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion )`.
+- Definición de “ACTIVO” para membresía (y organización, si aplica).
+
+**Título:** Garantizar unicidad de organización predeterminada activa por usuario
+**Objetivo:** Evitar configuraciones inválidas (múltiples predeterminadas activas).
+**Tipo:** Tarea
+**Descripción corta:** Agrega la restricción/índice único parcial para asegurar como máximo 1 membresía activa marcada como predeterminada por usuario.
+**Entregables:**
+- Índice único parcial `ux_usuario_org_default_activa` (o equivalente en tu tecnología de migraciones).
+- Nota breve en doc técnica de la regla que hace cumplir.
+
+**Título:** Datos semilla para probar escenarios de tenancy (0,1,2,>2 organizaciones)
+**Objetivo:** Facilitar QA y pruebas automatizadas reproduciendo escenarios del criterio de aceptación.
+**Tipo:** Tarea
+**Descripción corta:** Crea datos de ejemplo: usuario sin orgs activas, usuario con 1 org activa, usuario con 2 orgs activas con y sin predeterminada, y usuario con >2 orgs activas.
+**Entregables:**
+- Script de seed (SQL o fixture) para los 5 escenarios.
+- Documentación de credenciales/datos de prueba (solo entorno local).
+
+###### Backend
+
+**Título:** Implementar servicio de validación de credenciales
+**Objetivo:** Autenticar usuario por email/contraseña para habilitar `POST /auth/login`.
+**Tipo:** Tarea
+**Descripción corta:** Implementa lookup por email y verificación segura de contraseña. Debe devolver “credenciales inválidas” sin filtrar detalles.
+**Entregables:**
+- Método/servicio `authenticate(email, contrasena)`.
+- Mapeo de error a `401` para credenciales inválidas.
+
+**Título:** Implementar resolución de organización en login (reglas MVP)
+**Objetivo:** Seleccionar el `organizacion_id` correcto según membresías activas y predeterminada.
+**Tipo:** Tarea
+**Descripción corta:** Dado `usuario_id`, obtiene membresías activas y aplica reglas: 0→403, 1→ok, 2→requiere predeterminada, >2→409. No debe depender de input del cliente.
+**Entregables:**
+- Función/servicio `resolveLoginOrganization(usuario_id)`.
+- Errores normalizados: `SIN_ORGANIZACION` (403) y `TENANCY_CONFIG_INVALIDA` (409).
+
+**Título:** Emitir token en contexto de organización
+**Objetivo:** Generar token “emitido para la organización” seleccionada.
+**Tipo:** Tarea
+**Descripción corta:** Implementa emisión de token incluyendo, como mínimo, `usuario_id` y `organizacion_id` (claim acordado). La expiración debe ser consistente con `expira_en`.
+**Entregables:**
+- Servicio `issueToken({ usuario_id, organizacion_id })`.
+- Configuración de expiración y secreto/llave (por entorno).
+
+**Título:** Implementar endpoint `POST /auth/login` con contrato de respuesta
+**Objetivo:** Cumplir escenarios 1, 1b, 2, 2b, 3 y 4.
+**Tipo:** Historia
+**Descripción corta:** Endpoint que valida credenciales, resuelve organización, emite token y devuelve estructura de respuesta. Debe devolver `401/403/409` según corresponda.
+**Entregables:**
+- Ruta/controlador `POST /auth/login`.
+- Respuesta 200 con `token` (y, si aplica por contrato, `tipo_token`, `expira_en`, `organizaciones`).
+
+**Título:** Implementar autorización mínima para `POST /auth/switch`
+**Objetivo:** Requerir sesión válida para cambiar de organización.
+**Tipo:** Tarea
+**Descripción corta:** Protege el endpoint con verificación de token (mínima para este caso) y extrae `usuario_id` desde el token para validar membresía.
+**Entregables:**
+- Middleware/guard mínimo para token en `/auth/switch`.
+- Extracción de `usuario_id` y `organizacion_id` desde claims.
+
+**Título:** Implementar endpoint `POST /auth/switch` con validación de membresía
+**Objetivo:** Cumplir escenario 2c (cambio de tenant emitiendo nuevo token).
+**Tipo:** Historia
+**Descripción corta:** Valida que `organizacion_id` solicitada pertenece al usuario y está activa. Emite un nuevo token en ese contexto y devuelve `200`.
+**Entregables:**
+- Ruta/controlador `POST /auth/switch`.
+- Validación de pertenencia activa + manejo de errores (`403` o `404` según convención definida).
+
+**Título:** Normalizar errores y códigos de negocio para autenticación/tenancy
+**Objetivo:** Hacer verificables y consistentes las respuestas de error.
+**Tipo:** Tarea
+**Descripción corta:** Centraliza el shape de error (`codigo`, `mensaje`) y asegura que `/auth/login` use `SIN_ORGANIZACION` (403) y `TENANCY_CONFIG_INVALIDA` (409), y credenciales inválidas usen `401`.
+**Entregables:**
+- Mapper/handler de errores para auth.
+- Casos de prueba de serialización de error.
+
+**Título:** Pruebas unitarias de resolución de organización (0/1/2/>2)
+**Objetivo:** Asegurar reglas MVP y prevenir regresiones.
+**Tipo:** QA
+**Descripción corta:** Tests puros sobre `resolveLoginOrganization` cubriendo todos los escenarios de aceptación y bordes (p. ej. 2 activas con 2 predeterminadas → invalida).
+**Entregables:**
+- Suite de unit tests con 5 escenarios mínimos.
+- Reporte de cobertura (si existe en el stack).
+
+**Título:** Pruebas de integración de `POST /auth/login` (200/401/403/409)
+**Objetivo:** Verificar endpoint y contrato HTTP extremo a extremo.
+**Tipo:** QA
+**Descripción corta:** Ejecuta requests reales contra el servidor con datos seed, validando status codes y campos requeridos de la respuesta.
+**Entregables:**
+- Tests de integración para escenarios 1, 1b, 2, 2b, 3, 4.
+- Validación del shape de respuesta 200.
+
+**Título:** Pruebas de integración de `POST /auth/switch` (200 + validación de pertenencia)
+**Objetivo:** Verificar que el cambio de organización solo funciona con membresía activa.
+**Tipo:** QA
+**Descripción corta:** Con token inicial, solicita cambio a otra org válida y verifica nuevo token; intenta cambiar a org no perteneciente/inactiva y verifica rechazo.
+**Entregables:**
+- Tests de integración para escenario 2c y negativos.
+- Verificación de que el nuevo token refleja el `organizacion_id` solicitado.
+
+###### Frontend
+
+**Título:** Sin cambios de UI para US-AUTH-001
+**Objetivo:** Aclarar alcance: esta historia define comportamiento de API, no pantalla.
+**Tipo:** Tarea
+**Descripción corta:** No se implementa UI en esta historia. La pantalla de login corresponde a `US-AUTH-005`.
+**Entregables:**
+- Confirmación de “no aplica” en planning.
+- (Opcional) Colección de requests para probar la API (Postman/HTTP) si el equipo la usa.
