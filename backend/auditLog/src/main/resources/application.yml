@@ -1,0 +1,43 @@
+# Application Configuration
+spring:
+  application:
+    name: auditlog-service
+  main:
+    web-application-type: reactive
+
+# Server Configuration
+server:
+  port: 8083
+
+# SpringDoc OpenAPI Configuration (WebFlux)
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  info:
+    title: Audit Log Service API
+    description: Reactive microservice for audit event management in DocFlow
+    version: 0.0.1-SNAPSHOT
+    contact:
+      name: DocFlow Team
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.docflow.audit: DEBUG
+    org.springframework.web.reactive: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# MongoDB Configuration (placeholder - to be configured later)
+# spring:
+#   data:
+#     mongodb:
+#       uri: mongodb://localhost:27017/auditlog
+#       database: auditlog

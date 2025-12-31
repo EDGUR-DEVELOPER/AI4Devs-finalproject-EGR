@@ -1,0 +1,23 @@
+# =============================================================================
+# Test Configuration for Message Broker Service
+# =============================================================================
+
+spring:
+  application:
+    name: broker-service-test
+
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    consumer:
+      auto-offset-reset: earliest
+      group-id: test-group
+
+broker:
+  demo-topic: demo-topic
+  consumer:
+    group-id: test-group
+
+logging:
+  level:
+    root: WARN
+    com.docflow.broker: DEBUG

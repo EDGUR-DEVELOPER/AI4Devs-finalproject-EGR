@@ -127,6 +127,24 @@ Usa versiones estables y actuales dentro de la rama Spring Boot 3.5.x; alinea sp
 Salida: entrega el árbol del proyecto con el contenido completo de cada archivo, listo para ejecutar con Maven y Java 21.
 ```
 
+#### vault
+```prompt
+Como experto desarrollo backend, Quiero que generes un proyecto “Vault Integration Service” para DocFlow, listo para clonar y ejecutar localmente. Sigue estas instrucciones al pie de la letra:
+
+Stack: Java 21, Spring Boot 3.5.x (última 3.5.x), Maven, empaquetado JAR ejecutable.
+Dependencias exactas (solo estas): spring-boot-starter-web, spring-boot-starter-validation, spring-boot-starter-test, springdoc-openapi-starter-webmvc-ui, spring-vault-core (para integración con HashiCorp Vault), Lombok. No añadas otras.
+Sin seguridad adicional ni bases de datos en esta fase; no declares datasources.
+Código mínimo:
+Clase principal en com.docflow.vault.
+HealthController con GET /health → { "status": "ok" }.
+VaultClientConfig que exponga un VaultTemplate usando propiedades (spring.cloud.vault.* placeholders).
+SecretController con GET /secret/{path} que lea un secreto simple (String) usando VaultTemplate y devuelva { "data": "<valor>" } (maneja ausencia con 404).
+application.yml: server.port, spring.application.name=vault-service, placeholders para spring.cloud.vault (uri, token, kv.backend, kv.default-context), y habilita swagger-ui.
+README.md: pasos para compilar, probar y ejecutar (mvn spring-boot:run), cómo configurar las propiedades de Vault y ejemplo de curl para /health y /secret/{path}.
+Usa versiones estables alineadas con Spring Boot 3.5.x y Spring Vault compatibles.
+Salida: entrega el árbol del proyecto con el contenido completo de cada archivo, listo para ejecutar con Maven y Java 21.
+```
+
 #### Gateway API
 ```prompt
 Como experto desarrollo backend, Quiero que generes un proyecto “API Gateway” para DocFlow, listo para clonar y ejecutar localmente. Sigue estas instrucciones al pie de la letra:
@@ -201,4 +219,107 @@ Tu objetivo es generar una guía completa y el código inicial para un proyecto 
     * Sección de **Estructura de Carpetas Clave** (explicando la función de `/core`, `/features` y `/common/ui`).
 
 **NOTA FINAL:** Asegura que la arquitectura impida que el código de la UI acceda directamente a los detalles de implementación de la API. Todo debe fluir a través de los hooks y la capa de estado (Zustand).
+```
+
+## Generar primer docker compose para las BD:
+```prompt
+Como experto en deploy de docker, generame un docker compose en la raiz del proyecto para levantar la BD necesarios para los microservicios #file:backend solamente: PostgreSQL, MiniO y MongoDB. Si falta alguna tecnologia mas indicamelo. Este docker compose es para local y probar aplicaciones. Generame un README indicando la funcionalidad solamente del docker compose.
+```
+
+## Generar meta prompt para el flujo de trabajo como PM:
+```prompt
+Como experto en prompt engineer, generame un meta prompt donde implique un PM  en desarrollo de software. Donde analice una lista de tickets de un proyecto y tecnologias. teniendo el espacio donde se especifica los tickets, backend y frontend del proyecto. Teniendo como resultado un markdown con el contexto de paso a paso como llevar el desarrollo del proyecto. El objetivo del markdown es llevar el registro del desarrollo del proyecto donde se va indicando que falta por desarrollar, que se ha desarrollado.
+```
+
+`Meta-Prompt`
+```
+# ROLE
+Actúa como un Senior Technical Product Manager y Lead Developer con más de 15 años de experiencia gestionando ciclos de vida de desarrollo de software (SDLC). Tu especialidad es desglosar requerimientos complejos en planes de ejecución técnicos paso a paso, asegurando la coherencia entre el Backend y el Frontend.
+
+# TASK
+Tu objetivo es analizar una lista de tickets desordenados junto con el stack tecnológico definido. Debes generar un documento maestro en formato Markdown llamado "Bitácora de Desarrollo del Proyecto". Este documento servirá como la fuente de verdad para rastrear el progreso, indicando qué se ha hecho y qué falta, ordenado lógicamente por dependencias técnicas.
+
+# INPUT DATA
+Recibirás la siguiente información:
+1. Tecnologías Backend.
+2. Tecnologías Frontend.
+3. Lista de Tickets (User Stories, Tasks, Bugs, etc.).
+
+# CONSTRAINTS & GUIDELINES
+1. **Análisis de Dependencias:** Antes de ordenar, piensa paso a paso: ¿Qué endpoint necesita existir antes de crear la interfaz? ¿Qué configuración de base de datos se requiere primero?
+2. **Estructura Lógica:** Organiza los tickets en fases (ej. Configuración, Core Backend, API Integration, UI Components, Polish).
+3. **Formato Markdown:** Debes utilizar un formato visualmente limpio. Usa Checkboxes `[ ]` para tareas pendientes y `[x]` para tareas completadas (asume que por defecto todo inicia pendiente a menos que el contexto diga lo contrario).
+4. **Contexto Técnico:** En cada paso, menciona brevemente qué tecnología del stack se está utilizando.
+
+# OUTPUT FORMAT (MANDATORY)
+El resultado debe ser estrictamente un código Markdown con la siguiente estructura:
+
+## 1. Resumen del Proyecto
+* **Estado General:** (Calcula un % estimado de progreso basado en lo completado vs total)
+* **Stack Principal:** Resumen rápido de las tecnologías.
+
+## 2. Plan de Ejecución (Roadmap Paso a Paso)
+*(Aquí agrupa los tickets por lógica de implementación)*
+
+### Fase 1: [Nombre de la Fase, ej. Infraestructura & DB]
+* [ ] **ID-Ticket**: Título del Ticket
+    * *Detalle técnico:* Breve nota de implementación considerando {{BACKEND_TECH}}.
+    * *Dependencia:* Si bloquea a otro ticket.
+
+### Fase 2: [Nombre de la Fase, ej. API Development]
+...
+
+## 3. Registro de Progreso (Gap Analysis)
+* **🔴 Por Desarrollar:** Lista concisa de IDs que faltan.
+* **🟢 Desarrollado:** Lista de lo que ya está listo (si aplica).
+
+## 4. Próximos Pasos Recomendados
+Una sugerencia estratégica de qué atacar primero para desbloquear el mayor valor posible.
+
+---
+
+# USER INPUTS
+A continuación te proporciono los datos del proyecto actual para que generes la Bitácora:
+
+**Tecnologías Backend:**
+{{INSERTA_AQUI_TECNOLOGIAS_BACKEND}}
+
+**Tecnologías Frontend:**
+{{INSERTA_AQUI_TECNOLOGIAS_FRONTEND}}
+
+**Lista de Tickets/Requerimientos:**
+{{INSERTA_AQUI_LISTA_DE_TICKETS}}
+```
+
+`Meta prompt para registrar cambios:`
+```prompt
+# ROLE
+Actúa como un Technical Project Manager obsesionado con la documentación actualizada. Tu responsabilidad es mantener la "Bitácora de Desarrollo" viva y precisa.
+
+# TASK
+Vas a recibir dos insumos:
+1. El **Markdown actual** del proyecto (el estado anterior).
+2. El **Reporte de Avances** (qué tickets se terminaron, qué problemas surgieron o nuevos requerimientos).
+
+Tu trabajo es generar una NUEVA versión completa del código Markdown, actualizando los estados, los porcentajes de progreso y las recomendaciones estratégicas.
+
+# INSTRUCTIONS
+1. **Actualización de Checkboxes:** Busca los tickets mencionados en el reporte de avances y cambia su estado de `[ ]` a `[x]`.
+2. **Recálculo de Progreso:** Actualiza el porcentaje de avance en la sección "Resumen del Proyecto" basándote en la nueva cantidad de tareas completadas vs. totales.
+3. **Gestión de Listas:** Mueve los IDs de los tickets completados de la lista "🔴 Por Desarrollar" a la lista "🟢 Desarrollado".
+4. **Análisis de Bloqueos:** Si el reporte menciona problemas, agrega una nota de ⚠️ ADVERTENCIA en el ticket correspondiente o en la sección de resumen.
+5. **Reevaluación de Siguientes Pasos:** Dado que se han completado tareas, los "Próximos Pasos Recomendados" deben cambiar. Sugiere las siguientes tareas lógicas desbloqueadas.
+
+# OUTPUT FORMAT
+Devuelve el código Markdown completo y actualizado, manteniendo estrictamente la estructura original para no romper el formato del historial.
+
+---
+
+# USER INPUTS
+
+**1. Markdown Actual (Copia y pega tu bitácora actual aquí):**
+{{INSERTA_TU_MARKDOWN_ANTERIOR}}
+
+**2. Reporte de Avances (¿Qué hiciste hoy? ¿Qué tickets cerraste?):**
+{{INSERTA_TU_REPORTE_DE_AVANCES}}
 ```
