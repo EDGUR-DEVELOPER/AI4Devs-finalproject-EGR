@@ -1,0 +1,35 @@
+# Application Configuration
+spring:
+  application:
+    name: identity-service
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  info:
+    title: Identity Service API
+    description: IAM Service - Lightweight Keycloak Wrapper for DocFlow
+    version: 0.0.1-SNAPSHOT
+    contact:
+      name: DocFlow Team
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.docflow.identity: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
