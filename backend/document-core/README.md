@@ -105,3 +105,10 @@ Configuration is in `src/main/resources/application.yml`:
 
 - Database configuration is not included yet. DataSource auto-configuration is excluded.
 - Security is not configured yet. Prepared for future integration.
+
+## Development rules
+
+For general backend development conventions (architecture, testing, naming) see:
+
+- [.github/rules-backend.md](../../.github/rules-backend.md)
+- Project rules index: [.github/RULES.md](../../.github/RULES.md)

@@ -399,6 +399,12 @@ docker compose up -d --build
 
 ---
 
+## 📏 Reglas de infraestructura y Docker
+
+Las reglas específicas para mantener y evolucionar la infraestructura definida en los archivos `docker-compose.yml` se describen en:
+
+- [.github/rules-infra-docker.md](.github/rules-infra-docker.md)
+
 ## 📊 Resumen de Puertos
 
 | Puerto | Servicio | Protocolo |

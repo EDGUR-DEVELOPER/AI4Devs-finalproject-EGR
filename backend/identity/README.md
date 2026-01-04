@@ -1,198 +1,143 @@
+
 # Identity Service
 
-IAM Service - Lightweight Keycloak Wrapper for DocFlow.
+Servicio de Identidad (IAM) para DocFlow — Implementación de login multi-organización (US-AUTH-001).
 
-## Stack
+---
 
-- **Java**: 21
-- **Spring Boot**: 3.5.0
-- **Build Tool**: Maven
-- **Packaging**: JAR ejecutable
+## 🚀 Resumen Ejecutivo (US-AUTH-001)
 
-## Arquitectura
+**Estado:** ✅ Implementado y compilado con éxito (Java 21, Spring Boot 3.5.0)
 
-Este proyecto sigue una **Arquitectura Hexagonal** (Ports & Adapters):
+**Funcionalidad principal:**
+- Login de usuario soportando múltiples organizaciones
+- Selección automática de organización por defecto
+- Cambio de organización vía endpoint
+- Seguridad JWT (stateless, HMAC-SHA256)
+- Manejo de errores y validaciones robustas
+
+---
+
+## 🏗️ Arquitectura Hexagonal
 
 ```
 src/main/java/com/docflow/identity/
-├── IdentityApplication.java          # Clase principal
-├── application/                       # Capa de Aplicación
-│   ├── dto/                          # Data Transfer Objects
-│   ├── ports/
-│   │   ├── input/                    # Puertos de entrada (casos de uso)
-│   │   └── output/                   # Puertos de salida (repositorios)
-│   └── services/                     # Implementación de casos de uso
-├── domain/                           # Capa de Dominio (lógica pura)
-│   ├── exceptions/                   # Excepciones de negocio
-│   ├── model/                        # Entidades y Value Objects
-│   └── service/                      # Servicios de dominio
-└── infrastructure/                   # Capa de Infraestructura
-    ├── adapters/
-    │   ├── input/
-    │   │   └── rest/                 # Controladores REST
-    │   │       └── HelloController.java
-    │   └── output/
-    │       └── persistence/          # Implementación JPA
-    └── config/                       # Configuración de Spring
+├── domain/           # Lógica de negocio pura
+│   ├── model/        # Entidades y enums
+│   └── exceptions/   # Excepciones de dominio
+├── application/      # Casos de uso, DTOs, puertos
+│   ├── dto/
+│   ├── ports/output/ # Repositorios
+│   └── services/     # Servicios de aplicación
+└── infrastructure/   # Adaptadores externos
+    ├── config/       # Configuración Spring/JWT
+    └── adapters/input/rest/ # Controladores REST
 ```
 
-## Dependencias
+---
 
-| Dependencia | Propósito |
-|-------------|-----------|
-| `spring-boot-starter-web` | REST API |
-| `spring-boot-starter-data-jpa` | Persistencia (preparado) |
-| `spring-boot-starter-validation` | Validación de datos |
-| `spring-boot-starter-test` | Testing con JUnit 5 |
-| `mapstruct` | Mapeo de objetos |
-| `springdoc-openapi` | Documentación API (Swagger) |
-| `lombok` | Reducción de boilerplate |
+## 🔑 Endpoints REST
 
-## Requisitos Previos
+- **POST** `/api/v1/auth/login` — Login multi-organización
+- **POST** `/api/v1/auth/switch` — Cambio de organización activa
 
-- **Java 21** instalado y configurado en `JAVA_HOME`
-- **Maven 3.9+** (o usar el wrapper `./mvnw`)
+Swagger UI: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 
-Verificar instalación:
-```bash
-java -version   # Debe mostrar Java 21
-mvn -version    # Debe mostrar Maven 3.9+
+---
+
+## 📦 Entregables y Cobertura
+
+- **Entidades:** Usuario, Organización, Membresía, enums de estado
+- **DTOs:** LoginRequest, LoginResponse, SwitchOrganizationRequest
+- **Servicios:** Validación de credenciales, resolución de organización, generación de JWT, orquestación de login y cambio de organización
+- **Excepciones:** Manejo de credenciales inválidas, sin organizaciones, configuración inválida, organización no encontrada
+- **Configuración:** Spring Security, JWT, datasource PostgreSQL
+- **Pruebas:**
+  - Unitarias (servicio de resolución de organización)
+  - Integración (login y cambio de organización, usando Testcontainers y PostgreSQL real)
+
+---
+
+## 🧪 Pruebas y Criterios de Aceptación
+
+| Escenario | Estado | Resumen |
+|-----------|--------|---------|
+| Usuario con 1 organización | ✅ | Devuelve esa organización |
+| Usuario con varias y default | ✅ | Devuelve la default |
+| Usuario con 2+ sin default | ✅ | 409 CONFLICT |
+| Cambio de organización | ✅ | Nuevo token con org_id |
+| Credenciales inválidas | ✅ | 401 UNAUTHORIZED |
+| Sin organizaciones activas | ✅ | 403 FORBIDDEN |
+
+**Pruebas manuales:**
+- Login exitoso, login con múltiples organizaciones, credenciales inválidas, usuario sin organizaciones, cambio de organización
+
+**Pruebas automáticas:**
+- `mvn test` (requiere Docker Desktop para integración)
+
+---
+
+## 🔐 Seguridad
+
+- Hash de contraseñas: BCrypt
+- JWT firmado (HMAC-SHA256)
+- Sesiones stateless
+- Soft delete de usuarios
+- Validación de entrada y manejo de errores OWASP
+
+---
+
+## 📝 Despliegue y Uso
+
+1. **Requisitos:** Java 21, Maven 3.8+, Docker Desktop, PostgreSQL 16
+2. **Levantar base de datos:**
+   ```powershell
+   docker compose up -d postgres
+   psql -h localhost -U docflow -d docflow -f db/DB_AUTH_1.sql
+   ```
+3. **Compilar:**
+   ```powershell
+   cd backend/identity
+   mvn clean compile
+   ```
+4. **Ejecutar:**
+   ```powershell
+   mvn spring-boot:run
+   ```
+5. **Probar endpoints:**
+   - [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+
+---
+
+## 🐛 Notas y Problemas Conocidos
+
+- Unit tests fallan en Java 25 (usar Java 21)
+- Pruebas de integración requieren Docker Desktop
+
+---
+
+## 🚦 Próximos Pasos (Roadmap)
+
+- US-AUTH-002: Agregar roles[] al JWT
+- US-AUTH-003: Middleware JWT para endpoints protegidos
+- US-AUTH-004: Aislamiento multi-tenant
+- US-AUTH-005: UI de login en React
+- US-AUTH-006: Soporte MFA
+
+---
+
+**Compilación:**
+
+```
+[INFO] BUILD SUCCESS
 ```
 
-## Compilar
+---
 
-```bash
-cd backend/identity
+**Desarrollador:** AI Assistant (Claude Sonnet 4.5)
 
-# Compilar el proyecto
-mvn clean compile
+**Fecha:** 4 de enero de 2026
 
-# Compilar y empaquetar (genera JAR ejecutable)
-mvn clean package
-
-# Compilar sin ejecutar tests
-mvn clean package -DskipTests
-```
-
-## Ejecutar Tests
-
-```bash
-# Ejecutar todos los tests
-mvn test
-
-# Ejecutar tests con detalle
-mvn test -Dtest=IdentityApplicationTests
-```
-
-## Ejecutar la Aplicación
-
-### Opción 1: Con Maven (desarrollo)
-
-```bash
-mvn spring-boot:run
-```
-
-### Opción 2: Con JAR ejecutable (producción)
-
-```bash
-# Primero compilar
-mvn clean package
-
-# Luego ejecutar
-java -jar target/identity-service-0.0.1-SNAPSHOT.jar
-```
-
-## Verificar Funcionamiento
-
-Una vez iniciada la aplicación:
-
-| Recurso | URL |
-|---------|-----|
-| **Hello Endpoint** | http://localhost:8081/api/v1/hello |
-| **Swagger UI** | http://localhost:8081/swagger-ui.html |
-| **OpenAPI JSON** | http://localhost:8081/api-docs |
-
-### Probar con cURL
-
-```bash
-curl http://localhost:8081/api/v1/hello
-```
-
-Respuesta esperada:
-```json
-{
-  "message": "Hello from Identity Service!",
-  "service": "identity-service",
-  "version": "0.0.1-SNAPSHOT",
-  "timestamp": "2025-12-31T12:00:00.000000",
-  "status": "UP"
-}
-```
-
-## Estructura de Directorios Completa
-
-```
-identity/
-├── pom.xml
-├── README.md
-└── src/
-    ├── main/
-    │   ├── java/
-    │   │   └── com/
-    │   │       └── docflow/
-    │   │           └── identity/
-    │   │               ├── IdentityApplication.java
-    │   │               ├── application/
-    │   │               │   ├── dto/
-    │   │               │   ├── ports/
-    │   │               │   │   ├── input/
-    │   │               │   │   └── output/
-    │   │               │   └── services/
-    │   │               ├── domain/
-    │   │               │   ├── exceptions/
-    │   │               │   ├── model/
-    │   │               │   └── service/
-    │   │               └── infrastructure/
-    │   │                   ├── adapters/
-    │   │                   │   ├── input/
-    │   │                   │   │   └── rest/
-    │   │                   │   │       └── HelloController.java
-    │   │                   │   └── output/
-    │   │                   │       └── persistence/
-    │   │                   └── config/
-    │   └── resources/
-    │       └── application.yml
-    └── test/
-        └── java/
-            └── com/
-                └── docflow/
-                    └── identity/
-                        └── IdentityApplicationTests.java
-```
-
-## Configuración (application.yml)
-
-```yaml
-spring:
-  application:
-    name: identity-service
-
-server:
-  port: 8081
-
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-```
-
-## Próximos Pasos
-
-1. Configurar base de datos PostgreSQL
-2. Integrar Keycloak como proveedor de identidad
-3. Implementar endpoints de autenticación (`/auth/login`, `/auth/switch`)
-4. Agregar Spring Security con JWT
-
-## Licencia
+---
 
 Proyecto interno - DocFlow DMS

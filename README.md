@@ -6,6 +6,7 @@
 - [Especificación de la API](#especificación-de-la-api)
 - [Historias de Usuario](#historias-de-usuario)
 - [Tickets de Trabajo](#tickets-de-trabajo)
+- [Reglas de desarrollo](#reglas-de-desarrollo)
 
 # 📂 Ficha del proyecto
 * 📌**Nombre:** Eduardo Guardado Ruiz
@@ -63,6 +64,12 @@ El propósito principal de DocFlow es resolver la dicotomía entre **seguridad b
 * **Alertas:** Avisos claros sobre versiones obsoletas con redirección a la versión vigente.
 
 Esta es una propuesta arquitectónica detallada y profesional para **DocFlow**. Se ha priorizado la modularidad (DMS core con IA opcional), la seguridad (RBAC y auditoría), la escalabilidad (patrones asíncronos) y la mantenibilidad (Clean Architecture).
+
+## Reglas de desarrollo
+
+Las reglas de desarrollo para backend, frontend, base de datos e infraestructura están centralizadas en el índice de reglas del proyecto:
+
+- Ver [.github/RULES.md](.github/RULES.md)
 
 # Arquitectura del Sistema
 
@@ -507,6 +514,8 @@ erDiagram
         string nombre_completo
         boolean mfa_habilitado
         datetime fecha_eliminacion
+        datetime fecha_creacion
+        datetime fecha_actualizacion
     }
 
     Usuario_Organizacion {
@@ -522,6 +531,7 @@ erDiagram
         int organizacion_id FK
         string nombre
         string descripcion
+        datetime fecha_creacion
         %% JSONB eliminado aquí a favor de relación estricta
     }
 
@@ -531,6 +541,7 @@ erDiagram
         string nombre_legible
         string modulo "Agrupador: Seguridad, Billing, Docs"
         string descripcion
+        datetime fecha_creacion
     }
 
     Rol_Tiene_Permiso {
@@ -555,6 +566,7 @@ erDiagram
         string ruta_jerarquia "LTREE"
         datetime fecha_creacion
         datetime fecha_eliminacion
+        datetime fecha_actualizacion
     }
 
     Documento {
@@ -568,6 +580,7 @@ erDiagram
         jsonb metadatos_globales
         datetime fecha_creacion
         datetime fecha_eliminacion
+        datetime fecha_actualizacion
     }
 
     Version {
@@ -629,6 +642,7 @@ erDiagram
         bigint usuario_id FK
         string codigo_evento
         jsonb detalles_cambio
+        string direccion_ip
         datetime fecha_evento
     }
 
@@ -686,6 +700,8 @@ El actor autenticado en el sistema.
 * **nombre_completo** (`VARCHAR(100)`, Not Null).
 * **mfa_habilitado** (`BOOLEAN`, Default False): Bandera para 2FA.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
+* **fecha_creacion** (`TIMESTAMPTZ`, Not Null, Default NOW()): Fecha de creación del registro.
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Not Null, Default NOW()): Fecha de última actualización. Se actualiza automáticamente vía trigger.
 
 #### 3. `Usuario_Organizacion` (Membresía multi-organizacion)
 Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y resuelve la organización predeterminada usada en el login.
@@ -704,12 +720,14 @@ Define perfiles funcionales personalizados por la organización.
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
 * **nombre** (`VARCHAR(50)`, Not Null): Ej. "Administrador Legal", "Auditor Externo".
 * **descripcion** (`TEXT`, Nullable).
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación del rol.
 
 #### 5. `Permiso_Catalogo`
 Lista maestra e inmutable de capacidades del sistema (System Capabilities).
 * **id** (`INT`, PK).
 * **slug** (`VARCHAR(60)`, Unique): Identificador técnico (ej. `users.create`, `docs.export`, `billing.view`).
 * **modulo** (`VARCHAR(50)`): Agrupador lógico para UI (ej. "Seguridad", "Gestión Documental").
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de registro del permiso en el catálogo.
 
 #### 6. `Rol_Tiene_Permiso`
 Tabla intermedia (Many-to-Many) para asignar capacidades a roles.
@@ -735,7 +753,9 @@ Estructura jerárquica para organizar la información.
 * **nombre** (`VARCHAR(255)`, Not Null).
 * **ruta_jerarquia** (`LTREE` o `VARCHAR`, Indexado): Materialización del path (ej. `1.5.20`) para consultas de árbol optimizadas sin recursividad profunda.
 * **propietario_id** (`BIGINT`, FK -> `Usuario`).
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación de la carpeta.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de última modificación (renombre, movimiento).
 
 #### 9. `Documento`
 La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
@@ -746,6 +766,9 @@ La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
 * **nombre** (`VARCHAR(255)`, Not Null).
 * **metadatos_globales** (`JSONB`, Default `{}`): Campos definidos por el usuario (Tags, Cliente, Fecha Vencimiento). Indexado con GIN.
     * *Ejemplo:* `{"cliente": "Acme Corp", "tags": ["urgente", "legal"], "numero_factura": "F-2023-001"}`
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación del documento.
+* **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de última modificación de metadatos.
 
 #### 10. `Version`
 La entidad física. Representa un archivo inmutable en el tiempo.
@@ -808,7 +831,7 @@ Traza histórica inmutable.
 * **codigo_evento** (`VARCHAR(50)`, Not Null): Ej. `DOC_CREATED`, `DOC_DELETED`, `ACL_CHANGED`.
 * **detalles_cambio** (`JSONB`): Snapshot de los datos. Ej: `{ "antes": { "nombre": "A" }, "despues": { "nombre": "B" } }`.
     * *Ejemplo:* `{"campo": "estado", "valor_anterior": "borrador", "valor_nuevo": "publicado"}`
-* **direccion_ip** (`VARCHAR(45)`): IPv4 o IPv6.
+* **direccion_ip** (`VARCHAR(45)`, Nullable): IPv4 o IPv6 del cliente que realizó la acción.
 * **fecha_evento** (`TIMESTAMPTZ`, Default NOW()).
 
 # Especificación de la API

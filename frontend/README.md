@@ -141,6 +141,13 @@ El servidor de desarrollo está configurado para hacer proxy de las peticiones `
 - Nombres de archivos: `PascalCase` para componentes, `camelCase` para utilidades
 - Directorios en `kebab-case`
 
+## 📏 Reglas de desarrollo frontend
+
+Las reglas detalladas para el desarrollo de la aplicación frontend se encuentran en:
+
+- [.github/rules-frontend.md](../.github/rules-frontend.md)
+- Índice general de reglas del proyecto: [.github/RULES.md](../.github/RULES.md)
+
 ## 📝 Licencia
 
 Proyecto privado - Todos los derechos reservados

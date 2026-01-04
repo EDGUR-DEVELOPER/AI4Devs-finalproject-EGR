@@ -1,0 +1,19 @@
+# Propietarios de código por área
+# Reemplaza @org/equipo o @usuario por los equipos/usuarios reales.
+
+# Propietario por defecto (todo el repo)
+*       @org/equipo-principal
+
+# Backend (servicios Spring Boot)
+/backend/    @org/equipo-backend
+
+# Frontend (aplicación React/Vite)
+/frontend/   @org/equipo-frontend
+
+# Infraestructura / Docker Compose
+/docker-compose.yml           @org/equipo-infra
+/backend/*/docker-compose.yml @org/equipo-infra
+
+# Prompts y reglas de proceso
+/prompts/    @org/equipo-arquitectura
+/.github/    @org/equipo-arquitectura
