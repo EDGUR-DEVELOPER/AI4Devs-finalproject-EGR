@@ -3,6 +3,7 @@ package com.docflow.identity.application.services;
 import com.docflow.identity.application.dto.LoginResponse;
 import com.docflow.identity.application.dto.SwitchOrganizationRequest;
 import com.docflow.identity.application.ports.output.UsuarioOrganizacionRepository;
+import com.docflow.identity.application.ports.output.UsuarioRolRepository;
 import com.docflow.identity.domain.exceptions.OrganizacionNoEncontradaException;
 import com.docflow.identity.domain.model.EstadoMembresia;
 import com.docflow.identity.domain.model.UsuarioOrganizacionId;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrganizationSwitchUseCase {
 
     private final UsuarioOrganizacionRepository repository;
+    private final UsuarioRolRepository usuarioRolRepository;
     private final JwtTokenService tokenService;
     private final JwtProperties jwtProperties;
 
@@ -54,8 +56,16 @@ public class OrganizationSwitchUseCase {
             );
         }
 
-        // Issue new token
-        var token = tokenService.issueToken(usuarioId, request.organizacionId());
+        // Fetch roles for user in new organization
+        var roles = usuarioRolRepository.findCodigosRolesByUsuarioIdAndOrganizacionId(
+            usuarioId, 
+            request.organizacionId()
+        );
+        log.debug("Usuario {} tiene {} roles en la nueva organización {}", 
+            usuarioId, roles.size(), request.organizacionId());
+
+        // Issue new token with roles
+        var token = tokenService.issueToken(usuarioId, request.organizacionId(), roles);
 
         log.info("Cambio de organización exitoso para usuario {} a organización {}", 
             usuarioId, request.organizacionId());

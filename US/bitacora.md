@@ -12,11 +12,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **5%** (Infraestructura lista, código scaffoldeado) |
-| **Tickets MVP** | 0/30 completados |
+| **Progreso MVP** | 🟡 **12%** (Infraestructura + Autenticación base iniciada) |
+| **Tickets MVP** | 1/30 completados |
 | **Tickets Post-MVP** | 0/8 planificados |
-| **Días restantes** | 16 días (31 dic 2025 → 16 ene 2026) |
-| **Velocidad requerida** | ~2 tickets/día (con asistencia IA) |
+| **Días restantes** | 12 días (4 ene 2026 → 16 ene 2026) |
+| **Velocidad requerida** | ~2.5 tickets/día (con asistencia IA) |
 
 ### Stack Principal
 
@@ -100,16 +100,18 @@ Dic 31 ────────────────────────�
 
 #### Día 1 (1 Ene)
 
-- [ ] **US-AUTH-001**: Login multi-organización
+- [x] **US-AUTH-001**: Login multi-organización ✅
     * *Detalle técnico:* Crear modelos `Usuario`, `Organizacion`, `Usuario_Organizacion` en PostgreSQL. Endpoint `POST /auth/login` que resuelve membresías. Si usuario pertenece a 1 org → token directo; si >1 → retornar lista para selección.
     * *Servicio:* `identity-service` (Spring Data JPA)
     * *Tablas:* `usuarios`, `organizaciones`, `usuarios_organizaciones`
     * *Dependencia:* Ninguna (es el punto de partida)
+    * *Estado:* Completado el 4 Ene 2026
 
-- [ ] **US-AUTH-002**: Token JWT con claims de org/roles
+- [ ] **US-AUTH-002**: Token JWT con claims de org/roles ⚠️
     * *Detalle técnico:* Implementar generación de JWT con claims `org_id`, `roles[]`, `user_id`, `exp`. Crear `JwtService` usando `io.jsonwebtoken`. Definir interface `JwtPayload` en frontend.
     * *Servicio:* `identity-service`
     * *Dependencia:* US-AUTH-001
+    * ⚠️ **ADVERTENCIA:** Backend y estructura de datos completados. **PENDIENTE:** Integración frontend (interface `JwtPayload` y manejo de token en cliente).
 
 #### Día 2 (2 Ene)
 
@@ -345,11 +347,11 @@ Dic 31 ────────────────────────�
 
 ---
 
-## 3. Registro de Progreso (Gap Analysis)
-
-### 🔴 Por Desarrollar - MVP (30 tickets)
+## 3. Registro de Progreso (Ga29 tickets)
 
 | Fase | Tickets Pendientes |
+|------|-------------------|
+| Autenticación | US-AUTH-002 (frontend pendiente)
 |------|-------------------|
 | Autenticación | US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006 |
 | Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
@@ -371,45 +373,51 @@ Dic 31 ────────────────────────�
 
 ### 🟢 Completado
 
-| Item | Descripción |
-|------|-------------|
-| INFRA-001 | Docker Compose configurado con PostgreSQL, MongoDB, MinIO, Redis, Kafka, Vault |
-| INFRA-002 | Scaffolding backend (6 microservicios con arquitectura hexagonal) |
-| INFRA-003 | Scaffolding frontend (React + Vite + TypeScript + Tailwind) |
+| Item | Descripción | Fecha |
+|------|-------------|-------|
+| INFRA-001 | Docker Compose configurado con PostgreSQL, MongoDB, MinIO, Redis, Kafka, Vault | 31 Dic 2025 |
+| INFRA-002 | Scaffolding backend (6 microservicios con arquitectura hexagonal) | 31 Dic 2025 |
+| INFRA-003 | Scaffolding frontend (React + Vite + TypeScript + Tailwind) | 31 Dic 2025 |
+| US-AUTH-001 | Login multi-organización (Backend completo: modelos, endpoint `/auth/login`, lógica de membresías) | 4 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
+4-5 - 4-5 Enero 2026)
 
-### 🎯 Acción Inmediata (Día 1 - 1 Enero 2026)
+**Completar US-AUTH-002 (Frontend) + Iniciar US-AUTH-003**:
 
-**Iniciar con US-AUTH-001 + US-AUTH-002** en `identity-service`:
-
-1. **Crear migraciones de base de datos** (Flyway/Liquibase):
-   ```
-   - usuarios (id, email, password_hash, nombre, activo, created_at)
-   - organizaciones (id, nombre, activo, created_at)
-   - usuarios_organizaciones (usuario_id, organizacion_id, created_at)
-   ```
-
-2. **Implementar entidades JPA** con arquitectura hexagonal:
-   ```
-   domain/model/ → Usuario.java, Organizacion.java
-   infrastructure/adapters/output/persistence/ → UsuarioRepository.java
-   ```
-
-3. **Crear endpoint de login**:
-   ```
-   POST /auth/login
-   Request: { email, password }
-   Response: { token } | { organizaciones: [...] }
+1. **Finalizar US-AUTH-002 - Parte Frontend** (`frontend` React):
+   ```typescript
+   // Crear interface JwtPayload en /src/core/domain/auth/
+   interface JwtPayload {
+     user_id: string;
+     org_id: string;
+     roles: string[];
+     exp: number;
+   }
+   
+   // Implementar lógica de decodificación y almacenamiento de token
+   // Integrar con Zustand store de autenticación
    ```
 
-### 🔑 Por qué esto primero
+2. **Iniciar US-AUTH-003 - Middleware de Autenticación** (`identity-service` + `gateway-service`):
+   ```java
+   // Crear JwtAuthenticationFilter que valide token en cada request
+   // Configurar SecurityFilterChain con rutas públicas
+   // Extraer claims e inyectar en SecurityContext
+   ```
 
-US-AUTH-001/002 son **bloqueantes críticos**:
-- Sin autenticación, no se puede probar ningún otro endpoint
-- El token JWT con `org_id` es necesario para el filtro de tenant (US-AUTH-004)
+### 🔑 Por qué esto es crítico ahora
+
+**Bloqueos actuales:**
+- ✅ US-AUTH-001 completado → desbloquea US-AUTH-002 (casi listo)
+- ⏳ US-AUTH-002 frontend pendiente → necesario para probar el flujo completo
+- 🚨 US-AUTH-003 es **bloqueante crítico** para:
+  - US-AUTH-004 (aislamiento de datos por tenant)
+  - Todas las operaciones protegidas en fases posteriores
+  
+**Estrategia:** Completar la capa de autenticación básica (002 + 003) antes de avanzar a administración, para poder proteger todos los endpoints subsecuentes.AUTH-004)
 - Toda la lógica de permisos (P2) depende de saber quién es el usuario
 
 ### 📊 Métricas de Seguimiento
@@ -421,8 +429,10 @@ US-AUTH-001/002 son **bloqueantes críticos**:
 | % Completado al día 16 | 100% MVP | - |
 | Bugs críticos abiertos | 0 | - |
 
----
-
+----4 (1-4 Ene 2026)
+- [x] **US-AUTH-001 Completado:** Backend de login multi-organización funcional. Modelos JPA creados (`Usuario`, `Organizacion`, `UsuarioOrganizacion`). Endpoint `POST /auth/login` implementado con lógica de resolución de membresías.
+- [x] **US-AUTH-002 Parcial:** Generación de JWT con claims implementada en backend (`JwtTokenService`). Estructura de datos lista. **Pendiente:** Frontend (interface `JwtPayload` y manejo de token en React).
+- ⚠️ **Advertencia:** Velocidad actual por debajo de lo esperado. Se requiere acelerar para cumplir deadline. Siguiente sesión debe completar US-AUTH-002 frontend + US-AUTH-003.
 ## 5. Notas de Desarrollo
 
 > Espacio para registrar decisiones técnicas, problemas encontrados y soluciones durante el desarrollo.
