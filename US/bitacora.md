@@ -12,8 +12,8 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **12%** (Infraestructura + Autenticación base iniciada) |
-| **Tickets MVP** | 1/30 completados |
+| **Progreso MVP** | 🟡 **15%** (Infraestructura + Autenticación base completada) |
+| **Tickets MVP** | 2/30 completados |
 | **Tickets Post-MVP** | 0/8 planificados |
 | **Días restantes** | 12 días (4 ene 2026 → 16 ene 2026) |
 | **Velocidad requerida** | ~2.5 tickets/día (con asistencia IA) |
@@ -98,6 +98,7 @@ Dic 31 ────────────────────────�
 > **Tickets:** 6 | **Servicio principal:** `identity-service`  
 > **Bloquea:** Todo el resto del proyecto
 
+
 #### Día 1 (1 Ene)
 
 - [x] **US-AUTH-001**: Login multi-organización ✅
@@ -107,11 +108,11 @@ Dic 31 ────────────────────────�
     * *Dependencia:* Ninguna (es el punto de partida)
     * *Estado:* Completado el 4 Ene 2026
 
-- [ ] **US-AUTH-002**: Token JWT con claims de org/roles ⚠️
+- [x] **US-AUTH-002**: Token JWT con claims de org/roles ✅
     * *Detalle técnico:* Implementar generación de JWT con claims `org_id`, `roles[]`, `user_id`, `exp`. Crear `JwtService` usando `io.jsonwebtoken`. Definir interface `JwtPayload` en frontend.
     * *Servicio:* `identity-service`
     * *Dependencia:* US-AUTH-001
-    * ⚠️ **ADVERTENCIA:** Backend y estructura de datos completados. **PENDIENTE:** Integración frontend (interface `JwtPayload` y manejo de token en cliente).
+    * *Estado:* Completado el 5 Ene 2026 (Frontend y Backend)
 
 #### Día 2 (2 Ene)
 
@@ -351,9 +352,7 @@ Dic 31 ────────────────────────�
 
 | Fase | Tickets Pendientes |
 |------|-------------------|
-| Autenticación | US-AUTH-002 (frontend pendiente)
-|------|-------------------|
-| Autenticación | US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006 |
+| Autenticación | US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006 |
 | Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
@@ -379,66 +378,31 @@ Dic 31 ────────────────────────�
 | INFRA-002 | Scaffolding backend (6 microservicios con arquitectura hexagonal) | 31 Dic 2025 |
 | INFRA-003 | Scaffolding frontend (React + Vite + TypeScript + Tailwind) | 31 Dic 2025 |
 | US-AUTH-001 | Login multi-organización (Backend completo: modelos, endpoint `/auth/login`, lógica de membresías) | 4 Ene 2026 |
+| US-AUTH-002 | Token JWT con claims de org/roles (Backend y Frontend) | 5 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
-4-5 - 4-5 Enero 2026)
+**Completar capa de autenticación y protección de endpoints:**
 
-**Completar US-AUTH-002 (Frontend) + Iniciar US-AUTH-003**:
+1. **Iniciar US-AUTH-003 - Middleware de Autenticación** (`identity-service` + `gateway-service`):
+    - Crear `JwtAuthenticationFilter` que valide token en cada request.
+    - Configurar SecurityFilterChain con rutas públicas.
+    - Extraer claims e inyectar en SecurityContext.
 
-1. **Finalizar US-AUTH-002 - Parte Frontend** (`frontend` React):
-   ```typescript
-   // Crear interface JwtPayload en /src/core/domain/auth/
-   interface JwtPayload {
-     user_id: string;
-     org_id: string;
-     roles: string[];
-     exp: number;
-   }
-   
-   // Implementar lógica de decodificación y almacenamiento de token
-   // Integrar con Zustand store de autenticación
-   ```
+2. **Avanzar con US-AUTH-004 - Aislamiento de datos por tenant**:
+    - Agregar columna `organizacion_id` a todas las tablas de negocio.
+    - Implementar `TenantContext` y filtros automáticos en JPA.
 
-2. **Iniciar US-AUTH-003 - Middleware de Autenticación** (`identity-service` + `gateway-service`):
-   ```java
-   // Crear JwtAuthenticationFilter que valide token en cada request
-   // Configurar SecurityFilterChain con rutas públicas
-   // Extraer claims e inyectar en SecurityContext
-   ```
+3. **Paralelizar UI de Login y manejo de sesión (US-AUTH-005 y US-AUTH-006)** para acelerar integración frontend-backend.
 
-### 🔑 Por qué esto es crítico ahora
-
-**Bloqueos actuales:**
-- ✅ US-AUTH-001 completado → desbloquea US-AUTH-002 (casi listo)
-- ⏳ US-AUTH-002 frontend pendiente → necesario para probar el flujo completo
-- 🚨 US-AUTH-003 es **bloqueante crítico** para:
-  - US-AUTH-004 (aislamiento de datos por tenant)
-  - Todas las operaciones protegidas en fases posteriores
-  
-**Estrategia:** Completar la capa de autenticación básica (002 + 003) antes de avanzar a administración, para poder proteger todos los endpoints subsecuentes.AUTH-004)
-- Toda la lógica de permisos (P2) depende de saber quién es el usuario
-
-### 📊 Métricas de Seguimiento
-
-| Métrica | Target | Actual |
-|---------|--------|--------|
-| Tickets/día promedio | 2 | - |
-| % Completado al día 8 | 50% | - |
-| % Completado al día 16 | 100% MVP | - |
-| Bugs críticos abiertos | 0 | - |
-
-----4 (1-4 Ene 2026)
-- [x] **US-AUTH-001 Completado:** Backend de login multi-organización funcional. Modelos JPA creados (`Usuario`, `Organizacion`, `UsuarioOrganizacion`). Endpoint `POST /auth/login` implementado con lógica de resolución de membresías.
-- [x] **US-AUTH-002 Parcial:** Generación de JWT con claims implementada en backend (`JwtTokenService`). Estructura de datos lista. **Pendiente:** Frontend (interface `JwtPayload` y manejo de token en React).
-- ⚠️ **Advertencia:** Velocidad actual por debajo de lo esperado. Se requiere acelerar para cumplir deadline. Siguiente sesión debe completar US-AUTH-002 frontend + US-AUTH-003.
+**Nota:** El avance en US-AUTH-003 es crítico, ya que desbloquea la protección de todos los endpoints y permite avanzar con administración y permisos.
 ## 5. Notas de Desarrollo
 
-> Espacio para registrar decisiones técnicas, problemas encontrados y soluciones durante el desarrollo.
 
-### Día 1 (1 Ene 2026)
-- [ ] *Pendiente de iniciar*
+### Día 5 (5 Ene 2026)
+- [x] US-AUTH-002 completado (Frontend y Backend): Ahora el frontend decodifica y almacena el JWT correctamente, integrando la interface `JwtPayload` y el manejo de token en el store de autenticación.
+- [ ] *Pendiente de iniciar US-AUTH-003 (Middleware de autenticación)*
 
 ---
 

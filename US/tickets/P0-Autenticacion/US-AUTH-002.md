@@ -54,3 +54,45 @@
 * **Entregables:**
     - Función `getUserContextFromToken()`.
     - Estado global (Context/Store) actualizado con la info del token.
+---
+* **Título:** Sincronización de sesión entre pestañas
+* **Objetivo:** Garantizar que el logout se propague a todas las pestañas abiertas.
+* **Tipo:** Tarea
+* **Descripción corta:** Implementar listener del evento `storage` en el store de Zustand para detectar cambios en localStorage y sincronizar el estado de autenticación entre múltiples pestañas del navegador.
+* **Entregables:**
+    - Listener `storage` event en `useAuthStore`.
+    - Logout automático en todas las pestañas cuando una cierra sesión.
+    - Flag `isLoggingOut` para prevenir race conditions.
+---
+* **Título:** Interceptor Axios para manejo de 401 Unauthorized
+* **Objetivo:** Invalidar sesión automáticamente cuando el backend rechaza el token.
+* **Tipo:** Tarea
+* **Descripción corta:** Configurar interceptor de respuesta en la instancia de Axios que detecte códigos 401, ejecute el logout automático con razón 'unauthorized' y emita evento custom para redirección.
+* **Entregables:**
+    - Response interceptor en `axiosInstance.ts`.
+    - Integración con `useAuthStore.logout('unauthorized')`.
+    - Evento custom `auth:logout` con payload de razón.
+---
+* **Título:** Sistema de notificaciones globales
+* **Objetivo:** Informar al usuario sobre eventos de sesión (expiración, logout forzado).
+* **Tipo:** Tarea
+* **Descripción corta:** Implementar store de notificaciones con Zustand y componente `ToastContainer` que muestre mensajes contextuales cuando la sesión expira o es invalidada por el backend.
+* **Entregables:**
+    - Store `useNotificationStore` con método `showNotification(message, type)`.
+    - Componente UI `<Toast />` en `src/common/ui/`.
+    - Integración con `logout(reason)` para mostrar mensaje apropiado.
+    - Constantes de mensajes mapeados por `LogoutReason` para facilitar futura i18n.
+---
+* **Título:** Listener de eventos de logout en App
+* **Objetivo:** Centralizar la lógica de redirección post-logout.
+* **Tipo:** Tarea
+* **Descripción corta:** Implementar listener del evento custom `auth:logout` en el componente raíz (`App.tsx`) que maneje la navegación a `/login` usando React Router, desacoplando la lógica de routing de servicios y stores.
+* **Entregables:**
+    - Event listener en `App.tsx` o layout principal.
+    - Redirección con `useNavigate()` de React Router.
+---
+#### Backlog / Fase Posterior
+---
+* **TODO:** Implementar refresh automático de token antes de expiración.
+* **Descripción:** Agregar lógica para renovar el token X minutos antes de `exp` (requiere endpoint `/auth/refresh` en backend). Evita que el usuario pierda sesión mientras trabaja activamente.
+* **Prioridad:** Baja (post-MVP).

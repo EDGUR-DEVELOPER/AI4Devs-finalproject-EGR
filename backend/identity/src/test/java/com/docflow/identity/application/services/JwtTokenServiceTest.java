@@ -49,7 +49,7 @@ class JwtTokenServiceTest {
         var claims = decodificarToken(token);
         
         assertThat(claims.getSubject())
-            .isEqualTo(usuarioId.toString());
+            .isEqualTo(String.valueOf(usuarioId));
         
         assertThat(claims.get(JwtClaimNames.ORGANIZATION_ID, Integer.class))
             .isEqualTo(organizacionId);
