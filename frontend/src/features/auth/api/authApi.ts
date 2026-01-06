@@ -18,7 +18,7 @@ export const authApi = {
       API_ENDPOINTS.AUTH.LOGIN,
       {
         email,
-        contrasena: password, // Backend expects "contrasena" field
+        password,
       }
     );
     return data;

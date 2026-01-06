@@ -26,10 +26,12 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                // IAM Service Route: /api/iam/** -> http://localhost:8081/**
+                // IAM Service Route: /api/iam/** -> http://localhost:8081/api/v1/**
                 .route("iam-service", r -> r
                         .path("/api/iam/**")
-                        .filters(f -> f.stripPrefix(2))
+                        .filters(f -> f
+                                .stripPrefix(2)
+                                .prefixPath("/api/v1"))
                         .uri(IAM_SERVICE_URI))
                 // Document Service Route: /api/doc/** -> http://localhost:8082/**
                 .route("doc-service", r -> r
