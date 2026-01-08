@@ -1,6 +1,6 @@
-package com.docflow.identity.domain.model;
+package com.docflow.documentcore.domain.model;
 
-import com.docflow.identity.infrastructure.multitenancy.TenantEntityListener;
+import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,16 +13,16 @@ import org.hibernate.annotations.ParamDef;
 import java.time.OffsetDateTime;
 
 /**
- * Entidad que representa la asignación de un rol a un usuario dentro de una organización.
+ * Permisos de roles sobre carpetas (ACL).
+ * 
+ * Se heredan por los usuarios que poseen ese rol.
  * 
  * AISLAMIENTO MULTI-TENANT (US-AUTH-004):
- * - Cada asignación está vinculada a una organización específica (organizacionId NOT NULL)
  * - Hibernate Filter 'tenantFilter' aplica automáticamente WHERE organizacion_id = :tenantId
  * - TenantEntityListener inyecta organizacionId en @PrePersist/@PreUpdate
- * - Un mismo usuario puede tener diferentes roles en diferentes organizaciones
  */
 @Entity
-@Table(name = "usuarios_roles")
+@Table(name = "permiso_carpeta_rol")
 @EntityListeners(TenantEntityListener.class)
 @FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = Integer.class))
 @Filter(name = "tenantFilter", condition = "organizacion_id = :tenantId")
@@ -30,14 +30,14 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioRol {
+public class PermisoCarpetaRol {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "usuario_id", nullable = false)
-    private Long usuarioId;
+    @Column(name = "carpeta_id", nullable = false)
+    private Long carpetaId;
     
     @Column(name = "rol_id", nullable = false)
     private Integer rolId;
@@ -45,12 +45,13 @@ public class UsuarioRol {
     @Column(name = "organizacion_id", nullable = false)
     private Integer organizacionId;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nivel_acceso", nullable = false, length = 20)
+    private NivelAcceso nivelAcceso;
+    
     @Column(nullable = false)
-    private Boolean activo = true;
+    private Boolean recursivo = true;
     
     @Column(name = "fecha_asignacion", nullable = false)
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();
-    
-    @Column(name = "asignado_por")
-    private Long asignadoPor;
 }

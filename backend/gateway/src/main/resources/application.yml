@@ -17,6 +17,10 @@ spring.cloud.gateway:
   default-filters:
     - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
+# JWT Configuration (must match identity-service configuration)
+jwt:
+  secret: ${JWT_SECRET:docflow-secret-key-change-this-in-production-min-256-bits-required-for-security}
+
 # SpringDoc OpenAPI Configuration (WebFlux)
 springdoc:
   api-docs:

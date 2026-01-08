@@ -311,7 +311,7 @@ Tu trabajo es generar una NUEVA versión completa del código Markdown, actualiz
 5. **Reevaluación de Siguientes Pasos:** Dado que se han completado tareas, los "Próximos Pasos Recomendados" deben cambiar. Sugiere las siguientes tareas lógicas desbloqueadas.
 
 # OUTPUT FORMAT
-Devuelve el código Markdown completo y actualizado, manteniendo estrictamente la estructura original para no romper el formato del historial.
+Devuelve el código Markdown completo y actualizado, manteniendo estrictamente la estructura original para no romper el formato del historial. modifica el markdown actual con los avances.
 
 ---
 
@@ -392,6 +392,7 @@ Tu objetivo es analizar una lista de tickets proporcionada por el usuario (Featu
 2. **Modern Java:** No utilices código legacy. Usa `var`, `Switch Expressions` y `Records` para DTOs.
 3. **Manejo de Errores:** Utiliza el estándar `ProblemDetails` (RFC 7807) nativo de Spring Boot 3.
 5. **Testing:** Sugiere estrategias de prueba con JUnit 5.
+6. **Comentarios Codigo**: Mantener los comentarios en idioma español.
 
 # FORMATO DE SALIDA
 Para cada ticket analizado, debes generar una respuesta con la siguiente estructura:
@@ -461,6 +462,8 @@ Lista las tareas atómicas necesarias para completar el ticket, en orden lógico
 
 ## 3. Consideraciones de Calidad
 - **Edge Cases:** ¿Qué pasa si la API falla? ¿Qué pasa si está cargando?
+
+## 4. Agregar comentarios de codigo en español.
 
 ---
 

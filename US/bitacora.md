@@ -12,9 +12,9 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **18%** (Infraestructura + Autenticación base + Middleware completados) |
-| **Tickets MVP** | 3/30 completados |
-| **Tickets Post-MVP** | 1/9 planificados |
+| **Progreso MVP** | 🟡 **21%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos completados) |
+| **Tickets MVP** | 4/30 completados |
+| **Tickets Post-MVP** | 0/9 planificados |
 | **Días restantes** | 8 días (8 ene 2026 → 16 ene 2026) |
 | **Velocidad requerida** | ~3.4 tickets/día (con asistencia IA) |
 
@@ -122,10 +122,11 @@ Dic 31 ────────────────────────�
     * *Dependencia:* US-AUTH-002
     * *Estado:* Completado el 8 Ene 2026
 
-- [ ] **US-AUTH-004**: Aislamiento de datos por tenant
+- [x] **US-AUTH-004**: Aislamiento de datos por tenant ✅
     * *Detalle técnico:* Agregar columna `organizacion_id` a todas las tablas de negocio. Crear `TenantContext` que extraiga `org_id` del token. Implementar `@TenantFilter` para auto-filtrar queries JPA.
     * *Servicio:* `identity-service`, `document-core-service`
     * *Dependencia:* US-AUTH-003
+    * *Estado:* Completado el 8 Ene 2026
 
 #### Día 3-4 (3-4 Ene)
 
@@ -353,7 +354,7 @@ Dic 31 ────────────────────────�
 
 | Fase | Tickets Pendientes |
 |------|-------------------|
-| Autenticación | US-AUTH-004, US-AUTH-005, US-AUTH-006 |
+| Autenticación | US-AUTH-005, US-AUTH-006 |
 | Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
@@ -367,10 +368,12 @@ Dic 31 ────────────────────────�
 | US-DOC-005 | Rollback a versión anterior | Feature avanzado, no crítico para MVP |
 | US-ACL-009 | UI muestra capacidades por recurso | UX enhancement, funcionalidad base OK sin esto |
 | US-AUDIT-004 | UI de consulta de auditoría | Admin puede consultar vía API/DB directamente |
+| US-AUDIT-005 | Activación de auditoría de accesos no autorizados | Requiere base de auditoría y aislamiento multi-tenant; mejora la trazabilidad y seguridad post-MVP |
 | US-SEARCH-001 | Búsqueda de documentos (API) | Feature completo, requiere indexación |
 | US-SEARCH-002 | Búsqueda con filtro de permisos | Depende de US-SEARCH-001 |
 | US-SEARCH-003 | UI de búsqueda | Depende de US-SEARCH-001, 002 |
 | US-AUTH-007 | Implementación de Refresh Token | Mejora UX y seguridad, no bloquea MVP |
+
 
 ### 🟢 Completado
 
@@ -382,22 +385,23 @@ Dic 31 ────────────────────────�
 | US-AUTH-001 | Login multi-organización (Backend completo: modelos, endpoint `/auth/login`, lógica de membresías) | 4 Ene 2026 |
 | US-AUTH-002 | Token JWT con claims de org/roles (Backend y Frontend) | 5 Ene 2026 |
 | US-AUTH-003 | Middleware de autenticación (Backend y Frontend: filtro JWT, interceptor Axios, manejo global de 401) | 8 Ene 2026 |
+| US-AUTH-004 | Aislamiento de datos por tenant (DB, backend, frontend: migración, contexto, persistencia, filtrado, manejo de errores) | 8 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
 
-**Siguiente objetivo: consolidar autenticación y avanzar con administración.**
+**Siguiente objetivo: avanzar con la UI de login y administración de usuarios.**
 
-1. **Iniciar US-AUTH-004 - Aislamiento de datos por tenant** (`identity-service`, `document-core-service`):
-    - Agregar columna `organizacion_id` a todas las tablas de negocio.
-    - Implementar `TenantContext` y filtros automáticos en JPA.
+1. **Iniciar US-AUTH-005 - UI de Login** (`frontend`):
+    - Implementar la página de login y manejo de selección de organización.
+    - Integrar con el backend y guardar el token.
 
-2. **Desarrollar US-AUTH-005 y US-AUTH-006 en frontend** para completar el flujo de login y manejo de sesión expirada.
+2. **Desarrollar US-AUTH-006 - Manejo de sesión expirada** para robustecer la experiencia de usuario y seguridad.
 
-3. **Preparar inicio de US-ADMIN-001 (Crear usuario)**, ya desbloqueado por el avance en autenticación.
+3. **Preparar inicio de US-ADMIN-001 (Crear usuario)**, ya desbloqueado por el aislamiento de datos y autenticación.
 
-**Nota:** US-AUTH-003 completado. Se recomienda priorizar US-AUTH-004 y la UI de login para habilitar administración y permisos. US-AUTH-007 (Refresh Token) queda planificado como mejora post-MVP.
+**Nota:** US-AUTH-004 completado. Se recomienda priorizar la UI de login y administración para habilitar el flujo completo de usuarios y permisos.
 
 ---
 
@@ -405,6 +409,7 @@ Dic 31 ────────────────────────�
 
 ### Día 8 (8 Ene 2026)
 - [x] US-AUTH-003 completado: Middleware de autenticación implementado en backend y frontend. Endpoints protegidos, manejo global de 401 y pruebas de integración exitosas.
+- [x] US-AUTH-004 completado: Aislamiento de datos por organización implementado en DB, backend y frontend. Migraciones, contexto de tenant, persistencia y filtrado global activos.
 
 ---
 
