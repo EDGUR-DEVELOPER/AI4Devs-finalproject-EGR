@@ -84,6 +84,66 @@ cp .env.example .env
 | `MINIO_ROOT_PASSWORD` | `minioadmin123` | Contraseña de MinIO |
 | `VAULT_DEV_ROOT_TOKEN` | `root` | Token de Vault (modo dev) |
 
+### 3. Variables de entorno para Gateway (CORS)
+
+El servicio Gateway requiere configuración CORS para permitir requests desde el frontend.
+
+| Variable | Valor por defecto | Descripción |
+|----------|-------------------|-------------|
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Lista separada por comas de orígenes permitidos para CORS |
+
+#### Configuración por Entorno
+
+**Desarrollo (local):**
+```yaml
+# docker-compose.yml o .env
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+**Staging:**
+```yaml
+CORS_ALLOWED_ORIGINS=https://staging.docflow.com,https://admin-staging.docflow.com
+```
+
+**Producción:**
+```yaml
+CORS_ALLOWED_ORIGINS=https://app.docflow.com,https://admin.docflow.com
+```
+
+#### ⚠️ Restricciones de Seguridad
+
+- **NO usar wildcard (`*`)**: El wildcard está prohibido por razones de seguridad y causará que el Gateway falle al iniciar.
+- **Protocolo completo requerido**: Cada origen debe incluir `http://` o `https://`.
+- **Sin espacios**: Los orígenes deben estar separados por comas sin espacios.
+- **Warning en producción**: El Gateway registrará warnings si detecta orígenes `localhost` cuando el perfil activo es `production`.
+
+#### Ejemplos Válidos
+
+✅ **Correcto:**
+```bash
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+CORS_ALLOWED_ORIGINS=https://app.docflow.com,https://admin.docflow.com
+```
+
+❌ **Incorrecto:**
+```bash
+CORS_ALLOWED_ORIGINS=*                              # Wildcard prohibido
+CORS_ALLOWED_ORIGINS=localhost:5173                 # Falta protocolo
+CORS_ALLOWED_ORIGINS=http://localhost:5173, http://localhost:3000  # Espacios no permitidos
+```
+
+#### Aplicar cambios CORS
+
+Si modificas la variable `CORS_ALLOWED_ORIGINS`, debes reiniciar el servicio Gateway:
+
+```bash
+# Opción 1: Reiniciar solo Gateway (si está corriendo en Docker)
+docker compose restart gateway
+
+# Opción 2: Reiniciar aplicación Spring Boot (si corre localmente)
+# Ctrl+C y volver a ejecutar mvn spring-boot:run en backend/gateway
+```
+
 ---
 
 ## 🚀 Comandos de Uso

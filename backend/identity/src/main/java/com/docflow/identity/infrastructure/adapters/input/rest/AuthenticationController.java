@@ -8,6 +8,7 @@ import com.docflow.identity.application.services.JwtTokenService;
 import com.docflow.identity.application.services.OrganizationSwitchUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,22 +47,104 @@ public class AuthenticationController {
         @ApiResponse(
             responseCode = "200",
             description = "Autenticación exitosa",
-            content = @Content(schema = @Schema(implementation = LoginResponse.class))
+            content = @Content(
+                schema = @Schema(implementation = LoginResponse.class),
+                examples = @ExampleObject(
+                    name = "Login exitoso",
+                    value = """
+                        {
+                          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                          "tipoToken": "Bearer",
+                          "expiraEn": 86400,
+                          "organizacionId": 1
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error de validación en los datos de entrada",
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class),
+                examples = @ExampleObject(
+                    name = "Validación fallida",
+                    value = """
+                        {
+                          "type": "https://docflow.com/errors/validation-error",
+                          "title": "Error de Validación",
+                          "status": 400,
+                          "detail": "Error de validación en los datos de entrada",
+                          "instance": "/api/v1/auth/login",
+                          "codigo": "VALIDATION_ERROR",
+                          "errors": {
+                            "email": "El email es obligatorio",
+                            "password": "La contraseña debe tener al menos 8 caracteres"
+                          }
+                        }
+                        """
+                )
+            )
         ),
         @ApiResponse(
             responseCode = "401",
             description = "Credenciales inválidas",
-            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class),
+                examples = @ExampleObject(
+                    name = "Credenciales incorrectas",
+                    value = """
+                        {
+                          "type": "https://docflow.com/errors/credenciales-invalidas",
+                          "title": "Credenciales Inválidas",
+                          "status": 401,
+                          "detail": "Credenciales inválidas",
+                          "instance": "/api/v1/auth/login",
+                          "codigo": "CREDENCIALES_INVALIDAS"
+                        }
+                        """
+                )
+            )
         ),
         @ApiResponse(
             responseCode = "403",
             description = "Usuario sin organizaciones activas",
-            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class),
+                examples = @ExampleObject(
+                    name = "Sin organización",
+                    value = """
+                        {
+                          "type": "https://docflow.com/errors/sin-organizacion",
+                          "title": "Sin Organización",
+                          "status": 403,
+                          "detail": "El usuario no tiene organizaciones activas",
+                          "instance": "/api/v1/auth/login",
+                          "codigo": "SIN_ORGANIZACION"
+                        }
+                        """
+                )
+            )
         ),
         @ApiResponse(
             responseCode = "409",
             description = "Configuración de organizaciones inválida",
-            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class),
+                examples = @ExampleObject(
+                    name = "Configuración inválida",
+                    value = """
+                        {
+                          "type": "https://docflow.com/errors/organizacion-config-invalida",
+                          "title": "Configuración de Organización Inválida",
+                          "status": 409,
+                          "detail": "Usuario con múltiples organizaciones debe tener una predeterminada",
+                          "instance": "/api/v1/auth/login",
+                          "codigo": "ORGANIZACION_CONFIG_INVALIDA"
+                        }
+                        """
+                )
+            )
         )
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {

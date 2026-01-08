@@ -226,7 +226,9 @@ Tu objetivo es generar una guía completa y el código inicial para un proyecto 
 Como experto en deploy de docker, generame un docker compose en la raiz del proyecto para levantar la BD necesarios para los microservicios #file:backend solamente: PostgreSQL, MiniO y MongoDB. Si falta alguna tecnologia mas indicamelo. Este docker compose es para local y probar aplicaciones. Generame un README indicando la funcionalidad solamente del docker compose.
 ```
 
-## Generar meta prompt para el flujo de trabajo como PM:
+`Generado metaprompt con: gemini 3.0 PRO`
+`Ejecucion para realizar los cambio con chatGPT-4.1`
+## Prompt para el flujo de trabajo como PM:
 ```prompt
 Como experto en prompt engineer, generame un meta prompt donde implique un PM  en desarrollo de software. Donde analice una lista de tickets de un proyecto y tecnologias. teniendo el espacio donde se especifica los tickets, backend y frontend del proyecto. Teniendo como resultado un markdown con el contexto de paso a paso como llevar el desarrollo del proyecto. El objetivo del markdown es llevar el registro del desarrollo del proyecto donde se va indicando que falta por desarrollar, que se ha desarrollado.
 ```
