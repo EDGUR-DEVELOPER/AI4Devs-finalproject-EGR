@@ -1,7 +1,6 @@
 package com.docflow.identity.infrastructure.security;
 
 import com.docflow.identity.application.services.JwtTokenService;
-import com.docflow.identity.infrastructure.config.JwtClaimNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -175,7 +174,7 @@ class JwtAuthenticationFilterIntegrationTest {
             mockMvc.perform(post("/api/v1/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(loginRequest)))
-                    .andExpect(status().isNot(401)); // No debe ser unauthorized
+                    .andExpect(status().is(not(401))); // No debe ser unauthorized
         }
     }
 
@@ -241,7 +240,7 @@ class JwtAuthenticationFilterIntegrationTest {
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(switchRequest)))
-                    .andExpect(status().isNot(401)); // No debe ser unauthorized
+                    .andExpect(status().is(not(401))); // No debe ser unauthorized
         }
     }
 

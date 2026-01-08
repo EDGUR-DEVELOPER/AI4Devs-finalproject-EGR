@@ -1,7 +1,7 @@
 # 📋 Bitácora de Desarrollo del Proyecto DocFlow
 
 > **Documento Maestro** - Fuente de verdad para el seguimiento del desarrollo  
-> **Última actualización:** 31 de diciembre de 2025  
+> **Última actualización:** 8 de enero de 2026  
 > **Deadline MVP:** 16 de enero de 2026
 
 ---
@@ -12,11 +12,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **15%** (Infraestructura + Autenticación base completada) |
-| **Tickets MVP** | 2/30 completados |
-| **Tickets Post-MVP** | 0/8 planificados |
-| **Días restantes** | 12 días (4 ene 2026 → 16 ene 2026) |
-| **Velocidad requerida** | ~2.5 tickets/día (con asistencia IA) |
+| **Progreso MVP** | 🟡 **18%** (Infraestructura + Autenticación base + Middleware completados) |
+| **Tickets MVP** | 3/30 completados |
+| **Tickets Post-MVP** | 1/9 planificados |
+| **Días restantes** | 8 días (8 ene 2026 → 16 ene 2026) |
+| **Velocidad requerida** | ~3.4 tickets/día (con asistencia IA) |
 
 ### Stack Principal
 
@@ -116,10 +116,11 @@ Dic 31 ────────────────────────�
 
 #### Día 2 (2 Ene)
 
-- [ ] **US-AUTH-003**: Middleware de autenticación
+- [x] **US-AUTH-003**: Middleware de autenticación ✅
     * *Detalle técnico:* Crear `JwtAuthenticationFilter` que valide token en cada request. Extraer claims e inyectar en `SecurityContext`. Configurar rutas públicas (`/auth/**`, `/health`).
     * *Servicio:* `identity-service`, `gateway-service`
     * *Dependencia:* US-AUTH-002
+    * *Estado:* Completado el 8 Ene 2026
 
 - [ ] **US-AUTH-004**: Aislamiento de datos por tenant
     * *Detalle técnico:* Agregar columna `organizacion_id` a todas las tablas de negocio. Crear `TenantContext` que extraiga `org_id` del token. Implementar `@TenantFilter` para auto-filtrar queries JPA.
@@ -348,18 +349,18 @@ Dic 31 ────────────────────────�
 
 ---
 
-## 3. Registro de Progreso (Ga29 tickets)
+## 3. Registro de Progreso (Ga30 tickets)
 
 | Fase | Tickets Pendientes |
 |------|-------------------|
-| Autenticación | US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006 |
+| Autenticación | US-AUTH-004, US-AUTH-005, US-AUTH-006 |
 | Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
 | Documentos | US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006 |
 | Auditoría | US-AUDIT-001, US-AUDIT-002, US-AUDIT-003 |
 
-### 🟡 Post-MVP (8 tickets) - Implementar después del 16 Ene
+### 🟡 Post-MVP (9 tickets) - Implementar después del 16 Ene
 
 | Ticket | Descripción | Justificación Diferir |
 |--------|-------------|----------------------|
@@ -369,6 +370,7 @@ Dic 31 ────────────────────────�
 | US-SEARCH-001 | Búsqueda de documentos (API) | Feature completo, requiere indexación |
 | US-SEARCH-002 | Búsqueda con filtro de permisos | Depende de US-SEARCH-001 |
 | US-SEARCH-003 | UI de búsqueda | Depende de US-SEARCH-001, 002 |
+| US-AUTH-007 | Implementación de Refresh Token | Mejora UX y seguridad, no bloquea MVP |
 
 ### 🟢 Completado
 
@@ -379,31 +381,31 @@ Dic 31 ────────────────────────�
 | INFRA-003 | Scaffolding frontend (React + Vite + TypeScript + Tailwind) | 31 Dic 2025 |
 | US-AUTH-001 | Login multi-organización (Backend completo: modelos, endpoint `/auth/login`, lógica de membresías) | 4 Ene 2026 |
 | US-AUTH-002 | Token JWT con claims de org/roles (Backend y Frontend) | 5 Ene 2026 |
+| US-AUTH-003 | Middleware de autenticación (Backend y Frontend: filtro JWT, interceptor Axios, manejo global de 401) | 8 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
-**Completar capa de autenticación y protección de endpoints:**
 
-1. **Iniciar US-AUTH-003 - Middleware de Autenticación** (`identity-service` + `gateway-service`):
-    - Crear `JwtAuthenticationFilter` que valide token en cada request.
-    - Configurar SecurityFilterChain con rutas públicas.
-    - Extraer claims e inyectar en SecurityContext.
+**Siguiente objetivo: consolidar autenticación y avanzar con administración.**
 
-2. **Avanzar con US-AUTH-004 - Aislamiento de datos por tenant**:
+1. **Iniciar US-AUTH-004 - Aislamiento de datos por tenant** (`identity-service`, `document-core-service`):
     - Agregar columna `organizacion_id` a todas las tablas de negocio.
     - Implementar `TenantContext` y filtros automáticos en JPA.
 
-3. **Paralelizar UI de Login y manejo de sesión (US-AUTH-005 y US-AUTH-006)** para acelerar integración frontend-backend.
+2. **Desarrollar US-AUTH-005 y US-AUTH-006 en frontend** para completar el flujo de login y manejo de sesión expirada.
 
-**Nota:** El avance en US-AUTH-003 es crítico, ya que desbloquea la protección de todos los endpoints y permite avanzar con administración y permisos.
-## 5. Notas de Desarrollo
+3. **Preparar inicio de US-ADMIN-001 (Crear usuario)**, ya desbloqueado por el avance en autenticación.
 
-
-### Día 5 (5 Ene 2026)
-- [x] US-AUTH-002 completado (Frontend y Backend): Ahora el frontend decodifica y almacena el JWT correctamente, integrando la interface `JwtPayload` y el manejo de token en el store de autenticación.
-- [ ] *Pendiente de iniciar US-AUTH-003 (Middleware de autenticación)*
+**Nota:** US-AUTH-003 completado. Se recomienda priorizar US-AUTH-004 y la UI de login para habilitar administración y permisos. US-AUTH-007 (Refresh Token) queda planificado como mejora post-MVP.
 
 ---
 
-*Documento generado el 31 de diciembre de 2025. Actualizar diariamente con el progreso.*
+## 5. Notas de Desarrollo
+
+### Día 8 (8 Ene 2026)
+- [x] US-AUTH-003 completado: Middleware de autenticación implementado en backend y frontend. Endpoints protegidos, manejo global de 401 y pruebas de integración exitosas.
+
+---
+
+*Documento generado el 8 de enero de 2026. Actualizar diariamente con el progreso.*
