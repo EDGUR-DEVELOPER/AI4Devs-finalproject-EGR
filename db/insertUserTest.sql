@@ -12,7 +12,7 @@ INSERT INTO organizaciones (id, fecha_creacion, nombre, estado, configuracion) V
 
 select * from usuarios;
 
-INSERT INTO usuarios (id, email, created_at, updated_at, hash_contrasena, nombre_completo, mfa_habilitado) VALUES
+INSERT INTO usuarios (id, email, fecha_creacion, fecha_actualizacion, hash_contrasena, nombre_completo, mfa_habilitado) VALUES
     (1, 'sin-org@test.com', NOW(), NOW(), '$2a$10$7QJ8QwQwQwQwQwQwQwQwQeQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw', 'Usuario Sin Org', false),
     (2, 'una-org@test.com', NOW(), NOW(), '$2a$10$7QJ8QwQwQwQwQwQwQwQwQeQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw', 'Usuario Con Una Org', false),
     (3, 'dos-org-ok@test.com', NOW(), NOW(), '$2a$10$7QJ8QwQwQwQwQwQwQwQwQeQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw', 'Usuario Con Dos Orgs OK', false),

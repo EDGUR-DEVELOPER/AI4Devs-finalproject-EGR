@@ -44,20 +44,20 @@ public class Usuario {
     @Column(name = "fecha_eliminacion")
     private OffsetDateTime fechaEliminacion;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private OffsetDateTime fechaCreacion;
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion", nullable = false)
+    private OffsetDateTime fechaActualizacion;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = updatedAt = OffsetDateTime.now();
+        fechaCreacion = fechaActualizacion = OffsetDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
+        fechaActualizacion = OffsetDateTime.now();
     }
 
     /**

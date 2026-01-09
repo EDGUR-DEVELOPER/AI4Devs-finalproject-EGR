@@ -34,8 +34,8 @@ CREATE TABLE usuarios (
     nombre_completo VARCHAR(100) NOT NULL,
     mfa_habilitado BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_eliminacion TIMESTAMPTZ DEFAULT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     
     CONSTRAINT ck_email_formato CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT ck_nombre_longitud CHECK (LENGTH(TRIM(nombre_completo)) >= 2)
@@ -51,19 +51,19 @@ COMMENT ON TABLE usuarios IS 'Actores del sistema con credenciales globales. Sop
 COMMENT ON COLUMN usuarios.hash_contrasena IS 'Hash seguro usando Bcrypt (costo 12) o Argon2id';
 COMMENT ON COLUMN usuarios.fecha_eliminacion IS 'Soft delete: si no es NULL, el usuario está desactivado';
 
--- Trigger para actualizar updated_at automáticamente
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Trigger para actualizar fecha_actualizacion automáticamente
+CREATE OR REPLACE FUNCTION actualizar_fecha_actualizacion()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = NOW();
+    NEW.fecha_actualizacion = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_usuarios_updated_at
+CREATE TRIGGER trigger_usuarios_fecha_actualizacion
     BEFORE UPDATE ON usuarios
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    EXECUTE FUNCTION actualizar_fecha_actualizacion();
 
 -- -----------------------------------------------------------------------------
 -- 3. TABLA: usuarios_organizaciones (Membresía Multi-Organización)

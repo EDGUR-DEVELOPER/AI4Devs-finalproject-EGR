@@ -10,7 +10,7 @@
 -- -----------------------------------------------------------------------------
 
 -- Usuario 1: ADMIN + OPERATOR (múltiples roles activos)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (101, 'admin.user@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Admin User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -22,7 +22,7 @@ VALUES
     (101, 3, 1, true, NOW(), NULL);  -- OPERATOR
 
 -- Usuario 2: USER (un solo rol activo)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (102, 'regular.user@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Regular User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -32,14 +32,14 @@ INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, fecha_a
 VALUES (102, 2, 1, true, NOW(), 101);  -- USER
 
 -- Usuario 3: Sin roles asignados (para probar listado sin roles)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (103, 'noroles.user@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'No Roles User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
 VALUES (103, 1, 'ACTIVO', true, NOW());
 
 -- Usuario 4: Usuario SUSPENDIDO (para probar filtros por estado)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (104, 'suspended.user@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Suspended User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -49,7 +49,7 @@ INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, fecha_a
 VALUES (104, 2, 1, true, NOW(), 101);  -- USER
 
 -- Usuario 5: USER + OPERATOR (múltiples roles)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (105, 'multi.role@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Multi Role User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -61,7 +61,7 @@ VALUES
     (105, 3, 1, true, NOW(), 101);  -- OPERATOR
 
 -- Usuario 6: Usuario para búsqueda por nombre (nombre contiene "Juan")
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (106, 'juan.perez@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Juan Pérez González', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -71,7 +71,7 @@ INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, fecha_a
 VALUES (106, 2, 1, true, NOW(), 101);  -- USER
 
 -- Usuario 7: Usuario para búsqueda por email (email contiene "test")
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (107, 'test.search@acme.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Test Search User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -85,7 +85,7 @@ VALUES (107, 2, 1, true, NOW(), 101);  -- USER
 -- -----------------------------------------------------------------------------
 
 -- Usuario 201: Admin de Contoso (NO debe aparecer en listados de Acme)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (201, 'admin@contoso.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Contoso Admin', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)
@@ -95,7 +95,7 @@ INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, fecha_a
 VALUES (201, 1, 2, true, NOW(), NULL);  -- ADMIN
 
 -- Usuario 202: Usuario de Contoso (validación aislamiento)
-INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, created_at, updated_at) 
+INSERT INTO usuarios (id, email, hash_contrasena, nombre_completo, mfa_habilitado, fecha_eliminacion, fecha_creacion, fecha_actualizacion) 
 VALUES (202, 'user@contoso.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TuPcGmy30x9SToB5xLqf7gF8F3ni', 'Contoso User', false, NULL, NOW(), NOW());
 
 INSERT INTO usuarios_organizaciones (usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion)

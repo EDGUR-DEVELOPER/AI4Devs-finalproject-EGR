@@ -23,7 +23,7 @@ public record UserWithRolesProjection(
     String email,
     String nombreCompleto,
     String estado,
-    Integer rolId,
+    Long rolId,
     String rolCodigo,
     String rolNombre,
     OffsetDateTime fechaCreacion

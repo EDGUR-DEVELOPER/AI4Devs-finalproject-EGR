@@ -71,7 +71,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             r.id,
             r.codigo,
             r.nombre,
-            u.createdAt
+            u.fechaCreacion
         )
         FROM Usuario u
         INNER JOIN UsuarioOrganizacion uo ON uo.usuarioId = u.id

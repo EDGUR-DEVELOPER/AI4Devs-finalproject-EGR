@@ -47,7 +47,7 @@ kafka:
   producer:
     # Serialización JSON para eventos
     key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    # value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     # Retry policy: 3 reintentos con backoff exponencial
     retries: 3
     properties:
@@ -58,8 +58,8 @@ kafka:
     # Garantía de entrega: esperar confirmación de todos los réplicas
     acks: all
     # Idempotencia para evitar duplicados en reintentos
-    properties:
-      enable.idempotence: true
+    # properties:
+    #   enable.idempotence: true
   # Topics
   topics:
     role-assigned: identity.role.assigned

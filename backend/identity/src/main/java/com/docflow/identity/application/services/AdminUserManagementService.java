@@ -94,7 +94,7 @@ public class AdminUserManagementService {
             usuarioGuardado.getEmail(),
             usuarioGuardado.getNombreCompleto(),
             organizacionId,
-            usuarioGuardado.getCreatedAt()
+            usuarioGuardado.getFechaCreacion()
         );
     }
     
@@ -183,7 +183,7 @@ public class AdminUserManagementService {
                 usuarioDummy.setId(primeraProyeccion.usuarioId());
                 usuarioDummy.setEmail(primeraProyeccion.email());
                 usuarioDummy.setNombreCompleto(primeraProyeccion.nombreCompleto());
-                usuarioDummy.setCreatedAt(primeraProyeccion.fechaCreacion());
+                usuarioDummy.setFechaCreacion(primeraProyeccion.fechaCreacion());
                 
                 // Mapear roles (filtrar NULL para usuarios sin roles)
                 List<RoleSummaryDto> rolesDto = proyeccionesUsuario.stream()
@@ -206,7 +206,7 @@ public class AdminUserManagementService {
                     usuarioDummy.getNombreCompleto(),
                     primeraProyeccion.estado(), // Estado de membresía (ACTIVO/SUSPENDIDO)
                     rolesDto,
-                    usuarioDummy.getCreatedAt()
+                    usuarioDummy.getFechaCreacion()
                 );
             })
             .toList();

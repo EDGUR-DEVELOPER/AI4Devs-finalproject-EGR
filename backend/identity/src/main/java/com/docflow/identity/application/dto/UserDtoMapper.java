@@ -27,7 +27,7 @@ public interface UserDtoMapper {
     @Mapping(target = "id", source = "usuario.id")
     @Mapping(target = "email", source = "usuario.email")
     @Mapping(target = "nombreCompleto", source = "usuario.nombreCompleto")
-    @Mapping(target = "fechaCreacion", source = "usuario.createdAt")
+    @Mapping(target = "fechaCreacion", source = "usuario.fechaCreacion")
     @Mapping(target = "roles", source = "roles")
     UserWithRolesDto toUserWithRolesDto(Usuario usuario, List<RoleSummaryDto> roles);
     
