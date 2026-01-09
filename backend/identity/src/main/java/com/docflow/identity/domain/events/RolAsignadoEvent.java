@@ -18,64 +18,56 @@ public record RolAsignadoEvent(
     @JsonProperty("event_id")
     @Schema(
         description = "ID único del evento (UUID) para deduplicación en consumers",
-        example = "550e8400-e29b-41d4-a716-446655440000",
-        required = true
+        example = "550e8400-e29b-41d4-a716-446655440000"
     )
     String eventId,
     
     @JsonProperty("event_version")
     @Schema(
         description = "Versión del esquema del evento para evolución compatible",
-        example = "1.0",
-        required = true
+        example = "1.0"
     )
     String eventVersion,
     
     @JsonProperty("usuario_id")
     @Schema(
         description = "ID del usuario al que se asignó el rol",
-        example = "100",
-        required = true
+        example = "100"
     )
     Long usuarioId,
     
     @JsonProperty("rol_id")
     @Schema(
         description = "ID del rol asignado",
-        example = "2",
-        required = true
+        example = "2"
     )
     Integer rolId,
     
     @JsonProperty("organizacion_id")
     @Schema(
         description = "ID de la organización en la que se hizo la asignación",
-        example = "1",
-        required = true
+        example = "1"
     )
     Integer organizacionId,
     
     @JsonProperty("asignado_por")
     @Schema(
         description = "ID del usuario administrador que realizó la asignación",
-        example = "50",
-        required = true
+        example = "50"
     )
     Long asignadoPor,
     
     @JsonProperty("es_reactivacion")
     @Schema(
         description = "Indica si fue una reactivación de asignación previamente desactivada",
-        example = "false",
-        required = true
+        example = "false"
     )
     boolean esReactivacion,
     
     @JsonProperty("timestamp")
     @Schema(
         description = "Fecha y hora en que ocurrió la asignación (ISO 8601)",
-        example = "2026-01-09T10:30:00Z",
-        required = true
+        example = "2026-01-09T10:30:00Z"
     )
     OffsetDateTime timestamp
     

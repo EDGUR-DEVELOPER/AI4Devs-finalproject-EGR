@@ -13,8 +13,7 @@ public record AssignRoleRequest(
     
     @Schema(
         description = "ID del rol a asignar (global o de la organización)",
-        example = "2",
-        required = true
+        example = "2"
     )
     @NotNull(message = "El ID del rol es obligatorio")
     @Positive(message = "El ID del rol debe ser un número positivo")

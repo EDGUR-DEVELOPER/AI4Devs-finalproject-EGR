@@ -1,5 +1,7 @@
 package com.docflow.gateway.infrastructure.adapters.input.rest;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +51,8 @@ class HealthControllerTest {
                 .expectBody()
                 .jsonPath("$.status").exists()
                 .jsonPath("$.*").value(list -> {
-                    @SuppressWarnings("unchecked")
-                    java.util.List<Object> values = (java.util.List<Object>) list;
+                    
+                    List<Object> values = (java.util.List<Object>) list;
                     org.assertj.core.api.Assertions.assertThat(values).hasSize(1);
                 });
     }

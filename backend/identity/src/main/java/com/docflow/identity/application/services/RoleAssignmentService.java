@@ -68,7 +68,7 @@ public class RoleAssignmentService {
             usuarioId, rolId, organizacionId, asignadoPor);
         
         // 1. Validar que el usuario existe y no está eliminado
-        var usuario = usuarioRepository.findByIdAndFechaEliminacionIsNull(usuarioId)
+        usuarioRepository.findByIdAndFechaEliminacionIsNull(usuarioId)
             .orElseThrow(() -> {
                 log.warn("Usuario no encontrado o eliminado: usuarioId={}", usuarioId);
                 return new ResourceNotFoundException("Usuario", usuarioId);
