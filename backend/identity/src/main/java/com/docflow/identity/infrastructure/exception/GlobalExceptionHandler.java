@@ -1,8 +1,10 @@
 package com.docflow.identity.infrastructure.exception;
 
+import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
 import com.docflow.identity.domain.exceptions.InvalidCredentialsException;
 import com.docflow.identity.domain.exceptions.OrganizacionConfigInvalidaException;
 import com.docflow.identity.domain.exceptions.OrganizacionNoEncontradaException;
+import com.docflow.identity.domain.exceptions.PermisoInsuficienteException;
 import com.docflow.identity.domain.exceptions.SinOrganizacionException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -141,6 +143,63 @@ public class GlobalExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+    }
+
+    /**
+     * Maneja intentos de creación de usuarios con emails duplicados (409 Conflict).
+     * 
+     * Esta excepción se lanza cuando se intenta registrar un email ya existente en el sistema.
+     * Retorna HTTP 409 Conflict con formato ProblemDetail (RFC 7807).
+     * 
+     * Parte de US-ADMIN-001: Crear usuario (API) dentro de la organización.
+     */
+    @ExceptionHandler(EmailDuplicadoException.class)
+    public ResponseEntity<ProblemDetail> handleEmailDuplicado(
+            EmailDuplicadoException ex,
+            HttpServletRequest request) {
+
+        log.warn("Email duplicado en creación de usuario: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "email-duplicado"));
+        problem.setTitle("Email Duplicado");
+        problem.setProperty("codigo", "EMAIL_DUPLICADO");
+        problem.setProperty("categoria", "VALIDATION");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    /**
+     * Maneja intentos de operaciones administrativas sin permisos suficientes (403 Forbidden).
+     * 
+     * Esta excepción se lanza cuando un usuario intenta realizar una operación que requiere
+     * un rol específico (ej. ADMIN) y no lo posee.
+     * Retorna HTTP 403 Forbidden con formato ProblemDetail (RFC 7807).
+     * 
+     * Parte de US-ADMIN-001: Crear usuario (API) dentro de la organización.
+     */
+    @ExceptionHandler(PermisoInsuficienteException.class)
+    public ResponseEntity<ProblemDetail> handlePermisoInsuficiente(
+            PermisoInsuficienteException ex,
+            HttpServletRequest request) {
+
+        log.warn("Acceso denegado por permisos insuficientes: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "permiso-insuficiente"));
+        problem.setTitle("Permisos Insuficientes");
+        problem.setProperty("codigo", "PERMISO_INSUFICIENTE");
+        problem.setProperty("categoria", "AUTHORIZATION");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 
     /**

@@ -1,7 +1,7 @@
 # 📋 Bitácora de Desarrollo del Proyecto DocFlow
 
 > **Documento Maestro** - Fuente de verdad para el seguimiento del desarrollo  
-> **Última actualización:** 8 de enero de 2026  
+> **Última actualización:** 9 de enero de 2026  
 > **Deadline MVP:** 16 de enero de 2026
 
 ---
@@ -12,11 +12,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **27%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada completados) |
-| **Tickets MVP** | 6/30 completados |
+| **Progreso MVP** | 🟡 **30%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario completados) |
+| **Tickets MVP** | 7/30 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
-| **Días restantes** | 8 días (8 ene 2026 → 16 ene 2026) |
-| **Velocidad requerida** | ~3.4 tickets/día (con asistencia IA) |
+| **Días restantes** | 7 días (9 ene 2026 → 16 ene 2026) |
+| **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) |
 
 ### Stack Principal
 
@@ -152,11 +152,12 @@ Dic 31 ────────────────────────�
 
 #### Día 5 (5 Ene)
 
-- [ ] **US-ADMIN-001**: Crear usuario (API)
+- [x] **US-ADMIN-001**: Crear usuario (API)
     * *Detalle técnico:* Endpoint `POST /admin/users` que crea usuario dentro de la organización del admin. Hash de password con BCrypt. Validar unicidad de email por organización.
     * *Servicio:* `identity-service`
     * *Guard:* Requiere rol `ADMIN`
     * *Dependencia:* US-AUTH-003, US-AUTH-004
+    * *Estado:* Completado el 9 Ene 2026
 
 - [ ] **US-ADMIN-002**: Asignar rol (API)
     * *Detalle técnico:* Endpoint `POST /admin/users/{userId}/roles`. Crear tabla `roles` y `usuarios_roles`. Roles iniciales: `ADMIN`, `EDITOR`, `VIEWER`.
@@ -357,7 +358,7 @@ Dic 31 ────────────────────────�
 | Fase | Tickets Pendientes |
 |------|-------------------|
 | Autenticación |  |
-| Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
+| Administración | US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
 | Documentos | US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006 |
@@ -389,34 +390,35 @@ Dic 31 ────────────────────────�
 | US-AUTH-003 | Middleware de autenticación (Backend y Frontend: filtro JWT, interceptor Axios, manejo global de 401) | 8 Ene 2026 |
 | US-AUTH-004 | Aislamiento de datos por tenant (DB, backend, frontend: migración, contexto, persistencia, filtrado, manejo de errores) | 8 Ene 2026 |
 | US-AUTH-005 | UI de Login (Frontend: LoginPage, integración con backend, manejo de sesión y errores) | 8 Ene 2026 |
-| US-AUTH-006 | Manejo de sesión expirada (Interceptor Axios, limpieza de estado, redirección y alerta UX) | 8 Ene 2026 |
+| US-AUTH-006 | Manejo de sesión expirada (Interceptor Axios, limpieza de estado, redirección a login y alerta UX) | 8 Ene 2026 |
+| US-ADMIN-001 | Crear usuario (API, endpoint `/admin/users`, validación de email, hash de contraseña, asociación a organización, error handling RFC 7807) | 9 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
 
-**Siguiente objetivo: robustecer la experiencia de usuario y avanzar en administración.**
+**Siguiente objetivo: avanzar en administración de usuarios y gestión de roles.**
 
-**Siguiente objetivo: avanzar en administración de usuarios y permisos ACL.**
-
-1. **Iniciar US-ADMIN-001 - Crear usuario (API)** (`identity-service`):
-    - Habilitar la creación de usuarios desde el panel de administración.
-
-2. **Desarrollar US-ADMIN-002 - Asignar rol** (`identity-service`):
+1. **Iniciar US-ADMIN-002 - Asignar rol (API)** (`identity-service`):
     - Permitir la gestión de roles para usuarios recién creados.
+
+2. **Desarrollar US-ADMIN-003 - Listar usuarios (API)** (`identity-service`):
+    - Habilitar la consulta y paginación de usuarios por organización.
 
 3. **Preparar inicio de US-ACL-001 (Catálogo de niveles de acceso)**, una vez que la administración básica esté lista.
 
-**Nota:** El flujo de autenticación y manejo de sesión expirada ya está robusto. Se recomienda priorizar la gestión de usuarios y permisos para habilitar la administración y el control de acceso.
+**Nota:** El endpoint de creación de usuario ya está disponible y probado. Se recomienda priorizar la gestión de roles y la visualización de usuarios para habilitar la administración y el control de acceso.
 
 ---
 
 ## 5. Notas de Desarrollo
 
+### Día 9 (9 Ene 2026)
+
+- [x] US-ADMIN-001 completado: Endpoint `POST /admin/users` implementado y probado. Validación de email, hash de contraseña, asociación a organización y manejo de errores RFC 7807 funcionando correctamente. Desbloquea el desarrollo de asignación de roles y listado de usuarios.
 
 ### Día 8 (8 Ene 2026)
 
-### Día 8 (8 Ene 2026)
 - [x] US-AUTH-003 completado: Middleware de autenticación implementado en backend y frontend. Endpoints protegidos, manejo global de 401 y pruebas de integración exitosas.
 - [x] US-AUTH-004 completado: Aislamiento de datos por organización implementado en DB, backend y frontend. Migraciones, contexto de tenant, persistencia y filtrado global activos.
 - [x] US-AUTH-005 completado: UI de Login implementada e integrada con backend. Manejo de selección de organización, almacenamiento de token y feedback de errores funcional.
@@ -424,4 +426,4 @@ Dic 31 ────────────────────────�
 
 ---
 
-*Documento generado el 8 de enero de 2026. Actualizar diariamente con el progreso.*
+*Documento generado el 9 de enero de 2026. Actualizar diariamente con el progreso.*
