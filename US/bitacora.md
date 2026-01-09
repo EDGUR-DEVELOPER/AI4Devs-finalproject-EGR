@@ -12,8 +12,8 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **24%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login completados) |
-| **Tickets MVP** | 5/30 completados |
+| **Progreso MVP** | 🟡 **27%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada completados) |
+| **Tickets MVP** | 6/30 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
 | **Días restantes** | 8 días (8 ene 2026 → 16 ene 2026) |
 | **Velocidad requerida** | ~3.4 tickets/día (con asistencia IA) |
@@ -137,7 +137,8 @@ Dic 31 ────────────────────────�
     * *Dependencia:* US-AUTH-001, US-AUTH-002
     * *Estado:* Completado el 8 Ene 2026
 
-- [ ] **US-AUTH-006**: Manejo de sesión expirada
+- [x] **US-AUTH-006**: Manejo de sesión expirada
+        - [x] **US-AUTH-006**: Manejo de sesión expirada
     * *Detalle técnico:* Crear interceptor Axios que detecte 401. Limpiar token y redirigir a `/login` con mensaje. Implementar `useAuth` hook para validar sesión activa.
     * *Servicio:* `frontend`
     * *Dependencia:* US-AUTH-005
@@ -355,7 +356,7 @@ Dic 31 ────────────────────────�
 
 | Fase | Tickets Pendientes |
 |------|-------------------|
-| Autenticación | US-AUTH-006 |
+| Autenticación |  |
 | Administración | US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
@@ -388,6 +389,7 @@ Dic 31 ────────────────────────�
 | US-AUTH-003 | Middleware de autenticación (Backend y Frontend: filtro JWT, interceptor Axios, manejo global de 401) | 8 Ene 2026 |
 | US-AUTH-004 | Aislamiento de datos por tenant (DB, backend, frontend: migración, contexto, persistencia, filtrado, manejo de errores) | 8 Ene 2026 |
 | US-AUTH-005 | UI de Login (Frontend: LoginPage, integración con backend, manejo de sesión y errores) | 8 Ene 2026 |
+| US-AUTH-006 | Manejo de sesión expirada (Interceptor Axios, limpieza de estado, redirección y alerta UX) | 8 Ene 2026 |
 
 ---
 
@@ -395,16 +397,17 @@ Dic 31 ────────────────────────�
 
 **Siguiente objetivo: robustecer la experiencia de usuario y avanzar en administración.**
 
-1. **Iniciar US-AUTH-006 - Manejo de sesión expirada** (`frontend`):
-    - Implementar el interceptor Axios para detectar expiración de sesión y limpiar el estado.
-    - Mejorar la UX ante errores de autenticación.
+**Siguiente objetivo: avanzar en administración de usuarios y permisos ACL.**
 
-2. **Desarrollar US-ADMIN-001 - Crear usuario (API)** (`identity-service`):
+1. **Iniciar US-ADMIN-001 - Crear usuario (API)** (`identity-service`):
     - Habilitar la creación de usuarios desde el panel de administración.
 
-3. **Preparar inicio de US-ADMIN-002 (Asignar rol)**, una vez que la creación de usuarios esté lista.
+2. **Desarrollar US-ADMIN-002 - Asignar rol** (`identity-service`):
+    - Permitir la gestión de roles para usuarios recién creados.
 
-**Nota:** El flujo de login ya está disponible. Se recomienda priorizar la robustez de la sesión y la administración de usuarios para habilitar la gestión completa de accesos.
+3. **Preparar inicio de US-ACL-001 (Catálogo de niveles de acceso)**, una vez que la administración básica esté lista.
+
+**Nota:** El flujo de autenticación y manejo de sesión expirada ya está robusto. Se recomienda priorizar la gestión de usuarios y permisos para habilitar la administración y el control de acceso.
 
 ---
 
@@ -412,9 +415,12 @@ Dic 31 ────────────────────────�
 
 
 ### Día 8 (8 Ene 2026)
+
+### Día 8 (8 Ene 2026)
 - [x] US-AUTH-003 completado: Middleware de autenticación implementado en backend y frontend. Endpoints protegidos, manejo global de 401 y pruebas de integración exitosas.
 - [x] US-AUTH-004 completado: Aislamiento de datos por organización implementado en DB, backend y frontend. Migraciones, contexto de tenant, persistencia y filtrado global activos.
 - [x] US-AUTH-005 completado: UI de Login implementada e integrada con backend. Manejo de selección de organización, almacenamiento de token y feedback de errores funcional.
+- [x] US-AUTH-006 completado: Manejo de sesión expirada implementado en frontend. Interceptor Axios, limpieza de estado, redirección a login y alerta UX funcional.
 
 ---
 

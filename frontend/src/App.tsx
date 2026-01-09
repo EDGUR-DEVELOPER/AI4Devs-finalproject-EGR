@@ -21,6 +21,7 @@ function App() {
 /**
  * Listener component for auth:logout events
  * Centralizes logout redirection logic
+ * US-AUTH-006: Agrega query param ?reason=expired para sesiones expiradas
  */
 function AuthLogoutListener() {
   const navigate = useNavigate();
@@ -30,8 +31,17 @@ function AuthLogoutListener() {
       const customEvent = event as CustomEvent<{ reason: string }>;
       console.log('Auth logout event received:', customEvent.detail);
       
-      // Redirect to login page
-      navigate('/login', { replace: true });
+      // US-AUTH-006: Agregar query param para sesiones expiradas
+      const reason = customEvent.detail?.reason;
+      const shouldShowExpiredMessage = 
+        reason === 'unauthorized' || reason === 'expired';
+      
+      // Redirect to login page con query param si es sesión expirada
+      if (shouldShowExpiredMessage) {
+        navigate('/login?reason=expired', { replace: true });
+      } else {
+        navigate('/login', { replace: true });
+      }
     };
 
     window.addEventListener('auth:logout', handleLogout);
