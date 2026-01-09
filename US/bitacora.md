@@ -12,10 +12,8 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **30%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario completados) |
-| **Progreso MVP** | 🟡 **33%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol completados) |
-| **Tickets MVP** | 8/30 completados |
-[x] **US-ADMIN-002**: Asignar rol (API)
+| **Progreso MVP** | 🟡 **40%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario completados) |
+| **Tickets MVP** | 10/30 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
 | **Días restantes** | 7 días (9 ene 2026 → 16 ene 2026) |
 | **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) |
@@ -161,22 +159,25 @@ Dic 31 ────────────────────────�
     * *Dependencia:* US-AUTH-003, US-AUTH-004
     * *Estado:* Completado el 9 Ene 2026
 
-- [ ] **US-ADMIN-002**: Asignar rol (API)
+- [x] **US-ADMIN-002**: Asignar rol (API)
     * *Detalle técnico:* Endpoint `POST /admin/users/{userId}/roles`. Crear tabla `roles` y `usuarios_roles`. Roles iniciales: `ADMIN`, `EDITOR`, `VIEWER`.
     * *Servicio:* `identity-service`
     * *Dependencia:* US-ADMIN-001
+    * *Estado:* Completado el 9 Ene 2026
 
-- [ ] **US-ADMIN-003**: Listar usuarios (API)
+- [x] **US-ADMIN-003**: Listar usuarios (API)
     * *Detalle técnico:* Endpoint `GET /admin/users` con paginación. Filtrar automáticamente por `organizacion_id` del token. Incluir roles de cada usuario en respuesta.
     * *Servicio:* `identity-service`
     * *Dependencia:* US-ADMIN-001
+    * *Estado:* Completado el 9 Ene 2026
 
 #### Día 6 (6 Ene)
 
-- [ ] **US-ADMIN-004**: Desactivar usuario (API)
+- [x] **US-ADMIN-004**: Desactivar usuario (API)
     * *Detalle técnico:* Endpoint `PATCH /admin/users/{userId}/deactivate`. Soft-delete con campo `activo=false`. Invalidar tokens activos del usuario. Prevenir auto-desactivación.
     * *Servicio:* `identity-service`
     * *Dependencia:* US-ADMIN-001
+    * *Estado:* Completado el 9 Ene 2026
 
 - [ ] **US-ADMIN-005**: UI Gestión de Usuarios
     * *Detalle técnico:* Crear `UsersPage.tsx` con tabla de usuarios, modal de creación, acción de desactivar, selector de roles. Usar componentes Tailwind.
@@ -355,16 +356,14 @@ Dic 31 ────────────────────────�
 
 ---
 
-## 3. Registro de Progreso (Ga30 tickets)
 
-| Fase | Tickets Pendientes |
-|------|-------------------|
-| Autenticación |  |
-| Administración | US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
-| Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
-| Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
-| Documentos | US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006 |
-| Auditoría | US-AUDIT-001, US-AUDIT-002, US-AUDIT-003 |
+## 3. Registro de Progreso (Gap Analysis)
+
+* **🔴 Por Desarrollar:**  
+US-ADMIN-005, US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
+
+* **🟢 Desarrollado:**  
+INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004
 
 ### 🟡 Post-MVP (9 tickets) - Implementar después del 16 Ene
 
@@ -398,20 +397,13 @@ Dic 31 ────────────────────────�
 
 ---
 
+
 ## 4. Próximos Pasos Recomendados
 
-**Siguiente objetivo: avanzar en administración de usuarios y visualización.**
-
-1. **Desarrollar US-ADMIN-003 - Listar usuarios (API)** (`identity-service`):
-    - Habilitar la consulta y paginación de usuarios por organización. Permite a los administradores gestionar y auditar usuarios existentes.
-
-2. **Desarrollar US-ADMIN-004 - Desactivar usuario (API)** (`identity-service`):
-    - Permitir la desactivación de usuarios de manera segura, asegurando el aislamiento y la integridad de la organización.
-
-3. **Preparar inicio de US-ACL-001 (Catálogo de niveles de acceso)** (`document-core-service`):
-    - Una vez que la administración básica esté lista, comenzar con la gestión de permisos y niveles de acceso.
-
-**Nota:** El endpoint de asignación de roles ya está disponible y probado. Se recomienda priorizar la visualización y gestión de usuarios para habilitar la administración y el control de acceso.
+1. Priorizar **US-ADMIN-005** (UI de Gestión de Usuarios) para habilitar la administración visual y pruebas end-to-end del flujo de usuarios.
+2. Iniciar la **Fase 3 (ACL)** con **US-ACL-001** (Catálogo de niveles de acceso), ya que es prerequisito para la gestión de permisos.
+3. Planificar el desarrollo de endpoints de carpetas y documentos en paralelo, una vez que la base de permisos esté lista.
+4. Mantener la cobertura de pruebas y la documentación actualizada para evitar bloqueos en QA y auditoría.
 
 ---
 

@@ -1,5 +1,6 @@
 package com.docflow.identity.infrastructure.exception;
 
+import com.docflow.identity.domain.exceptions.AutoDeactivationNotAllowedException;
 import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
 import com.docflow.identity.domain.exceptions.InvalidCredentialsException;
 import com.docflow.identity.domain.exceptions.OrganizacionConfigInvalidaException;
@@ -200,6 +201,29 @@ public class GlobalExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
+    /**
+     * Maneja AutoDeactivationNotAllowedException (400 Bad Request).
+     * Se lanza cuando un administrador intenta desactivarse a sí mismo.
+     */
+    @ExceptionHandler(AutoDeactivationNotAllowedException.class)
+    public ResponseEntity<ProblemDetail> handleAutoDeactivationNotAllowed(
+            AutoDeactivationNotAllowedException ex,
+            HttpServletRequest request) {
+
+        log.warn("Intento de auto-desactivación bloqueado: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "auto-deactivation-not-allowed"));
+        problem.setTitle("Auto-desactivación no permitida");
+        problem.setProperty("codigo", "AUTO_DEACTIVACION_NO_PERMITIDA");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.badRequest().body(problem);
     }
 
     /**

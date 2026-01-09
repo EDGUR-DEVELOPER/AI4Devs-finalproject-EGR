@@ -12,5 +12,10 @@ public enum EstadoMembresia {
     /**
      * Membresía temporalmente suspendida.
      */
-    SUSPENDIDO
+    SUSPENDIDO,
+
+    /**
+     * Membresía desactivada permanentemente por un admin.
+     */
+    INACTIVO
 }

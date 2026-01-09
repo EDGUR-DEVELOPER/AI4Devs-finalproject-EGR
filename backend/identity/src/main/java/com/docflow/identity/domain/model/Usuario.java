@@ -34,6 +34,13 @@ public class Usuario {
     @Column(name = "mfa_habilitado", nullable = false)
     private Boolean mfaHabilitado = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private EstadoUsuario estado = EstadoUsuario.ACTIVO;
+
+    @Column(name = "fecha_desactivacion")
+    private OffsetDateTime fechaDesactivacion;
+
     @Column(name = "fecha_eliminacion")
     private OffsetDateTime fechaEliminacion;
 
@@ -60,5 +67,22 @@ public class Usuario {
      */
     public boolean isDeleted() {
         return fechaEliminacion != null;
+    }
+
+    /**
+     * Verifica si el usuario puede autenticarse activamente.
+     *
+     * @return true si el usuario está activo y no eliminado
+     */
+    public boolean isActivo() {
+        return estado == EstadoUsuario.ACTIVO && fechaEliminacion == null;
+    }
+
+    /**
+     * Desactiva el usuario estableciendo estado INACTIVO y registrando timestamp.
+     */
+    public void desactivar() {
+        this.estado = EstadoUsuario.INACTIVO;
+        this.fechaDesactivacion = OffsetDateTime.now();
     }
 }

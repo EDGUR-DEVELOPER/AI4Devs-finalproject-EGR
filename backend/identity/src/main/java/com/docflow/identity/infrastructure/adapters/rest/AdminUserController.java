@@ -11,11 +11,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -292,6 +294,73 @@ public class AdminUserController {
             response.usuarios().size(), 
             response.paginacion().pagina(),
             response.paginacion().totalPaginas());
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Desactiva un usuario en la organización del administrador.
+     * 
+     * <p><b>Efectos:</b>
+     * <ul>
+     *   <li>El usuario no podrá autenticarse nuevamente</li>
+     *   <li>Los tokens JWT existentes serán rechazados inmediatamente</li>
+     *   <li>La membresía en la organización se marca como INACTIVA</li>
+     *   <li>Los datos del usuario se preservan para auditoría</li>
+     * </ul>
+     * 
+     * <p><b>Restricciones:</b>
+     * <ul>
+     *   <li>Solo usuarios con rol ADMIN o SUPER_ADMIN pueden ejecutar esta acción</li>
+     *   <li>Un administrador NO puede desactivarse a sí mismo (retorna 400)</li>
+     *   <li>Solo puede desactivar usuarios de su propia organización (aislamiento multi-tenant)</li>
+     * </ul>
+     * 
+     * @param usuarioId ID del usuario a desactivar
+     * @param tokenValidation Token JWT del administrador (inyectado por Spring Security)
+     * @return 200 con mensaje de confirmación y timestamp
+     */
+    @PatchMapping("/{usuarioId}/deactivate")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @Operation(
+        summary = "Desactivar usuario",
+        description = "Desactiva un usuario en la organización actual sin eliminar sus datos. Los tokens existentes dejarán de funcionar inmediatamente.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        responses = {
+            @ApiResponse(
+                responseCode = "200",
+                description = "Usuario desactivado exitosamente",
+                content = @Content(schema = @Schema(implementation = DeactivateUserResponse.class))
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Intento de auto-desactivación",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                responseCode = "403",
+                description = "Rol insuficiente (requiere ADMIN)",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                responseCode = "404",
+                description = "Usuario no encontrado en la organización",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+        }
+    )
+    public ResponseEntity<DeactivateUserResponse> deactivateUser(
+            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal TokenValidationResult tokenValidation) {
+        
+        log.info("Admin {} solicita desactivar usuario {} en organización {}", 
+                 tokenValidation.usuarioId(), usuarioId, tokenValidation.organizacionId());
+        
+        var response = adminUserService.deactivateUser(
+            usuarioId, 
+            tokenValidation.organizacionId(), 
+            tokenValidation.usuarioId() // Para validar auto-desactivación
+        );
         
         return ResponseEntity.ok(response);
     }

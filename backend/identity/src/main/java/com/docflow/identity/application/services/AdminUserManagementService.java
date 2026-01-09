@@ -4,11 +4,14 @@ import com.docflow.identity.application.dto.*;
 import com.docflow.identity.application.ports.UserWithRolesProjection;
 import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
 import com.docflow.identity.application.ports.UsuarioRepository;
+import com.docflow.identity.domain.exceptions.AutoDeactivationNotAllowedException;
 import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
+import com.docflow.identity.domain.exceptions.ResourceNotFoundException;
 import com.docflow.identity.domain.model.EstadoMembresia;
 import com.docflow.identity.domain.model.Rol;
 import com.docflow.identity.domain.model.Usuario;
 import com.docflow.identity.domain.model.UsuarioOrganizacion;
+import com.docflow.identity.domain.model.UsuarioOrganizacionId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -244,5 +247,94 @@ public class AdminUserManagementService {
         
         // 8. Retornar respuesta con usuarios y metadata
         return new ListUsersResponseDto(usuariosFiltrados, paginacion);
+    }
+
+    /**
+     * Desactiva un usuario en una organización específica.
+     * 
+     * <p>Esta operación:
+     * <ul>
+     *   <li>Valida que el usuario exista y pertenezca a la organización</li>
+     *   <li>Actualiza el estado del usuario a INACTIVO</li>
+     *   <li>Actualiza la membresía organizacional a INACTIVO</li>
+     *   <li>Registra la fecha de desactivación para auditoría</li>
+     * </ul>
+     * 
+     * <p><b>Efecto en autenticación:</b> Los tokens JWT existentes del usuario
+     * serán rechazados en el próximo request debido a la validación en tiempo real
+     * del filtro de autenticación.
+     * 
+     * @param usuarioId ID del usuario a desactivar
+     * @param organizacionId ID de la organización del administrador que ejecuta la acción
+     * @param adminId ID del administrador ejecutando la acción (para evitar auto-desactivación)
+     * @return Respuesta con confirmación y timestamp de desactivación
+     * @throws AutoDeactivationNotAllowedException si el admin intenta desactivarse a sí mismo
+     * @throws ResourceNotFoundException si el usuario no existe o no pertenece a la organización
+     */
+    @Transactional
+    public DeactivateUserResponse deactivateUser(
+            Long usuarioId, 
+            Integer organizacionId, 
+            Long adminId) {
+        
+        log.info("Iniciando desactivación de usuario {} en organización {} por admin {}", 
+                 usuarioId, organizacionId, adminId);
+        
+        // 1. Validación de auto-desactivación
+        if (usuarioId.equals(adminId)) {
+            log.warn("Admin {} intentó auto-desactivarse", adminId);
+            throw new AutoDeactivationNotAllowedException(
+                "Un administrador no puede desactivarse a sí mismo. " +
+                "Solicite a otro administrador realizar esta acción."
+            );
+        }
+        
+        // 2. Buscar usuario (usar método que excluye soft-deleted)
+        var usuario = usuarioRepository.findByIdAndFechaEliminacionIsNull(usuarioId)
+            .orElseThrow(() -> {
+                log.error("Usuario {} no encontrado o ya eliminado", usuarioId);
+                return new ResourceNotFoundException(
+                    "Usuario no encontrado o ya eliminado", 
+                    usuarioId
+                );
+            });
+        
+        // 3. Verificar membresía activa en la organización
+        var membresiaId = new UsuarioOrganizacionId(usuarioId, organizacionId);
+        var membresia = usuarioOrganizacionRepository.findById(membresiaId)
+            .orElseThrow(() -> {
+                log.error("Usuario {} no pertenece a organización {}", usuarioId, organizacionId);
+                return new ResourceNotFoundException(
+                    "Usuario no encontrado en esta organización", 
+                    usuarioId
+                );
+            });
+        
+        // 4. Validar que no esté ya desactivado (idempotencia parcial)
+        if (membresia.getEstado() == EstadoMembresia.INACTIVO) {
+            log.info("Usuario {} ya estaba desactivado en organización {}", usuarioId, organizacionId);
+            return new DeactivateUserResponse(
+                usuarioId, 
+                "Usuario ya estaba desactivado", 
+                usuario.getFechaDesactivacion()
+            );
+        }
+        
+        // 5. Desactivar usuario (método de dominio)
+        usuario.desactivar();
+        usuarioRepository.save(usuario);
+        
+        // 6. Desactivar membresía organizacional
+        membresia.setEstado(EstadoMembresia.INACTIVO);
+        usuarioOrganizacionRepository.save(membresia);
+        
+        log.info("Usuario {} desactivado exitosamente en organización {} por admin {}", 
+                 usuarioId, organizacionId, adminId);
+        
+        return new DeactivateUserResponse(
+            usuarioId,
+            "Usuario desactivado exitosamente",
+            usuario.getFechaDesactivacion()
+        );
     }
 }
