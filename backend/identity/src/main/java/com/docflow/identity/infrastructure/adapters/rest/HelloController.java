@@ -1,4 +1,4 @@
-package com.docflow.identity.infrastructure.adapters.input.rest;
+package com.docflow.identity.infrastructure.adapters.rest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

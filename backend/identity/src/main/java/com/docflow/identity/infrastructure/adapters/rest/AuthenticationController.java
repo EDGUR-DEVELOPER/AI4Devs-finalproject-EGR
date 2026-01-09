@@ -1,4 +1,4 @@
-package com.docflow.identity.infrastructure.adapters.input.rest;
+package com.docflow.identity.infrastructure.adapters.rest;
 
 import com.docflow.identity.application.dto.LoginRequest;
 import com.docflow.identity.application.dto.LoginResponse;

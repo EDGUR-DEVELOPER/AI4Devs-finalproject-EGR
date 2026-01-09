@@ -1,6 +1,5 @@
 package com.docflow.identity.infrastructure.multitenancy;
 
-import com.docflow.identity.infrastructure.multitenancy.TenantContextHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

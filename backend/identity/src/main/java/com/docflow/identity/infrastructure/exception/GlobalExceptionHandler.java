@@ -1,7 +1,14 @@
 package com.docflow.identity.infrastructure.exception;
 
-import com.docflow.identity.domain.exceptions.ResourceNotFoundException;
-import com.docflow.identity.domain.exceptions.TenantContextMissingException;
+import com.docflow.identity.domain.exceptions.InvalidCredentialsException;
+import com.docflow.identity.domain.exceptions.OrganizacionConfigInvalidaException;
+import com.docflow.identity.domain.exceptions.OrganizacionNoEncontradaException;
+import com.docflow.identity.domain.exceptions.SinOrganizacionException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -9,7 +16,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.net.URI;
-import java.time.Instant;
 
 /**
  * Manejador global de excepciones para el servicio de identidad.
@@ -26,80 +32,137 @@ import java.time.Instant;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    private static final String ERROR_URI_BASE = "Documentacion Errores.";
 
     /**
-     * Maneja ResourceNotFoundException y retorna HTTP 404.
-     * 
-     * SEGURIDAD: No revela si el recurso existe en otra organización.
-     * Mismo comportamiento para "no existe" vs "existe pero es de otra org".
-     * 
-     * @param ex la excepción lanzada
-     * @return ProblemDetail con status 404
+     * Maneja InvalidCredentialsException (401 Unauthorized).
      */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
-        log.debug("Recurso no encontrado: {}", ex.getMessage());
-        
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidCredentials(
+            InvalidCredentialsException ex,
+            HttpServletRequest request) {
+
+        log.warn("Intento de login fallido desde IP: {}", request.getRemoteAddr());
+
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.NOT_FOUND, 
+            HttpStatus.UNAUTHORIZED,
             ex.getMessage()
         );
-        
-        problem.setTitle("Recurso No Encontrado");
-        problem.setType(URI.create("https://docflow.com/errors/resource-not-found"));
-        problem.setProperty("timestamp", Instant.now());
-        
-        return problem;
+        problem.setType(URI.create(ERROR_URI_BASE + "credenciales-invalidas"));
+        problem.setTitle("Credenciales Inválidas");
+        problem.setProperty("codigo", "CREDENCIALES_INVALIDAS");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 
     /**
-     * Maneja TenantContextMissingException y retorna HTTP 401.
-     * 
-     * Indica que la petición no tiene contexto de organización válido.
-     * Puede significar:
-     * - Token JWT ausente o inválido
-     * - Header X-Organization-Id ausente (problema de configuración del Gateway)
-     * - Endpoint protegido accedido sin autenticación
-     * 
-     * @param ex la excepción lanzada
-     * @return ProblemDetail con status 401
+     * Maneja SinOrganizacionException (403 Forbidden).
      */
-    @ExceptionHandler(TenantContextMissingException.class)
-    public ProblemDetail handleTenantContextMissing(TenantContextMissingException ex) {
-        log.warn("Contexto tenant ausente: {}", ex.getMessage());
-        
+    @ExceptionHandler(SinOrganizacionException.class)
+    public ResponseEntity<ProblemDetail> handleSinOrganizacion(
+            SinOrganizacionException ex,
+            HttpServletRequest request) {
+
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNAUTHORIZED, 
-            "No se pudo determinar la organización. Autentíquese e intente nuevamente."
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
         );
-        
-        problem.setTitle("Contexto de Organización Ausente");
-        problem.setType(URI.create("https://docflow.com/errors/tenant-context-missing"));
-        problem.setProperty("timestamp", Instant.now());
-        problem.setProperty("hint", "Verifique que el token JWT sea válido y contenga el claim 'org_id'");
-        
-        return problem;
+        problem.setType(URI.create(ERROR_URI_BASE + "sin-organizacion"));
+        problem.setTitle("Sin Organización");
+        problem.setProperty("codigo", "SIN_ORGANIZACION");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 
     /**
-     * Maneja excepciones genéricas no capturadas.
-     * 
-     * @param ex la excepción lanzada
-     * @return ProblemDetail con status 500
+     * Maneja OrganizacionConfigInvalidaException (409 Conflict).
+     */
+    @ExceptionHandler(OrganizacionConfigInvalidaException.class)
+    public ResponseEntity<ProblemDetail> handleConfigInvalida(
+            OrganizacionConfigInvalidaException ex,
+            HttpServletRequest request) {
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "organizacion-config-invalida"));
+        problem.setTitle("Configuración de Organización Inválida");
+        problem.setProperty("codigo", "ORGANIZACION_CONFIG_INVALIDA");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    /**
+     * Maneja OrganizacionNoEncontradaException (403 Forbidden).
+     */
+    @ExceptionHandler(OrganizacionNoEncontradaException.class)
+    public ResponseEntity<ProblemDetail> handleOrganizacionNoEncontrada(
+            OrganizacionNoEncontradaException ex,
+            HttpServletRequest request) {
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "organizacion-no-encontrada"));
+        problem.setTitle("Organización No Encontrada");
+        problem.setProperty("codigo", "ORGANIZACION_NO_ENCONTRADA");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
+    /**
+     * Maneja errores de validación de Bean Validation (400 Bad Request).
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
+        var errors = ex.getBindingResult().getFieldErrors().stream()
+            .collect(Collectors.toMap(
+                FieldError::getField,
+                error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value"
+            ));
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "Error de validación en los datos de entrada"
+        );
+        problem.setType(URI.create(ERROR_URI_BASE + "validation-error"));
+        problem.setTitle("Error de Validación");
+        problem.setProperty("codigo", "VALIDATION_ERROR");
+        problem.setProperty("errors", errors);
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+    }
+
+    /**
+     * Maneja excepciones genéricas no capturadas (500 Internal Server Error).
      */
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleGenericException(Exception ex) {
-        log.error("Error no manejado: ", ex);
-        
+    public ResponseEntity<ProblemDetail> handleGenericException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.error("Error inesperado en request {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.INTERNAL_SERVER_ERROR, 
-            "Ha ocurrido un error interno. Por favor contacte al administrador."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Ha ocurrido un error inesperado. Por favor contacte al soporte."
         );
-        
+        problem.setType(URI.create(ERROR_URI_BASE + "error-interno"));
         problem.setTitle("Error Interno del Servidor");
-        problem.setType(URI.create("https://docflow.com/errors/internal-server-error"));
-        problem.setProperty("timestamp", Instant.now());
-        
-        return problem;
+        problem.setProperty("codigo", "ERROR_INTERNO");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
     }
+
 }

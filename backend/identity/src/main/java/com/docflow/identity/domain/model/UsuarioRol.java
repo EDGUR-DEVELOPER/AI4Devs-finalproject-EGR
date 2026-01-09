@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 
@@ -24,7 +22,6 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "usuarios_roles")
 @EntityListeners(TenantEntityListener.class)
-@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = Integer.class))
 @Filter(name = "tenantFilter", condition = "organizacion_id = :tenantId")
 @Getter
 @Setter

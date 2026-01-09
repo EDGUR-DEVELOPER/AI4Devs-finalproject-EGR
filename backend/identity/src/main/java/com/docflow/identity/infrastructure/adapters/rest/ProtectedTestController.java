@@ -1,4 +1,4 @@
-package com.docflow.identity.infrastructure.adapters.in.rest;
+package com.docflow.identity.infrastructure.adapters.rest;
 
 import com.docflow.identity.application.services.JwtTokenService.TokenValidationResult;
 import io.swagger.v3.oas.annotations.Operation;
