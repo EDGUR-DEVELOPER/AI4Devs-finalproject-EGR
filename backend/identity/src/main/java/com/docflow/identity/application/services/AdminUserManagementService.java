@@ -1,18 +1,25 @@
 package com.docflow.identity.application.services;
 
-import com.docflow.identity.application.dto.CreateUserRequest;
-import com.docflow.identity.application.dto.UserCreatedResponse;
+import com.docflow.identity.application.dto.*;
+import com.docflow.identity.application.ports.UserWithRolesProjection;
 import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
 import com.docflow.identity.application.ports.UsuarioRepository;
 import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
 import com.docflow.identity.domain.model.EstadoMembresia;
+import com.docflow.identity.domain.model.Rol;
 import com.docflow.identity.domain.model.Usuario;
 import com.docflow.identity.domain.model.UsuarioOrganizacion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Servicio para gestión de usuarios por parte de administradores.
@@ -29,6 +36,7 @@ public class AdminUserManagementService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioOrganizacionRepository usuarioOrganizacionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserDtoMapper userDtoMapper;
     
     /**
      * Crea un nuevo usuario y lo asocia a la organización especificada.
@@ -85,5 +93,156 @@ public class AdminUserManagementService {
             organizacionId,
             usuarioGuardado.getCreatedAt()
         );
+    }
+    
+    /**
+     * Lista usuarios de una organización con sus roles asignados, soportando paginación y filtros.
+     * 
+     * Proceso de ejecución:
+     * 1. Validación y normalización de parámetros de paginación (page >= 1, limit <= 100)
+     * 2. Query JPQL con INNER/LEFT JOINs para obtener proyecciones (1 fila por usuario-rol)
+     * 3. Agrupación en memoria usando streams con LinkedHashMap (preserva orden original)
+     * 4. Mapeo de proyecciones a entidades dummy para MapStruct
+     * 5. Aplicación de filtros opcionales en memoria (estado, búsqueda)
+     * 6. Recálculo de metadata de paginación post-filtro
+     * 
+     * Seguridad multi-tenant:
+     * - organizacionId viene del token JWT (nunca del request)
+     * - Query filtra por organizacion_id a nivel de BD
+     * - Solo retorna usuarios con membresía en la organización
+     * 
+     * Performance:
+     * - Aprovecha índice idx_usuarios_roles_org
+     * - Paginación a nivel de BD (OFFSET/LIMIT)
+     * - Filtros aplicados post-query para simplificar lógica JPQL
+     * 
+     * @param organizacionId ID de la organización (extraído del token JWT)
+     * @param page Número de página (base 1, mínimo 1)
+     * @param limit Elementos por página (mínimo 1, máximo 100 forzado)
+     * @param estado Filtro opcional por estado de membresía (ACTIVO, SUSPENDIDO)
+     * @param busqueda Filtro opcional de búsqueda en email o nombre (case-insensitive, contains)
+     * @return DTO con lista de usuarios paginada y metadata de paginación
+     */
+    @Transactional(readOnly = true)
+    public ListUsersResponseDto listUsers(
+            Integer organizacionId, 
+            Integer page, 
+            Integer limit,
+            Optional<String> estado,
+            Optional<String> busqueda) {
+        
+        log.info("Listando usuarios de organización {} (page={}, limit={}, estado={}, busqueda={})",
+            organizacionId, page, limit, estado.orElse("ALL"), busqueda.orElse("NONE"));
+        
+        // 1. Validar y normalizar parámetros de paginación
+        int validatedPage = Math.max(1, page); // Mínimo página 1
+        int validatedLimit = Math.min(Math.max(1, limit), 100); // Rango [1, 100]
+        
+        log.debug("Parámetros validados: page={}, limit={}", validatedPage, validatedLimit);
+        
+        // 2. Construir Pageable con ordenamiento por ID de usuario (preserva orden de inserción)
+        var pageable = PageRequest.of(
+            validatedPage - 1, // Convertir de base-1 a base-0
+            validatedLimit,
+            Sort.by("usuarioId").ascending()
+        );
+        
+        // 3. Ejecutar query JPQL con constructor expression
+        Page<UserWithRolesProjection> proyeccionesPage = usuarioRepository
+            .findUsersWithRolesByOrganizacion(organizacionId, pageable);
+        
+        log.debug("Query retornó {} proyecciones de {} totales",
+            proyeccionesPage.getContent().size(), proyeccionesPage.getTotalElements());
+        
+        // 4. Agrupar proyecciones por usuarioId (1 usuario → N roles)
+        //    Usar LinkedHashMap para preservar orden original de inserción
+        Map<Long, List<UserWithRolesProjection>> usuariosAgrupados = proyeccionesPage
+            .getContent()
+            .stream()
+            .collect(Collectors.groupingBy(
+                UserWithRolesProjection::usuarioId,
+                LinkedHashMap::new, // Preserva orden
+                Collectors.toList()
+            ));
+        
+        log.debug("Proyecciones agrupadas en {} usuarios únicos", usuariosAgrupados.size());
+        
+        // 5. Mapear cada grupo de proyecciones a UserWithRolesDto
+        List<UserWithRolesDto> usuariosDto = usuariosAgrupados.entrySet().stream()
+            .map(entry -> {
+                List<UserWithRolesProjection> proyeccionesUsuario = entry.getValue();
+                
+                // Tomar primera proyección para datos del usuario (todas tienen mismos datos de usuario)
+                UserWithRolesProjection primeraProyeccion = proyeccionesUsuario.get(0);
+                
+                // Crear entidad Usuario dummy para MapStruct
+                Usuario usuarioDummy = new Usuario();
+                usuarioDummy.setId(primeraProyeccion.usuarioId());
+                usuarioDummy.setEmail(primeraProyeccion.email());
+                usuarioDummy.setNombreCompleto(primeraProyeccion.nombreCompleto());
+                usuarioDummy.setCreatedAt(primeraProyeccion.fechaCreacion());
+                
+                // Mapear roles (filtrar NULL para usuarios sin roles)
+                List<RoleSummaryDto> rolesDto = proyeccionesUsuario.stream()
+                    .filter(p -> p.rolId() != null) // Excluir usuarios sin roles (LEFT JOIN)
+                    .map(p -> {
+                        // Crear entidad Rol dummy para MapStruct
+                        Rol rolDummy = new Rol();
+                        rolDummy.setId(p.rolId());
+                        rolDummy.setCodigo(p.rolCodigo());
+                        rolDummy.setNombre(p.rolNombre());
+                        return userDtoMapper.toRoleSummaryDto(rolDummy);
+                    })
+                    .distinct() // Evitar duplicados si query retorna mismo rol múltiples veces
+                    .toList();
+                
+                // Mapear a UserWithRolesDto usando MapStruct (incluye estado de membresía)
+                return new UserWithRolesDto(
+                    usuarioDummy.getId(),
+                    usuarioDummy.getEmail(),
+                    usuarioDummy.getNombreCompleto(),
+                    primeraProyeccion.estado(), // Estado de membresía (ACTIVO/SUSPENDIDO)
+                    rolesDto,
+                    usuarioDummy.getCreatedAt()
+                );
+            })
+            .toList();
+        
+        log.debug("Mapeados {} usuarios a DTOs", usuariosDto.size());
+        
+        // 6. Aplicar filtros opcionales en memoria
+        List<UserWithRolesDto> usuariosFiltrados = usuariosDto.stream()
+            .filter(usuario -> {
+                // Filtro por estado (exacto)
+                boolean matchEstado = estado.isEmpty() || 
+                    usuario.estado().equalsIgnoreCase(estado.get());
+                
+                // Filtro por búsqueda (contains en email o nombre, case-insensitive)
+                boolean matchBusqueda = busqueda.isEmpty() ||
+                    usuario.email().toLowerCase().contains(busqueda.get().toLowerCase()) ||
+                    usuario.nombreCompleto().toLowerCase().contains(busqueda.get().toLowerCase());
+                
+                return matchEstado && matchBusqueda;
+            })
+            .toList();
+        
+        log.debug("Después de filtros: {} usuarios", usuariosFiltrados.size());
+        
+        // 7. Recalcular metadata de paginación sobre lista filtrada
+        int totalFiltrados = usuariosFiltrados.size();
+        int totalPaginas = (int) Math.ceil((double) totalFiltrados / validatedLimit);
+        
+        PaginationMetadataDto paginacion = new PaginationMetadataDto(
+            totalFiltrados,
+            validatedPage,
+            validatedLimit,
+            Math.max(1, totalPaginas) // Mínimo 1 página incluso si no hay datos
+        );
+        
+        log.info("Listado completado: {} usuarios retornados de {} totales (página {}/{})",
+            usuariosFiltrados.size(), totalFiltrados, validatedPage, totalPaginas);
+        
+        // 8. Retornar respuesta con usuarios y metadata
+        return new ListUsersResponseDto(usuariosFiltrados, paginacion);
     }
 }

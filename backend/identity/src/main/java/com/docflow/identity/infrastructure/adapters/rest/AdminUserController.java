@@ -1,14 +1,12 @@
 package com.docflow.identity.infrastructure.adapters.rest;
 
-import com.docflow.identity.application.dto.AssignRoleRequest;
-import com.docflow.identity.application.dto.AssignRoleResponse;
-import com.docflow.identity.application.dto.CreateUserRequest;
-import com.docflow.identity.application.dto.UserCreatedResponse;
+import com.docflow.identity.application.dto.*;
 import com.docflow.identity.application.services.AdminUserManagementService;
 import com.docflow.identity.application.services.RoleAssignmentService;
 import com.docflow.identity.domain.exceptions.PermisoInsuficienteException;
 import com.docflow.identity.application.services.JwtTokenService.TokenValidationResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,9 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 /**
  * Controlador REST para operaciones administrativas de gestión de usuarios.
@@ -199,6 +200,99 @@ public class AdminUserController {
             usuarioId, request.rolId(), response.reactivado());
         
         // 3. Retornar 200 OK
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Lista usuarios de la organización con sus roles asignados.
+     * 
+     * Endpoint con soporte de:
+     * - Paginación: page (base 1, default 1), limit (default 20, max 100 forzado)
+     * - Filtro por estado: estado=ACTIVO o estado=SUSPENDIDO
+     * - Búsqueda: busqueda=texto (contains en email o nombre, case-insensitive)
+     * 
+     * Seguridad multi-tenant:
+     * - organizacionId extraído del token JWT (nunca del request)
+     * - Solo retorna usuarios con membresía en la organización del admin
+     * - Validación de rol ADMIN mediante @PreAuthorize
+     * 
+     * Performance:
+     * - Query optimizado con índices (idx_usuarios_roles_org)
+     * - Paginación a nivel de base de datos
+     * - Agrupación de roles en memoria (eficiente para páginas pequeñas)
+     * 
+     * Metadata de paginación:
+     * - total: total de elementos después de aplicar filtros
+     * - pagina: número de página actual (base 1)
+     * - limite: elementos por página (forzado a max 100)
+     * - totalPaginas: páginas disponibles basado en total/limite
+     * 
+     * @param tokenValidation Token JWT con información del usuario autenticado
+     * @param page Número de página (base 1, mínimo 1, default 1)
+     * @param limit Elementos por página (mínimo 1, máximo 100, default 20)
+     * @param estado Filtro opcional por estado de membresía (ACTIVO, SUSPENDIDO)
+     * @param busqueda Filtro opcional de búsqueda en email o nombre
+     * @return Lista paginada de usuarios con sus roles y metadata de paginación
+     */
+    @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')")
+    @Operation(
+        summary = "Listar usuarios de la organización con roles",
+        description = "Retorna lista paginada de usuarios de la organización del token JWT con sus roles asignados. " +
+                     "Soporta filtros por estado y búsqueda por email/nombre. " +
+                     "Límite máximo de 100 elementos por página."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Lista de usuarios obtenida exitosamente",
+            content = @Content(schema = @Schema(implementation = ListUsersResponseDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Token JWT ausente o inválido"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Usuario sin rol ADMIN o SUPER_ADMIN"
+        )
+    })
+    public ResponseEntity<ListUsersResponseDto> listUsers(
+            @AuthenticationPrincipal TokenValidationResult tokenValidation,
+            
+            @Parameter(description = "Número de página (base 1)", example = "1")
+            @RequestParam(defaultValue = "1") Integer page,
+            
+            @Parameter(description = "Elementos por página (máximo 100)", example = "20")
+            @RequestParam(defaultValue = "20") Integer limit,
+            
+            @Parameter(description = "Filtro por estado de membresía", example = "ACTIVO")
+            @RequestParam(required = false) String estado,
+            
+            @Parameter(description = "Búsqueda en email o nombre (case-insensitive)", example = "juan")
+            @RequestParam(required = false) String busqueda) {
+        
+        log.info("Solicitud de listado de usuarios por admin: {} (org: {}, page={}, limit={}, estado={}, busqueda={})",
+            tokenValidation.usuarioId(), tokenValidation.organizacionId(), 
+            page, limit, estado, busqueda);
+        
+        // Extraer organizacionId del token JWT (nunca del request)
+        Integer organizacionId = tokenValidation.organizacionId();
+        
+        // Delegar al servicio con parámetros opcionales
+        var response = adminUserService.listUsers(
+            organizacionId,
+            page,
+            limit,
+            Optional.ofNullable(estado),
+            Optional.ofNullable(busqueda)
+        );
+        
+        log.info("Listado completado: {} usuarios retornados (página {}/{})",
+            response.usuarios().size(), 
+            response.paginacion().pagina(),
+            response.paginacion().totalPaginas());
+        
         return ResponseEntity.ok(response);
     }
 }
