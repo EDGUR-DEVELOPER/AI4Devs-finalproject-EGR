@@ -305,6 +305,163 @@ Este endpoint también retorna ProblemDetail con los siguientes códigos:
 
 ---
 
+## Códigos de Error del Endpoint `/api/v1/admin/users/:userId/roles` (US-ADMIN-002)
+
+### 1. VALIDATION_ERROR (HTTP 400)
+
+**Código:** `VALIDATION_ERROR`  
+**Status HTTP:** `400 Bad Request`  
+**Trigger Técnico:** Errores de validación Bean Validation en `AssignRoleRequest` (rolId null, no positivo).
+
+#### Ejemplo de Respuesta
+
+```json
+{
+  "type": "https://docflow.com/errors/validation-error",
+  "title": "Error de Validación",
+  "status": 400,
+  "detail": "Error de validación en los datos de entrada",
+  "instance": "/api/v1/admin/users/100/roles",
+  "codigo": "VALIDATION_ERROR",
+  "errors": {
+    "rolId": "El ID del rol es obligatorio"
+  }
+}
+```
+
+#### Recomendaciones UX
+
+- **Mensaje Principal:** "Datos de entrada inválidos"
+- **Acción:** Mostrar errores de validación en el formulario
+- **Icono:** ⚠️ Advertencia
+
+---
+
+### 2. USUARIO_NO_ENCONTRADO (HTTP 404)
+
+**Código:** `USUARIO_NO_ENCONTRADO`  
+**Status HTTP:** `404 Not Found`  
+**Trigger Técnico:** 
+- Usuario no existe en la base de datos, O
+- Usuario está eliminado (soft delete), O
+- Usuario no pertenece a la organización del administrador, O
+- Usuario no tiene membresía activa en la organización
+
+**Nota de Seguridad (Security by Obscurity):** Por razones de seguridad, **no se diferencia** entre usuario inexistente, eliminado o de otra organización. Siempre se retorna el mismo mensaje genérico para no revelar información sobre usuarios de otras organizaciones.
+
+#### Ejemplo de Respuesta
+
+```json
+{
+  "type": "https://docflow.com/errors/usuario-no-encontrado",
+  "title": "Usuario No Encontrado",
+  "status": 404,
+  "detail": "Usuario con ID '100' no encontrado",
+  "instance": "/api/v1/admin/users/100/roles",
+  "codigo": "USUARIO_NO_ENCONTRADO"
+}
+```
+
+#### Recomendaciones UX
+
+- **Mensaje Principal:** "Usuario no encontrado"
+- **Mensaje Secundario:** "El usuario no existe o no pertenece a tu organización"
+- **Icono:** 🔍 No encontrado
+- **Color:** Gris
+- **Acción:** Redirigir a lista de usuarios o permitir reintentar
+
+---
+
+### 3. ROL_NO_ENCONTRADO (HTTP 404)
+
+**Código:** `ROL_NO_ENCONTRADO`  
+**Status HTTP:** `404 Not Found`  
+**Trigger Técnico:** 
+- Rol no existe en la base de datos, O
+- Rol está inactivo, O
+- Rol custom pertenece a otra organización, O
+- Rol custom pertenece a una organización suspendida/archivada
+
+**Nota de Seguridad (Security by Obscurity):** Por razones de seguridad, **no se diferencia** entre rol inexistente, inactivo o de otra organización. Siempre se retorna el mismo mensaje genérico para no revelar información sobre roles de otras organizaciones.
+
+#### Ejemplo de Respuesta
+
+```json
+{
+  "type": "https://docflow.com/errors/rol-no-encontrado",
+  "title": "Rol No Encontrado",
+  "status": 404,
+  "detail": "Rol con ID '5' no encontrado",
+  "instance": "/api/v1/admin/users/100/roles",
+  "codigo": "ROL_NO_ENCONTRADO"
+}
+```
+
+#### Recomendaciones UX
+
+- **Mensaje Principal:** "Rol no encontrado"
+- **Mensaje Secundario:** "El rol no existe o no está disponible para tu organización"
+- **Icono:** 🔍 No encontrado
+- **Color:** Gris
+- **Acción:** Mostrar lista de roles disponibles
+
+---
+
+### 4. PERMISO_INSUFICIENTE (HTTP 403)
+
+**Código:** `PERMISO_INSUFICIENTE`  
+**Status HTTP:** `403 Forbidden`  
+**Trigger Técnico:** Usuario autenticado no tiene rol `ADMIN` o `SUPER_ADMIN` en su organización.
+
+#### Ejemplo de Respuesta
+
+```json
+{
+  "type": "https://docflow.com/errors/permiso-insuficiente",
+  "title": "Permiso Insuficiente",
+  "status": 403,
+  "detail": "Se requiere rol ADMIN o SUPER_ADMIN para asignar roles",
+  "instance": "/api/v1/admin/users/100/roles",
+  "codigo": "PERMISO_INSUFICIENTE"
+}
+```
+
+#### Recomendaciones UX
+
+- **Mensaje Principal:** "No tienes permisos para realizar esta acción"
+- **Mensaje Secundario:** "Contacta a un administrador de tu organización"
+- **Icono:** 🔒 Bloqueado
+- **Color:** Rojo
+- **Acción:** Ocultar funcionalidad de asignación de roles en la UI
+
+---
+
+### 5. TOKEN_AUSENTE_O_INVALIDO (HTTP 401)
+
+**Código:** `TOKEN_AUSENTE_O_INVALIDO`  
+**Status HTTP:** `401 Unauthorized`  
+**Trigger Técnico:** Token JWT ausente, expirado, o con firma inválida.
+
+#### Ejemplo de Respuesta
+
+```json
+{
+  "type": "https://docflow.com/errors/unauthorized",
+  "title": "No Autorizado",
+  "status": 401,
+  "detail": "Token JWT inválido o expirado",
+  "instance": "/api/v1/admin/users/100/roles",
+  "codigo": "TOKEN_AUSENTE_O_INVALIDO"
+}
+```
+
+#### Recomendaciones UX
+
+- **Acción:** Redirigir automáticamente a la página de login
+- **Mensaje (opcional):** "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+
+---
+
 ## Logs y Observabilidad
 
 ### Logs Recomendados
@@ -329,6 +486,9 @@ Considerar agregar métricas para:
 - Contador de errores `CREDENCIALES_INVALIDAS` (detectar ataques de fuerza bruta)
 - Contador de errores `SIN_ORGANIZACION` (usuarios sin onboarding completo)
 - Contador de errores `ORGANIZACION_CONFIG_INVALIDA` (problemas de configuración de datos)
+- Contador de asignaciones de roles por organización (auditoría)
+- Contador de reactivaciones de roles (análisis de patrones)
+- Contador de errores `USUARIO_NO_ENCONTRADO` y `ROL_NO_ENCONTRADO` por organización
 
 ---
 
@@ -336,18 +496,24 @@ Considerar agregar métricas para:
 
 ### Implementación Backend
 
-- [GlobalExceptionHandler.java](../src/main/java/com/docflow/identity/infrastructure/adapters/input/rest/GlobalExceptionHandler.java) - Manejo global de excepciones
-- [AuthenticationController.java](../src/main/java/com/docflow/identity/infrastructure/adapters/input/rest/AuthenticationController.java) - Endpoint `/auth/login`
+- [GlobalExceptionHandler.java](../src/main/java/com/docflow/identity/infrastructure/exception/GlobalExceptionHandler.java) - Manejo global de excepciones
+- [AuthenticationController.java](../src/main/java/com/docflow/identity/infrastructure/adapters/rest/AuthenticationController.java) - Endpoint `/auth/login`
+- [AdminUserController.java](../src/main/java/com/docflow/identity/infrastructure/adapters/rest/AdminUserController.java) - Endpoint `/admin/users/:userId/roles`
 - [Excepciones de Dominio](../src/main/java/com/docflow/identity/domain/exceptions/) - Excepciones de negocio
 
 ### Tests
 
-- [AuthLoginIntegrationTest.java](../src/test/java/com/docflow/identity/infrastructure/adapters/input/rest/AuthLoginIntegrationTest.java) - Tests de integración con todos los escenarios
+- [AuthLoginIntegrationTest.java](../src/test/java/com/docflow/identity/infrastructure/adapters/rest/AuthLoginIntegrationTest.java) - Tests de integración login
+- [RoleAssignmentServiceTest.java](../src/test/java/com/docflow/identity/application/services/RoleAssignmentServiceTest.java) - Tests unitarios asignación de roles
 
 ---
 
 ## Versionamiento
 
-**Versión:** 1.0.0  
-**Última Actualización:** 8 de enero de 2026  
+**Versión:** 1.1.0  
+**Última Actualización:** 9 de enero de 2026  
+**Changelog:**
+- v1.1.0 (2026-01-09): Agregados códigos de error para US-ADMIN-002 (asignación de roles)
+- v1.0.0 (2026-01-08): Versión inicial con códigos de autenticación
+
 **Contacto:** Equipo Backend DocFlow

@@ -1,4 +1,4 @@
-package com.docflow.audit.application.ports.output;
+package com.docflow.audit.application.ports;
 
 import com.docflow.audit.domain.model.LogAuditoria;
 import com.docflow.audit.infrastructure.multitenancy.TenantContextHolder;

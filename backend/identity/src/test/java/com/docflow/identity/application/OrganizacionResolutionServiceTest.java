@@ -1,6 +1,7 @@
-package com.docflow.identity.application.services;
+package com.docflow.identity.application;
 
-import com.docflow.identity.application.ports.output.UsuarioOrganizacionRepository;
+import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
+import com.docflow.identity.application.services.OrganizacionResolutionService;
 import com.docflow.identity.domain.exceptions.OrganizacionConfigInvalidaException;
 import com.docflow.identity.domain.exceptions.SinOrganizacionException;
 import com.docflow.identity.domain.model.EstadoMembresia;

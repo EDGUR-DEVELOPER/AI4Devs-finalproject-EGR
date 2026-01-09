@@ -1,11 +1,16 @@
 package com.docflow.identity.infrastructure.adapters.rest;
 
+import com.docflow.identity.application.dto.AssignRoleRequest;
+import com.docflow.identity.application.dto.AssignRoleResponse;
 import com.docflow.identity.application.dto.CreateUserRequest;
 import com.docflow.identity.application.dto.UserCreatedResponse;
 import com.docflow.identity.application.services.AdminUserManagementService;
+import com.docflow.identity.application.services.RoleAssignmentService;
 import com.docflow.identity.domain.exceptions.PermisoInsuficienteException;
 import com.docflow.identity.application.services.JwtTokenService.TokenValidationResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminUserController {
     
     private final AdminUserManagementService adminUserService;
+    private final RoleAssignmentService roleAssignmentService;
     
     /**
      * Crea un nuevo usuario en la organización del administrador autenticado.
@@ -100,5 +106,99 @@ public class AdminUserController {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(usuarioCreado);
+    }
+    
+    /**
+     * Asigna un rol a un usuario dentro de la organización del administrador.
+     * 
+     * El endpoint soporta:
+     * - Asignación de roles globales (ADMIN, USER, VIEWER, SUPER_ADMIN)
+     * - Asignación de roles custom de la organización
+     * - Idempotencia: llamadas repetidas no generan error
+     * - Reactivación automática de asignaciones previamente desactivadas
+     * 
+     * Validaciones de seguridad aplicadas:
+     * - Usuario objetivo debe existir y no estar eliminado
+     * - Usuario objetivo debe tener membresía activa en la organización
+     * - Rol debe existir y estar activo
+     * - Rol debe ser global O pertenecer a la organización del admin
+     * - Si rol es custom, su organización debe estar activa
+     * 
+     * Security by obscurity:
+     * - Retorna 404 si usuario/rol no existen EN LA ORGANIZACIÓN
+     * - No revela información de usuarios/roles de otras organizaciones
+     * 
+     * El evento de asignación se publica a Kafka (topic: identity.role.assigned)
+     * para auditoría externa por el microservicio auditLog.
+     * 
+     * @param usuarioId ID del usuario al que se asigna el rol
+     * @param request Datos del rol a asignar (rolId)
+     * @param tokenValidation Información del token JWT del administrador
+     * @return Confirmación de asignación con código HTTP 200
+     * @throws PermisoInsuficienteException si el usuario no tiene rol ADMIN (403)
+     * @throws ResourceNotFoundException si usuario/rol no existen en la org (404)
+     */
+    @PostMapping("/{usuarioId}/roles")
+    @Operation(
+        summary = "Asignar rol a usuario en la organización",
+        description = "Permite a un administrador asignar un rol (global o custom) a un usuario de la misma organización. " +
+                     "Soporta idempotencia y reactivación automática. Publica evento a Kafka para auditoría."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Rol asignado exitosamente (o reactivado si existía inactivo)",
+            content = @Content(schema = @Schema(implementation = AssignRoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Error de validación: rolId inválido o faltante"
+        ),
+        @ApiResponse(
+            responseCode = "401", 
+            description = "Token JWT ausente o inválido"
+        ),
+        @ApiResponse(
+            responseCode = "403", 
+            description = "Usuario autenticado no tiene rol ADMIN o SUPER_ADMIN"
+        ),
+        @ApiResponse(
+            responseCode = "404", 
+            description = "Usuario no encontrado, eliminado, sin membresía activa, o rol no disponible para la organización"
+        )
+    })
+    public ResponseEntity<AssignRoleResponse> assignRoleToUser(
+            @PathVariable Long usuarioId,
+            @Valid @RequestBody AssignRoleRequest request,
+            @AuthenticationPrincipal TokenValidationResult tokenValidation) {
+        
+        log.info("Solicitud de asignación de rol: usuarioId={}, rolId={}, adminId={} (org: {})",
+            usuarioId, request.rolId(), tokenValidation.usuarioId(), tokenValidation.organizacionId());
+        
+        // 1. Verificar rol ADMIN/SUPER_ADMIN
+        var hasAdminRole = tokenValidation.roles().stream()
+            .anyMatch(role -> "ADMIN".equalsIgnoreCase(role) || "SUPER_ADMIN".equalsIgnoreCase(role));
+        
+        if (!hasAdminRole) {
+            log.warn("Usuario {} sin permisos de administrador intentó asignar rol",
+                tokenValidation.usuarioId());
+            throw new PermisoInsuficienteException(
+                "Se requiere rol ADMIN o SUPER_ADMIN para asignar roles"
+            );
+        }
+        
+        // 2. Delegar asignación al servicio
+        var response = roleAssignmentService.assignRole(
+            usuarioId,
+            request.rolId(),
+            tokenValidation.organizacionId(),
+            tokenValidation.usuarioId() // asignadoPor
+        );
+        
+        log.info("Rol asignado exitosamente: usuarioId={}, rolId={}, reactivado={}",
+            usuarioId, request.rolId(), response.reactivado());
+        
+        // 3. Retornar 200 OK
+        return ResponseEntity.ok(response);
     }
 }

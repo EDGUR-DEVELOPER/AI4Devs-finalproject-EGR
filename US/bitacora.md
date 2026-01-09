@@ -13,7 +13,9 @@
 | Métrica | Valor |
 |---------|-------|
 | **Progreso MVP** | 🟡 **30%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario completados) |
-| **Tickets MVP** | 7/30 completados |
+| **Progreso MVP** | 🟡 **33%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol completados) |
+| **Tickets MVP** | 8/30 completados |
+[x] **US-ADMIN-002**: Asignar rol (API)
 | **Tickets Post-MVP** | 0/9 planificados |
 | **Días restantes** | 7 días (9 ene 2026 → 16 ene 2026) |
 | **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) |
@@ -358,7 +360,7 @@ Dic 31 ────────────────────────�
 | Fase | Tickets Pendientes |
 |------|-------------------|
 | Autenticación |  |
-| Administración | US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
+| Administración | US-ADMIN-003, US-ADMIN-004, US-ADMIN-005 |
 | Permisos ACL | US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008 |
 | Carpetas | US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005 |
 | Documentos | US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006 |
@@ -392,22 +394,24 @@ Dic 31 ────────────────────────�
 | US-AUTH-005 | UI de Login (Frontend: LoginPage, integración con backend, manejo de sesión y errores) | 8 Ene 2026 |
 | US-AUTH-006 | Manejo de sesión expirada (Interceptor Axios, limpieza de estado, redirección a login y alerta UX) | 8 Ene 2026 |
 | US-ADMIN-001 | Crear usuario (API, endpoint `/admin/users`, validación de email, hash de contraseña, asociación a organización, error handling RFC 7807) | 9 Ene 2026 |
+| US-ADMIN-002 | Asignar rol a usuario (API, endpoint `/admin/users/{userId}/roles`, migraciones, validaciones, seed roles base, pruebas unitarias e integración) | 9 Ene 2026 |
 
 ---
 
 ## 4. Próximos Pasos Recomendados
 
-**Siguiente objetivo: avanzar en administración de usuarios y gestión de roles.**
+**Siguiente objetivo: avanzar en administración de usuarios y visualización.**
 
-1. **Iniciar US-ADMIN-002 - Asignar rol (API)** (`identity-service`):
-    - Permitir la gestión de roles para usuarios recién creados.
+1. **Desarrollar US-ADMIN-003 - Listar usuarios (API)** (`identity-service`):
+    - Habilitar la consulta y paginación de usuarios por organización. Permite a los administradores gestionar y auditar usuarios existentes.
 
-2. **Desarrollar US-ADMIN-003 - Listar usuarios (API)** (`identity-service`):
-    - Habilitar la consulta y paginación de usuarios por organización.
+2. **Desarrollar US-ADMIN-004 - Desactivar usuario (API)** (`identity-service`):
+    - Permitir la desactivación de usuarios de manera segura, asegurando el aislamiento y la integridad de la organización.
 
-3. **Preparar inicio de US-ACL-001 (Catálogo de niveles de acceso)**, una vez que la administración básica esté lista.
+3. **Preparar inicio de US-ACL-001 (Catálogo de niveles de acceso)** (`document-core-service`):
+    - Una vez que la administración básica esté lista, comenzar con la gestión de permisos y niveles de acceso.
 
-**Nota:** El endpoint de creación de usuario ya está disponible y probado. Se recomienda priorizar la gestión de roles y la visualización de usuarios para habilitar la administración y el control de acceso.
+**Nota:** El endpoint de asignación de roles ya está disponible y probado. Se recomienda priorizar la visualización y gestión de usuarios para habilitar la administración y el control de acceso.
 
 ---
 
@@ -416,6 +420,8 @@ Dic 31 ────────────────────────�
 ### Día 9 (9 Ene 2026)
 
 - [x] US-ADMIN-001 completado: Endpoint `POST /admin/users` implementado y probado. Validación de email, hash de contraseña, asociación a organización y manejo de errores RFC 7807 funcionando correctamente. Desbloquea el desarrollo de asignación de roles y listado de usuarios.
+
+- [x] US-ADMIN-002 completado: Endpoint `POST /admin/users/{userId}/roles` implementado y probado. Migraciones de tablas `roles` y `usuarios_roles`, seed de roles base, validaciones de pertenencia y aislamiento, pruebas unitarias e integración exitosas. Desbloquea la visualización y gestión avanzada de usuarios.
 
 ### Día 8 (8 Ene 2026)
 

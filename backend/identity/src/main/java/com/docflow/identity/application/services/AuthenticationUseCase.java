@@ -2,7 +2,7 @@ package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.LoginRequest;
 import com.docflow.identity.application.dto.LoginResponse;
-import com.docflow.identity.application.ports.output.UsuarioRolRepository;
+import com.docflow.identity.application.ports.UsuarioRolRepository;
 import com.docflow.identity.infrastructure.config.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

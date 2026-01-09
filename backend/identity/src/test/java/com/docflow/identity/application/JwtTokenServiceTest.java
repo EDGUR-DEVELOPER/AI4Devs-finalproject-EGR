@@ -1,5 +1,6 @@
-package com.docflow.identity.application.services;
+package com.docflow.identity.application;
 
+import com.docflow.identity.application.services.JwtTokenService;
 import com.docflow.identity.infrastructure.config.JwtClaimNames;
 import com.docflow.identity.infrastructure.config.JwtProperties;
 import io.jsonwebtoken.Claims;

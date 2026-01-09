@@ -1,4 +1,4 @@
-package com.docflow.identity;
+package com.docflow.identity.infrastructure;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

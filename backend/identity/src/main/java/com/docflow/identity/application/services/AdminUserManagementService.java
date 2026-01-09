@@ -2,8 +2,8 @@ package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.CreateUserRequest;
 import com.docflow.identity.application.dto.UserCreatedResponse;
-import com.docflow.identity.application.ports.output.UsuarioOrganizacionRepository;
-import com.docflow.identity.application.ports.output.UsuarioRepository;
+import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
+import com.docflow.identity.application.ports.UsuarioRepository;
 import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
 import com.docflow.identity.domain.model.EstadoMembresia;
 import com.docflow.identity.domain.model.Usuario;

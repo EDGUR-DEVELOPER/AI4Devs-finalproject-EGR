@@ -2,8 +2,8 @@ package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.LoginResponse;
 import com.docflow.identity.application.dto.SwitchOrganizationRequest;
-import com.docflow.identity.application.ports.output.UsuarioOrganizacionRepository;
-import com.docflow.identity.application.ports.output.UsuarioRolRepository;
+import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
+import com.docflow.identity.application.ports.UsuarioRolRepository;
 import com.docflow.identity.domain.exceptions.OrganizacionNoEncontradaException;
 import com.docflow.identity.domain.model.EstadoMembresia;
 import com.docflow.identity.domain.model.UsuarioOrganizacionId;

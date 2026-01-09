@@ -1,6 +1,6 @@
 package com.docflow.identity.application.services;
 
-import com.docflow.identity.application.ports.output.UsuarioRepository;
+import com.docflow.identity.application.ports.UsuarioRepository;
 import com.docflow.identity.domain.exceptions.InvalidCredentialsException;
 import com.docflow.identity.domain.model.Usuario;
 import lombok.RequiredArgsConstructor;

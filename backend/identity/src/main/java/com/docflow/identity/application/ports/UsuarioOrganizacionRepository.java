@@ -1,4 +1,4 @@
-package com.docflow.identity.application.ports.output;
+package com.docflow.identity.application.ports;
 
 import com.docflow.identity.domain.model.EstadoMembresia;
 import com.docflow.identity.domain.model.UsuarioOrganizacion;
