@@ -9,7 +9,7 @@ spring:
 cors:
   allowed-origins:
     - http://localhost:5173  # Vite dev server (frontend)
-    - http://localhost:3000  # React/Next.js dev server
+    - http://localhost:3001  # React/Next.js dev server
     # Para producción, reemplazar con:
     # - https://app.docflow.com
     # - https://admin.docflow.com

@@ -472,3 +472,10 @@ Lista las tareas atómicas necesarias para completar el ticket, en orden lógico
 # INPUT DEL USUARIO
 [Colocar los tickets...]
 ```
+
+### Prompt para implementar el dashboard del frontend
+`Claude Opus 4.5`
+```
+Como experto en desarrollo de frontend, implementa un dashboard en frontend
+ donde tenga un interfaz para mostrar informacion del sistema y un panel para acceder a modulos. que sea manera amigable. Respeta la arquitectura del proyecto. Reutiliza componentes si se requiere. Solo enfocate en frontend, no realices nada de backend. Respeta la metodologia de UI/UX mobile y despues desktop y aplica las mejores practicas.
+```
