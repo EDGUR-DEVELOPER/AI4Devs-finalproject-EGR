@@ -31,7 +31,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return true si existe un usuario con ese email
      */
     boolean existsByEmail(String email);
-    
+
     /**
      * Busca un usuario por ID que no esté eliminado (soft delete).
      * Utilizado para validar que el usuario objetivo existe y está activo.
@@ -40,12 +40,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return Optional con el usuario si existe y no está eliminado
      */
     Optional<Usuario> findByIdAndFechaEliminacionIsNull(Long id);
-    
+
     /**
-     * Obtiene usuarios de una organización con sus roles asignados mediante constructor expression JPQL.
+     * Obtiene usuarios de una organización con sus roles asignados mediante
+     * constructor expression JPQL.
      * 
      * Query optimizado que:
-     * - Usa INNER JOIN con UsuarioOrganizacion filtrando por organizacionId y estado ACTIVO
+     * - Usa INNER JOIN con UsuarioOrganizacion filtrando por organizacionId y
+     * estado ACTIVO
      * - Usa LEFT JOIN con UsuarioRol y Rol para incluir usuarios sin roles
      * - Filtra usuarios no eliminados (fechaEliminacion IS NULL)
      * - Retorna proyecciones UserWithRolesProjection (1 fila por usuario-rol)
@@ -59,32 +61,30 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * genera N filas (desnormalización intencional para eficiencia de query).
      * 
      * @param organizacionId ID de la organización cuyos usuarios se listan
-     * @param pageable Configuración de paginación y ordenamiento
+     * @param pageable       Configuración de paginación y ordenamiento
      * @return Página de proyecciones con datos de usuarios y roles (sin agrupar)
      */
     @Query("""
-        SELECT new com.docflow.identity.application.ports.UserWithRolesProjection(
-            u.id,
-            u.email,
-            u.nombreCompleto,
-            uo.estado,
-            r.id,
-            r.codigo,
-            r.nombre,
-            u.fechaCreacion
-        )
-        FROM Usuario u
-        INNER JOIN UsuarioOrganizacion uo ON uo.usuarioId = u.id
-        LEFT JOIN UsuarioRol ur ON ur.usuarioId = u.id 
-            AND ur.organizacionId = :organizacionId 
-            AND ur.activo = true
-        LEFT JOIN Rol r ON r.id = ur.rolId
-        WHERE uo.organizacionId = :organizacionId
-          AND uo.estado IN ('ACTIVO', 'SUSPENDIDO')
-          AND u.fechaEliminacion IS NULL
-        """)
+            SELECT
+                u.id AS usuarioId,
+                u.email AS email,
+                u.nombreCompleto AS nombreCompleto,
+                uo.estado AS estado,
+                r.id AS rolId,
+                r.codigo AS rolCodigo,
+                r.nombre AS rolNombre,
+                u.fechaCreacion AS fechaCreacion
+            FROM Usuario u
+            INNER JOIN UsuarioOrganizacion uo ON uo.usuarioId = u.id
+            LEFT JOIN UsuarioRol ur ON ur.usuarioId = u.id
+                AND ur.organizacionId = :organizacionId
+                AND ur.activo = true
+            LEFT JOIN Rol r ON r.id = ur.rolId
+            WHERE uo.organizacionId = :organizacionId
+              AND uo.estado IN ('ACTIVO', 'SUSPENDIDO')
+              AND u.fechaEliminacion IS NULL
+            """)
     Page<UserWithRolesProjection> findUsersWithRolesByOrganizacion(
-        @Param("organizacionId") Integer organizacionId, 
-        Pageable pageable
-    );
+            @Param("organizacionId") Integer organizacionId,
+            Pageable pageable);
 }
