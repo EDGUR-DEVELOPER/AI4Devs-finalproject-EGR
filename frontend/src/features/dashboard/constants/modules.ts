@@ -10,9 +10,9 @@ export const SYSTEM_MODULES: SystemModule[] = [
         name: 'Gestión de Usuarios',
         description: 'Administra usuarios, roles y permisos',
         icon: 'users',
-        path: '/admin/users',
+        path: '/admin',
         color: 'blue',
-        requiredRoles: ['ADMIN'],
+        requiredRoles: ['ADMIN', 'SUPER_ADMIN'],
         enabled: true,
     },
     {

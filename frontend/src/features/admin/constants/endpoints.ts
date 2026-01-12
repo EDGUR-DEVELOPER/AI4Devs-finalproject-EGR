@@ -5,16 +5,16 @@
 export const ADMIN_ENDPOINTS = {
     USERS: {
         /** GET - Obtener lista de usuarios */
-        LIST: '/admin/users',
+        LIST: '/iam/admin/users',
         /** POST - Crear nuevo usuario */
-        CREATE: '/admin/users',
+        CREATE: '/iam/admin/users',
         /** PATCH - Desactivar un usuario */
-        DEACTIVATE: (userId: string) => `/admin/users/${userId}/deactivate`,
+        DEACTIVATE: (userId: string) => `/iam/admin/users/${userId}/deactivate`,
         /** POST - Asignar rol a usuario */
-        ASSIGN_ROLE: (userId: string) => `/admin/users/${userId}/roles`,
+        ASSIGN_ROLE: (userId: string) => `/iam/admin/users/${userId}/roles`,
     },
     ROLES: {
         /** GET - Obtener roles disponibles */
-        LIST: '/admin/roles',
+        LIST: '/iam/admin/roles',
     },
 } as const;

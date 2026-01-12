@@ -7,8 +7,8 @@ interface AdminRouteGuardProps {
     children: React.ReactNode;
 }
 
-/** Código del rol de administrador */
-const ADMIN_ROLE_CODE = 'ADMIN';
+/** Códigos de roles permitidos para administración */
+const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'];
 
 /**
  * Guard que protege rutas de administración
@@ -25,10 +25,10 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) =>
         return <Navigate to="/login" replace />;
     }
 
-    // Verificar si tiene rol de admin
-    const hasAdminRole = roles.some((role) => role === ADMIN_ROLE_CODE);
+    // Verificar si tiene algún rol permitido
+    const hasAllowedRole = roles.some((role) => ADMIN_ROLES.includes(role));
 
-    if (!hasAdminRole) {
+    if (!hasAllowedRole) {
         return <Navigate to="/access-denied" replace />;
     }
 
