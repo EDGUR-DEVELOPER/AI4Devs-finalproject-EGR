@@ -85,4 +85,12 @@ public class Usuario {
         this.estado = EstadoUsuario.INACTIVO;
         this.fechaDesactivacion = OffsetDateTime.now();
     }
+
+    /**
+     * Activa el usuario estableciendo estado ACTIVO y limpiando fecha de desactivación.
+     */
+    public void activar() {
+        this.estado = EstadoUsuario.ACTIVO;
+        this.fechaDesactivacion = null;
+    }
 }

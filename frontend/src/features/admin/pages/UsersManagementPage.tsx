@@ -3,17 +3,18 @@ import { useAdminUsers } from '../hooks/useAdminUsers';
 import { useAdminRoles } from '../hooks/useAdminRoles';
 import { useCreateUser } from '../hooks/useCreateUser';
 import { useDeactivateUser } from '../hooks/useDeactivateUser';
+import { useActivateUser } from '../hooks/useActivateUser';
 import { useAssignRole } from '../hooks/useAssignRole';
 import { UsersTable } from '../components/UsersTable';
 import { CreateUserModal } from '../components/CreateUserModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { UI_MESSAGES, FORM_LABELS } from '../constants/messages';
-import type { CreateUserRequest } from '../types/user.types';
+import type { CreateUserFormData } from '../types/user.types';
 
 /** Estado para modal de desactivación */
 interface UserToDeactivate {
     id: string;
-    nombre: string;
+    nombreCompleto: string;
 }
 
 /**
@@ -31,22 +32,23 @@ export const UsersManagementPage: React.FC = () => {
     const { roles } = useAdminRoles();
     const { createUser, isCreating } = useCreateUser();
     const { deactivateUser, isDeactivating } = useDeactivateUser();
+    const { activateUser, isActivating } = useActivateUser();
     const { assignRole, isAssigning } = useAssignRole();
 
     // Handler: Crear usuario
-    const handleCreateUser = async (data: CreateUserRequest) => {
-        const newUser = await createUser(data);
-        if (newUser) {
+    const handleCreateUser = async (data: CreateUserFormData) => {
+        await createUser(data, () => {
+            // Cerrar modal automáticamente cuando la petición finaliza exitosamente
             setIsCreateModalOpen(false);
             refetch(); // Recargar lista de usuarios
-        }
+        });
     };
 
     // Handler: Iniciar desactivación (abrir modal de confirmación)
     const handleInitiateDeactivate = (userId: string) => {
         const user = users.find((u) => u.id === userId);
         if (user) {
-            setUserToDeactivate({ id: userId, nombre: user.nombre });
+            setUserToDeactivate({ id: userId, nombreCompleto: user.nombreCompleto });
         }
     };
 
@@ -59,6 +61,23 @@ export const UsersManagementPage: React.FC = () => {
             // Actualizar UI de forma optimista
             updateUserLocally(userToDeactivate.id, { estado: 'INACTIVO' });
             setUserToDeactivate(null);
+            // Recargar después de un pequeño delay para asegurar que el servidor procesó
+            setTimeout(() => {
+                refetch();
+            }, 500);
+        }
+    };
+
+    // Handler: Activar usuario
+    const handleActivateUser = async (userId: string) => {
+        const success = await activateUser(userId);
+        if (success) {
+            // Actualizar UI de forma optimista
+            updateUserLocally(userId, { estado: 'ACTIVO' });
+            // Recargar después de un pequeño delay
+            setTimeout(() => {
+                refetch();
+            }, 500);
         }
     };
 
@@ -71,7 +90,7 @@ export const UsersManagementPage: React.FC = () => {
     };
 
     // Indicador de operación en progreso
-    const isProcessing = isDeactivating || isAssigning;
+    const isProcessing = isDeactivating || isAssigning || isActivating;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -110,6 +129,7 @@ export const UsersManagementPage: React.FC = () => {
                         error={error}
                         onRetry={refetch}
                         onDeactivate={handleInitiateDeactivate}
+                        onActivate={handleActivateUser}
                         onAssignRole={handleAssignRole}
                         isProcessing={isProcessing}
                     />
@@ -122,13 +142,14 @@ export const UsersManagementPage: React.FC = () => {
                 onClose={() => setIsCreateModalOpen(false)}
                 onSubmit={handleCreateUser}
                 isLoading={isCreating}
+                availableRoles={roles}
             />
 
             {/* Modal de confirmación de desactivación */}
             <ConfirmationModal
                 isOpen={!!userToDeactivate}
                 title="Desactivar Usuario"
-                message={UI_MESSAGES.CONFIRM_DEACTIVATE(userToDeactivate?.nombre ?? '')}
+                message={UI_MESSAGES.CONFIRM_DEACTIVATE(userToDeactivate?.nombreCompleto ?? '')}
                 confirmLabel={FORM_LABELS.DEACTIVATE}
                 onConfirm={handleConfirmDeactivate}
                 onCancel={() => setUserToDeactivate(null)}

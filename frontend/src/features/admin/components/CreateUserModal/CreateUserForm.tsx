@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { FormField, Input, Button } from '@ui/forms';
+import { FormField, Input, Button, Select } from '@ui/forms';
 import { FORM_LABELS, VALIDATION_MESSAGES } from '../../constants/messages';
-import type { CreateUserRequest } from '../../types/user.types';
+import type { CreateUserFormData, UserRole } from '../../types/user.types';
 
 interface CreateUserFormProps {
     /** Callback al enviar el formulario */
-    onSubmit: (data: CreateUserRequest) => void;
+    onSubmit: (data: CreateUserFormData) => void;
     /** Indica si está procesando */
     isLoading: boolean;
     /** Callback para cancelar */
     onCancel: () => void;
+    /** Roles disponibles para asignar */
+    availableRoles: UserRole[];
 }
 
 /** Expresión regular para validar formato de email */
@@ -26,11 +28,13 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     onSubmit,
     isLoading,
     onCancel,
+    availableRoles = [],
 }) => {
     // Estado del formulario
     const [email, setEmail] = useState('');
     const [nombre, setNombre] = useState('');
     const [password, setPassword] = useState('');
+    const [rolId, setRolId] = useState<number | ''>('');
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Validaciones del formulario
@@ -47,6 +51,8 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
         // Validar nombre
         if (!nombre.trim()) {
             newErrors.nombre = VALIDATION_MESSAGES.NAME_REQUIRED;
+        } else if (nombre.trim().length < 2) {
+            newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
         }
 
         // Validar contraseña
@@ -54,6 +60,11 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
             newErrors.password = VALIDATION_MESSAGES.PASSWORD_REQUIRED;
         } else if (password.length < MIN_PASSWORD_LENGTH) {
             newErrors.password = VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH;
+        }
+
+        // Validar rol
+        if (!rolId) {
+            newErrors.rolId = 'Debe seleccionar un rol';
         }
 
         setErrors(newErrors);
@@ -67,7 +78,8 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
             onSubmit({
                 email: email.trim(),
                 nombre: nombre.trim(),
-                password
+                password,
+                rolId: Number(rolId)
             });
         }
     };
@@ -106,6 +118,33 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
                     disabled={isLoading}
                     autoComplete="name"
                 />
+            </FormField>
+
+            <FormField
+                label="Rol Inicial"
+                error={errors.rolId}
+                required
+                htmlFor="create-user-role"
+            >
+                <Select
+                    id="create-user-role"
+                    value={rolId}
+                    onChange={(e) => setRolId(Number(e.target.value))}
+                    disabled={isLoading || availableRoles.length === 0}
+                >
+                    {availableRoles.length === 0 ? (
+                        <option value="" disabled>No hay roles disponibles</option>
+                    ) : (
+                        <>
+                            <option value="">Seleccione un rol...</option>
+                            {availableRoles.map((role) => (
+                                <option key={role.id} value={role.id}>
+                                    {role.nombre}
+                                </option>
+                            ))}
+                        </>
+                    )}
+                </Select>
             </FormField>
 
             <FormField

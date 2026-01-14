@@ -122,16 +122,16 @@ COMMENT ON VIEW v_contexto_usuario_token IS 'Vista optimizada para generación d
 -- =============================================================================
 
 -- Roles globales (aplicables a todas las organizaciones)
-INSERT INTO roles (id, codigo, nombre, descripcion, organizacion_id) VALUES
-    (1, 'SUPER_ADMIN', 'Super Administrador', 'Acceso total al sistema, gestión de organizaciones', NULL),
-    (2, 'ADMIN', 'Administrador', 'Administrador de organización con permisos completos', NULL),
-    (3, 'USER', 'Usuario Estándar', 'Usuario con permisos de lectura/escritura en documentos', NULL),
-    (4, 'VIEWER', 'Visor', 'Usuario con permisos de solo lectura', NULL);
+INSERT INTO roles (id, codigo, nombre, descripcion, organizacion_id, activo, fecha_creacion) VALUES
+    (1, 'SUPER_ADMIN', 'Super Administrador', 'Acceso total al sistema, gestión de organizaciones', null, true, NOW()),
+    (2, 'ADMIN', 'Administrador', 'Administrador de organización con permisos completos', NULL, true, NOW()),
+    (3, 'USER', 'Usuario Estándar', 'Usuario con permisos de lectura/escritura en documentos', 0, true, NOW()),
+    (4, 'VIEWER', 'Visor', 'Usuario con permisos de solo lectura', 0, true, NOW());
 
 -- Roles específicos de ejemplo para Acme Corp (organizacion_id=1)
-INSERT INTO roles (codigo, nombre, descripcion, organizacion_id) VALUES
-    ('AUDITOR', 'Auditor Interno', 'Acceso de lectura a logs de auditoría', 1),
-    ('CONTRIBUTOR', 'Colaborador Externo', 'Permisos limitados para usuarios externos', 1);
+INSERT INTO roles (id, codigo, nombre, descripcion, organizacion_id, activo, fecha_creacion ) VALUES
+    (5, 'AUDITOR', 'Auditor Interno', 'Acceso de lectura a logs de auditoría', 1, true, NOW()),
+    (6, 'CONTRIBUTOR', 'Colaborador Externo', 'Permisos limitados para usuarios externos', 1, true, NOW());
 
 -- Reset sequence
 SELECT setval('roles_id_seq', (SELECT MAX(id) FROM roles));

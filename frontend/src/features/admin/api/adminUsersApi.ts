@@ -15,13 +15,23 @@ import type {
 export const adminUsersApi = {
     /**
      * Obtiene la lista de usuarios de la organización
-     * @returns Lista de usuarios con sus roles y estado
+     * @param page - Número de página (base 1, default 1)
+     * @param limit - Elementos por página (default 20, max 100)
+     * @param estado - Filtro opcional por estado (ACTIVO, SUSPENDIDO, etc.)
+     * @param busqueda - Filtro opcional de búsqueda en email o nombre
+     * @returns Lista de usuarios con paginación
      */
-    getUsers: async (): Promise<AdminUser[]> => {
+    getUsers: async (page: number = 1, limit: number = 20, estado?: string, busqueda?: string): Promise<AdminUser[]> => {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('limit', limit.toString());
+        if (estado) params.append('estado', estado);
+        if (busqueda) params.append('busqueda', busqueda);
+
         const { data } = await apiClient.get<GetUsersResponse>(
-            ADMIN_ENDPOINTS.USERS.LIST
+            `${ADMIN_ENDPOINTS.USERS.LIST}?${params.toString()}`
         );
-        return data.users;
+        return data?.usuarios || [];
     },
 
     /**
@@ -46,11 +56,19 @@ export const adminUsersApi = {
     },
 
     /**
+     * Activa un usuario existente (desactivado o suspendido)
+     * @param userId - ID del usuario a activar
+     */
+    activateUser: async (userId: string): Promise<void> => {
+        await apiClient.patch(ADMIN_ENDPOINTS.USERS.ACTIVATE(userId));
+    },
+
+    /**
      * Asigna un rol a un usuario
      * @param userId - ID del usuario
      * @param roleId - ID del rol a asignar
      */
     assignRole: async (userId: string, roleId: number): Promise<void> => {
-        await apiClient.post(ADMIN_ENDPOINTS.USERS.ASSIGN_ROLE(userId), { roleId });
+        await apiClient.post(ADMIN_ENDPOINTS.USERS.ASSIGN_ROLE(userId), { rolId: roleId });
     },
 };

@@ -19,6 +19,7 @@ import java.util.List;
  *   allowed-origins:
  *     - http://localhost:5173
  *     - http://localhost:3000
+ *     - http://localhost:3001
  * </pre>
  * </p>
  */
@@ -37,12 +38,13 @@ public class CorsProperties {
      * Ejemplos válidos:
      * <ul>
      *   <li>http://localhost:5173 (Vite dev server)</li>
-     *   <li>http://localhost:3000 (React/Next.js dev)</li>
+     *   <li>http://localhost:3000/3001 (React/Next.js dev)</li>
      * </ul>
      * </p>
      */
     private List<String> allowedOrigins = List.of(
         "http://localhost:5173",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "http://localhost:3001"
     );
 }

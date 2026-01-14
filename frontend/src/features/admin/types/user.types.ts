@@ -17,22 +17,40 @@ export interface UserRole {
 export interface AdminUser {
     id: string;
     email: string;
-    nombre: string;
+    nombreCompleto: string;
     estado: UserStatus;
     roles: UserRole[];
-    createdAt: string;
+    fechaCreacion: string;
 }
 
 /** Datos para crear un nuevo usuario */
 export interface CreateUserRequest {
     email: string;
+    nombreCompleto: string;
+    password: string;
+    rolId?: number;
+}
+
+/** Datos del formulario de creación (sin idOrganizacion) */
+export interface CreateUserFormData {
+    email: string;
     nombre: string;
     password: string;
+    rolId: number;
+}
+
+/** Metadata de paginación */
+export interface PaginationMetadata {
+    total: number;
+    pagina: number;
+    limite: number;
+    totalPaginas: number;
 }
 
 /** Respuesta de la API al obtener usuarios */
 export interface GetUsersResponse {
-    users: AdminUser[];
+    usuarios: AdminUser[];
+    paginacion: PaginationMetadata;
 }
 
 /** Respuesta de creación de usuario */

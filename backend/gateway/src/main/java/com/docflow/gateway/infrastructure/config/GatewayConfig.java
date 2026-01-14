@@ -82,7 +82,7 @@ public class GatewayConfig {
         corsConfig.setAllowedOrigins(corsProperties.getAllowedOrigins());
         
         // Métodos HTTP permitidos
-        corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         
         // Headers permitidos
         corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type"));

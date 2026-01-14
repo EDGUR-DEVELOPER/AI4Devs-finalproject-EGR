@@ -18,6 +18,8 @@ interface UsersTableProps {
     onRetry: () => void;
     /** Callback para desactivar usuario */
     onDeactivate: (userId: string) => void;
+    /** Callback para activar usuario */
+    onActivate: (userId: string) => void;
     /** Callback para asignar rol */
     onAssignRole: (userId: string, roleId: number) => void;
     /** Indica si hay una operación en progreso */
@@ -35,6 +37,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     error,
     onRetry,
     onDeactivate,
+    onActivate,
     onAssignRole,
     isProcessing,
 }) => {
@@ -67,7 +70,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     }
 
     // Estado vacío
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
         return (
             <div className="text-center py-12">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
@@ -125,6 +128,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                             user={user}
                             availableRoles={availableRoles}
                             onDeactivate={onDeactivate}
+                            onActivate={onActivate}
                             onAssignRole={onAssignRole}
                             isProcessing={isProcessing}
                         />

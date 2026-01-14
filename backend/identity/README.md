@@ -109,23 +109,6 @@ Swagger UI: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagge
 
 ---
 
-## 🐛 Notas y Problemas Conocidos
-
-- Unit tests fallan en Java 25 (usar Java 21)
-- Pruebas de integración requieren Docker Desktop
-
----
-
-## 🚦 Próximos Pasos (Roadmap)
-
-- US-AUTH-002: Agregar roles[] al JWT
-- US-AUTH-003: Middleware JWT para endpoints protegidos
-- US-AUTH-004: Aislamiento multi-tenant
-- US-AUTH-005: UI de login en React
-- US-AUTH-006: Soporte MFA
-
----
-
 **Compilación:**
 
 ```

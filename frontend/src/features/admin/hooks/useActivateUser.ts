@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { adminUsersApi } from '../api/adminUsersApi';
 import { useNotificationStore } from '@ui/notifications/useNotificationStore';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES, DEFAULT_ERROR_MESSAGE } from '../constants/messages';
+import { ERROR_MESSAGES, DEFAULT_ERROR_MESSAGE } from '../constants/messages';
 
 /** Tipo para errores de API con response */
 interface ApiError {
@@ -14,34 +14,34 @@ interface ApiError {
     message?: string;
 }
 
-/** Retorno del hook de desactivación */
-interface UseDeactivateUserReturn {
-    /** Función para desactivar un usuario */
-    deactivateUser: (userId: string) => Promise<boolean>;
-    /** Indica si está en proceso de desactivación */
-    isDeactivating: boolean;
+/** Retorno del hook de activación */
+interface UseActivateUserReturn {
+    /** Función para activar un usuario */
+    activateUser: (userId: string) => Promise<boolean>;
+    /** Indica si está en proceso de activación */
+    isActivating: boolean;
 }
 
 /**
- * Hook para desactivar usuarios
+ * Hook para activar usuarios
  * Incluye manejo de estado de carga y notificaciones
  * US-ADMIN-005: UI mínima de gestión de usuarios
  */
-export const useDeactivateUser = (): UseDeactivateUserReturn => {
-    const [isDeactivating, setIsDeactivating] = useState(false);
+export const useActivateUser = (): UseActivateUserReturn => {
+    const [isActivating, setIsActivating] = useState(false);
     const { showNotification } = useNotificationStore();
 
-    const deactivateUser = useCallback(
+    const activateUser = useCallback(
         async (userId: string): Promise<boolean> => {
-            setIsDeactivating(true);
+            setIsActivating(true);
             try {
-                console.log(`[useDeactivateUser] Iniciando desactivación del usuario: ${userId}`);
-                const response = await adminUsersApi.deactivateUser(userId);
-                console.log(`[useDeactivateUser] Respuesta del servidor:`, response);
-                showNotification(SUCCESS_MESSAGES.USER_DEACTIVATED, 'success');
+                console.log(`[useActivateUser] Iniciando activación del usuario: ${userId}`);
+                const response = await adminUsersApi.activateUser(userId);
+                console.log(`[useActivateUser] Respuesta del servidor:`, response);
+                showNotification('Usuario activado exitosamente', 'success');
                 return true;
             } catch (error: unknown) {
-                console.error(`[useDeactivateUser] Error al desactivar usuario:`, error);
+                console.error(`[useActivateUser] Error al activar usuario:`, error);
                 const apiError = error as ApiError;
                 const status = apiError.response?.status ?? 500;
                 const serverMessage = apiError.response?.data?.detail || apiError.message;
@@ -49,11 +49,11 @@ export const useDeactivateUser = (): UseDeactivateUserReturn => {
                 showNotification(message, 'error');
                 return false;
             } finally {
-                setIsDeactivating(false);
+                setIsActivating(false);
             }
         },
         [showNotification]
     );
 
-    return { deactivateUser, isDeactivating };
+    return { activateUser, isActivating };
 };

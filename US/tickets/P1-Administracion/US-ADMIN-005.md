@@ -44,7 +44,7 @@
 * **Título:** Implementar servicio/cliente API para usuarios
 * **Objetivo:** Centralizar las llamadas a la API de administración de usuarios.
 * **Tipo:** Tarea
-* **Descripción corta:** Crear servicio con métodos: `getUsers()`, `createUser(data)`, `assignRole(userId, roleId)`, `deactivateUser(userId)`, `getRoles()`. Incluir manejo de token en headers.
+* **Descripción corta:** Crear servicio con métodos: `getUsers()`, `createUser(data)`, `assignRole(userId, roleId)`, `desactivateUser(userId)`, `getRoles()`. Incluir manejo de token en headers.
 * **Entregables:**
     - Servicio `AdminUsersService` o similar.
     - Interceptor/config para incluir token en requests.

@@ -12,6 +12,8 @@ interface UsersTableRowProps {
     availableRoles: AvailableRole[];
     /** Callback para desactivar usuario */
     onDeactivate: (userId: string) => void;
+    /** Callback para activar usuario */
+    onActivate: (userId: string) => void;
     /** Callback para asignar rol */
     onAssignRole: (userId: string, roleId: number) => void;
     /** Indica si hay una operación en progreso */
@@ -27,6 +29,7 @@ export const UsersTableRow: React.FC<UsersTableRowProps> = ({
     user,
     availableRoles,
     onDeactivate,
+    onActivate,
     onAssignRole,
     isProcessing,
 }) => {
@@ -41,7 +44,7 @@ export const UsersTableRow: React.FC<UsersTableRowProps> = ({
 
             {/* Columna Nombre */}
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {user.nombre}
+                {user.nombreCompleto}
             </td>
 
             {/* Columna Estado */}
@@ -71,13 +74,21 @@ export const UsersTableRow: React.FC<UsersTableRowProps> = ({
 
             {/* Columna Acciones */}
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                {isActive && (
+                {isActive ? (
                     <button
                         onClick={() => onDeactivate(user.id)}
                         disabled={isProcessing}
                         className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                        {isProcessing ? 'Procesando...' : FORM_LABELS.DEACTIVATE}
+                        {isProcessing ? 'Procesando...' : 'Desactivar'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => onActivate(user.id)}
+                        disabled={isProcessing}
+                        className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {isProcessing ? 'Procesando...' : 'Activar'}
                     </button>
                 )}
             </td>

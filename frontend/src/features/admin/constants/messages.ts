@@ -51,4 +51,5 @@ export const VALIDATION_MESSAGES = {
     NAME_REQUIRED: 'El nombre es requerido',
     PASSWORD_REQUIRED: 'La contraseña es requerida',
     PASSWORD_MIN_LENGTH: 'La contraseña debe tener al menos 8 caracteres',
+    PASSWORD_COMPLEXITY: 'Debe tener mayúscula, minúscula y número',
 } as const;

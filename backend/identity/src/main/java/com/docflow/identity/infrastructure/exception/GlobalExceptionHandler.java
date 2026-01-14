@@ -35,7 +35,7 @@ import java.net.URI;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-    private static final String ERROR_URI_BASE = "Documentacion Errores.";
+    private static final String ERROR_URI_BASE = "urn:docflow:error:";
 
     /**
      * Maneja InvalidCredentialsException (401 Unauthorized).
@@ -48,9 +48,8 @@ public class GlobalExceptionHandler {
         log.warn("Intento de login fallido desde IP: {}", request.getRemoteAddr());
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNAUTHORIZED,
-            ex.getMessage()
-        );
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "credenciales-invalidas"));
         problem.setTitle("Credenciales Inválidas");
         problem.setProperty("codigo", "CREDENCIALES_INVALIDAS");
@@ -68,9 +67,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.FORBIDDEN,
-            ex.getMessage()
-        );
+                HttpStatus.FORBIDDEN,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "sin-organizacion"));
         problem.setTitle("Sin Organización");
         problem.setProperty("codigo", "SIN_ORGANIZACION");
@@ -88,9 +86,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.CONFLICT,
-            ex.getMessage()
-        );
+                HttpStatus.CONFLICT,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "organizacion-config-invalida"));
         problem.setTitle("Configuración de Organización Inválida");
         problem.setProperty("codigo", "ORGANIZACION_CONFIG_INVALIDA");
@@ -108,9 +105,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.FORBIDDEN,
-            ex.getMessage()
-        );
+                HttpStatus.FORBIDDEN,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "organizacion-no-encontrada"));
         problem.setTitle("Organización No Encontrada");
         problem.setProperty("codigo", "ORGANIZACION_NO_ENCONTRADA");
@@ -128,15 +124,13 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         var errors = ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value"
-            ));
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value"));
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            "Error de validación en los datos de entrada"
-        );
+                HttpStatus.BAD_REQUEST,
+                "Error de validación en los datos de entrada");
         problem.setType(URI.create(ERROR_URI_BASE + "validation-error"));
         problem.setTitle("Error de Validación");
         problem.setProperty("codigo", "VALIDATION_ERROR");
@@ -149,7 +143,8 @@ public class GlobalExceptionHandler {
     /**
      * Maneja intentos de creación de usuarios con emails duplicados (409 Conflict).
      * 
-     * Esta excepción se lanza cuando se intenta registrar un email ya existente en el sistema.
+     * Esta excepción se lanza cuando se intenta registrar un email ya existente en
+     * el sistema.
      * Retorna HTTP 409 Conflict con formato ProblemDetail (RFC 7807).
      * 
      * Parte de US-ADMIN-001: Crear usuario (API) dentro de la organización.
@@ -162,9 +157,8 @@ public class GlobalExceptionHandler {
         log.warn("Email duplicado en creación de usuario: {}", ex.getMessage());
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.CONFLICT,
-            ex.getMessage()
-        );
+                HttpStatus.CONFLICT,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "email-duplicado"));
         problem.setTitle("Email Duplicado");
         problem.setProperty("codigo", "EMAIL_DUPLICADO");
@@ -175,9 +169,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja intentos de operaciones administrativas sin permisos suficientes (403 Forbidden).
+     * Maneja intentos de operaciones administrativas sin permisos suficientes (403
+     * Forbidden).
      * 
-     * Esta excepción se lanza cuando un usuario intenta realizar una operación que requiere
+     * Esta excepción se lanza cuando un usuario intenta realizar una operación que
+     * requiere
      * un rol específico (ej. ADMIN) y no lo posee.
      * Retorna HTTP 403 Forbidden con formato ProblemDetail (RFC 7807).
      * 
@@ -191,9 +187,8 @@ public class GlobalExceptionHandler {
         log.warn("Acceso denegado por permisos insuficientes: {}", ex.getMessage());
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.FORBIDDEN,
-            ex.getMessage()
-        );
+                HttpStatus.FORBIDDEN,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "permiso-insuficiente"));
         problem.setTitle("Permisos Insuficientes");
         problem.setProperty("codigo", "PERMISO_INSUFICIENTE");
@@ -215,9 +210,8 @@ public class GlobalExceptionHandler {
         log.warn("Intento de auto-desactivación bloqueado: {}", ex.getMessage());
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            ex.getMessage()
-        );
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage());
         problem.setType(URI.create(ERROR_URI_BASE + "auto-deactivation-not-allowed"));
         problem.setTitle("Auto-desactivación no permitida");
         problem.setProperty("codigo", "AUTO_DEACTIVACION_NO_PERMITIDA");
@@ -237,9 +231,8 @@ public class GlobalExceptionHandler {
         log.error("Error inesperado en request {}: {}", request.getRequestURI(), ex.getMessage(), ex);
 
         var problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Ha ocurrido un error inesperado. Por favor contacte al soporte."
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Ha ocurrido un error inesperado. Por favor contacte al soporte.");
         problem.setType(URI.create(ERROR_URI_BASE + "error-interno"));
         problem.setTitle("Error Interno del Servidor");
         problem.setProperty("codigo", "ERROR_INTERNO");

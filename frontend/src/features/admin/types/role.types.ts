@@ -11,9 +11,7 @@ export interface AvailableRole {
 }
 
 /** Respuesta de la API al obtener roles disponibles */
-export interface GetRolesResponse {
-    roles: AvailableRole[];
-}
+export type GetRolesResponse = AvailableRole[];
 
 /** Request para asignar un rol a un usuario */
 export interface AssignRoleRequest {

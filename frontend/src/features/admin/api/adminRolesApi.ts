@@ -1,6 +1,6 @@
 import { apiClient } from '@core/shared/api/axiosInstance';
 import { ADMIN_ENDPOINTS } from '../constants/endpoints';
-import type { AvailableRole, GetRolesResponse } from '../types/role.types';
+import type { AvailableRole } from '../types/role.types';
 
 /**
  * Servicio de API para roles disponibles
@@ -13,9 +13,9 @@ export const adminRolesApi = {
      * @returns Lista de roles disponibles
      */
     getRoles: async (): Promise<AvailableRole[]> => {
-        const { data } = await apiClient.get<GetRolesResponse>(
+        const { data } = await apiClient.get<AvailableRole[]>(
             ADMIN_ENDPOINTS.ROLES.LIST
         );
-        return data.roles;
+        return data;
     },
 };

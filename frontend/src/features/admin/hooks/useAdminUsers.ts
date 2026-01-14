@@ -29,11 +29,11 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
     const [error, setError] = useState<string | null>(null);
 
     // Función para cargar usuarios desde la API
-    const fetchUsers = useCallback(async () => {
+    const fetchUsers = useCallback(async (page: number = 1, limit: number = 20, estado?: string, busqueda?: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await adminUsersApi.getUsers();
+            const data = await adminUsersApi.getUsers(page, limit, estado, busqueda);
             setUsers(data);
         } catch (err) {
             console.error('Error cargando usuarios:', err);

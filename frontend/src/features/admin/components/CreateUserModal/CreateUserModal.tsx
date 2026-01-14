@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreateUserForm } from './CreateUserForm';
-import type { CreateUserRequest } from '../../types/user.types';
+import type { CreateUserFormData, UserRole } from '../../types/user.types';
 
 interface CreateUserModalProps {
     /** Indica si el modal está abierto */
@@ -8,9 +8,11 @@ interface CreateUserModalProps {
     /** Callback para cerrar el modal */
     onClose: () => void;
     /** Callback al enviar el formulario */
-    onSubmit: (data: CreateUserRequest) => void;
+    onSubmit: (data: CreateUserFormData) => void;
     /** Indica si está procesando */
     isLoading: boolean;
+    /** Roles disponibles */
+    availableRoles: UserRole[];
 }
 
 /**
@@ -22,6 +24,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     onClose,
     onSubmit,
     isLoading,
+    availableRoles,
 }) => {
     if (!isOpen) return null;
 
@@ -67,6 +70,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     onSubmit={onSubmit}
                     isLoading={isLoading}
                     onCancel={onClose}
+                    availableRoles={availableRoles}
                 />
             </div>
         </div>
