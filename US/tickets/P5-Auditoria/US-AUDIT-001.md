@@ -1,5 +1,7 @@
 ## P5 — Auditoría: logs inmutables + UI mínima
 
+> Estado: **Post-MVP** — Auditoría asíncrona (MongoDB + Kafka + Audit Log) ha sido retirada para el MVP. Para el MVP, usar persistencia sincrónica mínima en PostgreSQL (tabla `Evento_Auditoria`) o registrar en logs/tabla simple. Replanificar la implementación completa en la Fase Post-MVP.
+
 ### [US-AUDIT-001] Emitir evento de auditoría en acciones críticas
 ---
 #### Base de datos

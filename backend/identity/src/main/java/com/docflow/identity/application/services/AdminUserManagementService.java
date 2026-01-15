@@ -181,9 +181,17 @@ public class AdminUserManagementService {
                                 validatedLimit,
                                 Sort.by("usuarioId").ascending());
 
-                // 3. Ejecutar query JPQL con constructor expression
+                // 3. Ejecutar query JPQL con filtros de estado y búsqueda a nivel de BD
+                // Convertir ACTIVOS/INACTIVOS a ACTIVO/INACTIVO para la query
+                String estadoFiltro = estado
+                                .map(e -> e.equals("ACTIVOS") ? "ACTIVO" : e.equals("INACTIVO") ? "INACTIVO" : null)
+                                .orElse(null);
+                String busquedaFiltro = busqueda.orElse(null);
+
+                log.debug("Filtros aplicados en query: estado={}, busqueda={}", estadoFiltro, busquedaFiltro);
+
                 Page<UserWithRolesProjection> proyeccionesPage = usuarioRepository
-                                .findUsersWithRolesByOrganizacion(organizacionId, pageable);
+                                .findUsersWithRolesByOrganizacion(organizacionId, estadoFiltro, busquedaFiltro, pageable);
 
                 log.debug("Query retornó {} proyecciones de {} totales",
                                 proyeccionesPage.getContent().size(), proyeccionesPage.getTotalElements());
@@ -237,7 +245,7 @@ public class AdminUserManagementService {
                                                         usuarioDummy.getEmail(),
                                                         usuarioDummy.getNombreCompleto(),
                                                         primeraProyeccion.getEstado(), // Estado de membresía
-                                                                                       // (ACTIVO/SUSPENDIDO)
+                                                                                       // (ACTIVO/INACTIVO)
                                                         rolesDto,
                                                         usuarioDummy.getFechaCreacion());
                                 })
@@ -245,30 +253,10 @@ public class AdminUserManagementService {
 
                 log.debug("Mapeados {} usuarios a DTOs", usuariosDto.size());
 
-                // 6. Aplicar filtros opcionales en memoria
-                List<UserWithRolesDto> usuariosFiltrados = usuariosDto.stream()
-                                .filter(usuario -> {
-                                        // Filtro por estado (exacto)
-                                        boolean matchEstado = estado.isEmpty() ||
-                                                        usuario.estado().equalsIgnoreCase(estado.get());
-
-                                        // Filtro por búsqueda (contains en email o nombre, case-insensitive)
-                                        boolean matchBusqueda = busqueda.isEmpty() ||
-                                                        usuario.email().toLowerCase()
-                                                                        .contains(busqueda.get().toLowerCase())
-                                                        ||
-                                                        usuario.nombreCompleto().toLowerCase()
-                                                                        .contains(busqueda.get().toLowerCase());
-
-                                        return matchEstado && matchBusqueda;
-                                })
-                                .toList();
-
-                log.debug("Después de filtros: {} usuarios", usuariosFiltrados.size());
-
-                // 7. Recalcular metadata de paginación sobre lista filtrada
-                int totalFiltrados = usuariosFiltrados.size();
-                int totalPaginas = (int) Math.ceil((double) totalFiltrados / validatedLimit);
+                // 6. Recalcular metadata de paginación con los datos de la página actual
+                // (la paginación ya se aplicó en la query a nivel de BD)
+                int totalFiltrados = (int) proyeccionesPage.getTotalElements();
+                int totalPaginas = proyeccionesPage.getTotalPages();
 
                 PaginationMetadataDto paginacion = new PaginationMetadataDto(
                                 totalFiltrados,
@@ -278,10 +266,10 @@ public class AdminUserManagementService {
                 );
 
                 log.info("Listado completado: {} usuarios retornados de {} totales (página {}/{})",
-                                usuariosFiltrados.size(), totalFiltrados, validatedPage, totalPaginas);
+                                usuariosDto.size(), totalFiltrados, validatedPage, totalPaginas);
 
-                // 8. Retornar respuesta con usuarios y metadata
-                return new ListUsersResponseDto(usuariosFiltrados, paginacion);
+                // 7. Retornar respuesta con usuarios y metadata
+                return new ListUsersResponseDto(usuariosDto, paginacion);
         }
 
         /**

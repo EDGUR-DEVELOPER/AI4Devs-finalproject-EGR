@@ -92,7 +92,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 20),
                 3);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act
@@ -121,7 +121,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 20),
                 0);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         // Act
@@ -150,7 +150,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 20),
                 2);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act
@@ -179,7 +179,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 20),
                 2);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act: Buscar "test" en email (case-insensitive)
@@ -207,7 +207,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 20),
                 2);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act: Buscar "juan" en nombre (case-insensitive)
@@ -236,7 +236,7 @@ class AdminUserManagementServiceTest {
                 10 // Total en BD
         );
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act: Filtrar solo ACTIVO con limit=5
@@ -262,7 +262,7 @@ class AdminUserManagementServiceTest {
                 PageRequest.of(0, 100), // El servicio debe ajustar a 100
                 1);
 
-        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(Pageable.class)))
+        when(usuarioRepository.findUsersWithRolesByOrganizacion(eq(ORG_ID), any(String.class), any(String.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // Act: Intentar pasar limit=200 (debe forzarse a 100)

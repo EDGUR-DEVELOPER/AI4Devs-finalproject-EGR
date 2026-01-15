@@ -1,5 +1,7 @@
 ## P5 — Auditoría: logs inmutables + UI mínima
 
+> Estado: **Post-MVP** — Esta historia queda planificada para Post-MVP porque depende de Audit Log y MongoDB/Kafka. En MVP sólo se aceptan controles básicos y registro simple en PostgreSQL. Rehabilitar en fase posterior.
+
 ### [US-AUDIT-005] Activación de auditoría de accesos no autorizados (Post-MVP)
 ---
 #### Backend

@@ -13,8 +13,10 @@ import java.time.OffsetDateTime;
 
 /**
  * Servicio de aplicación para asignación de roles a usuarios.
- * Maneja la lógica de negocio de asignación con validaciones de seguridad multi-tenant,
- * reactivación de asignaciones soft-deleted, y publicación de eventos a Kafka.
+ * Maneja la lógica de negocio de asignación con validaciones de seguridad multi-tenant
+ * y reactivación de asignaciones soft-deleted.
+ * 
+ * MVP: Auditoría de eventos deshabilitada. Se implementará en fase post-MVP.
  */
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,6 @@ public class RoleAssignmentService {
     private final UsuarioRolRepository usuarioRolRepository;
     private final UsuarioOrganizacionRepository usuarioOrganizacionRepository;
     private final OrganizacionRepository organizacionRepository;
-    private final RoleEventPublisher roleEventPublisher;
     
     /**
      * Asigna un rol a un usuario dentro de una organización.
@@ -161,16 +162,7 @@ public class RoleAssignmentService {
                 usuarioId, rolId, organizacionId);
         }
         
-        // 7. Publicar evento a Kafka para auditoría externa
-        roleEventPublisher.publishRolAsignadoEvent(
-            usuarioId,
-            rolId,
-            organizacionId,
-            asignadoPor,
-            esReactivacion
-        );
-        
-        // 8. Construir respuesta
+        // 7. Construir respuesta
         var mensaje = esReactivacion 
             ? "Rol reactivado correctamente" 
             : "Rol asignado correctamente";

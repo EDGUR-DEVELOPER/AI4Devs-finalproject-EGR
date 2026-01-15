@@ -23,17 +23,17 @@ interface UseAdminUsersReturn extends UseAdminUsersState {
  * Maneja estados de carga, error y datos
  * US-ADMIN-005: UI mínima de gestión de usuarios
  */
-export const useAdminUsers = (): UseAdminUsersReturn => {
+export const useAdminUsers = (estado?: string, busqueda?: string): UseAdminUsersReturn => {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Función para cargar usuarios desde la API
-    const fetchUsers = useCallback(async (page: number = 1, limit: number = 20, estado?: string, busqueda?: string) => {
+    const fetchUsers = useCallback(async (page: number = 1, limit: number = 20, filterEstado?: string, filterBusqueda?: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await adminUsersApi.getUsers(page, limit, estado, busqueda);
+            const data = await adminUsersApi.getUsers(page, limit, filterEstado, filterBusqueda);
             setUsers(data);
         } catch (err) {
             console.error('Error cargando usuarios:', err);
@@ -50,16 +50,16 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
         );
     }, []);
 
-    // Carga inicial al montar el componente
+    // Carga inicial al montar el componente y cuando cambia el filtro de estado
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        fetchUsers(1, 20, estado, busqueda);
+    }, [estado, busqueda, fetchUsers]);
 
     return {
         users,
         isLoading,
         error,
-        refetch: fetchUsers,
+        refetch: () => fetchUsers(1, 20, estado, busqueda),
         updateUserLocally,
     };
 };

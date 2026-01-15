@@ -46,10 +46,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * constructor expression JPQL.
      * 
      * Query optimizado que:
-     * - Usa INNER JOIN con UsuarioOrganizacion filtrando por organizacionId y
-     * estado ACTIVO
+     * - Usa INNER JOIN con UsuarioOrganizacion filtrando por organizacionId
      * - Usa LEFT JOIN con UsuarioRol y Rol para incluir usuarios sin roles
      * - Filtra usuarios no eliminados (fechaEliminacion IS NULL)
+     * - Aplica filtros opcionales de estado (ACTIVOS, INACTIVOS) y búsqueda (email/nombre)
      * - Retorna proyecciones UserWithRolesProjection (1 fila por usuario-rol)
      * - Soporta paginación y ordenamiento
      * 
@@ -61,7 +61,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * genera N filas (desnormalización intencional para eficiencia de query).
      * 
      * @param organizacionId ID de la organización cuyos usuarios se listan
-     * @param pageable       Configuración de paginación y ordenamiento
+     * @param estado Filtro opcional por estado de membresía (ACTIVOS, INACTIVOS o null para todos)
+     * @param busqueda Filtro opcional de búsqueda en email o nombre (case-insensitive, null para sin filtro)
+     * @param pageable Configuración de paginación y ordenamiento
      * @return Página de proyecciones con datos de usuarios y roles (sin agrupar)
      */
     @Query("""
@@ -81,10 +83,17 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
                 AND ur.activo = true
             LEFT JOIN Rol r ON r.id = ur.rolId
             WHERE uo.organizacionId = :organizacionId
-              AND uo.estado IN ('ACTIVO', 'SUSPENDIDO')
               AND u.fechaEliminacion IS NULL
+              AND (:estado IS NULL 
+                   OR (:estado = 'ACTIVOS' AND uo.estado = 'ACTIVO')
+                   OR (:estado = 'INACTIVOS' AND uo.estado = 'INACTIVO'))
+              AND (:busqueda IS NULL 
+                   OR LOWER(u.email) LIKE LOWER(('%' || CAST(:busqueda AS String) || '%'))
+                   OR LOWER(u.nombreCompleto) LIKE LOWER(('%' || CAST(:busqueda AS String) || '%')))
             """)
     Page<UserWithRolesProjection> findUsersWithRolesByOrganizacion(
             @Param("organizacionId") Integer organizacionId,
+            @Param("estado") String estado,
+            @Param("busqueda") String busqueda,
             Pageable pageable);
 }

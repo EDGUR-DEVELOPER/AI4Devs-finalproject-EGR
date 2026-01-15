@@ -41,29 +41,6 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
   issuer: ${JWT_ISSUER:docflow-identity-service}
 
-# Kafka Configuration
-kafka:
-  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  producer:
-    # Serialización JSON para eventos
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    # value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    # Retry policy: 3 reintentos con backoff exponencial
-    retries: 3
-    properties:
-      # Backoff inicial de 1 segundo entre reintentos
-      retry.backoff.ms: 1000
-      # Timeout máximo de bloqueo en send: 5 segundos
-      max.block.ms: 5000
-    # Garantía de entrega: esperar confirmación de todos los réplicas
-    acks: all
-    # Idempotencia para evitar duplicados en reintentos
-    # properties:
-    #   enable.idempotence: true
-  # Topics
-  topics:
-    role-assigned: identity.role.assigned
-
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:

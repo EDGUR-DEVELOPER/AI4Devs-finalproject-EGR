@@ -1,5 +1,7 @@
 ## P5 — Auditoría: logs inmutables + UI mínima
 
+> Estado: **Post-MVP** — Auditoría asíncrona e indexada fue retirada del MVP. Para MVP, priorizar consultas básicas sobre la tabla `Evento_Auditoria` en PostgreSQL; la API paginada e indexación avanzada quedan para Post-MVP.
+
 ### [US-AUDIT-003] Consultar auditoría (API) con paginación y fechas
 ---
 #### Base de datos

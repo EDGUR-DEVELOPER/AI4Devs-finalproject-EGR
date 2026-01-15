@@ -479,3 +479,62 @@ Lista las tareas atómicas necesarias para completar el ticket, en orden lógico
 Como experto en desarrollo de frontend, implementa un dashboard en frontend
  donde tenga un interfaz para mostrar informacion del sistema y un panel para acceder a modulos. que sea manera amigable. Respeta la arquitectura del proyecto. Reutiliza componentes si se requiere. Solo enfocate en frontend, no realices nada de backend. Respeta la metodologia de UI/UX mobile y despues desktop y aplica las mejores practicas.
 ```
+
+---
+## Logica para el desarrollo de la aplicacion despues de la experiencia del desarrollo de las primeras 2 epicas.
+En el proceso del desarrollo se tuvo complicaciones para la implementacios del TDD/BDD. no se obtenia pruebas unitarios entendibles. Y sin uso correcto del BDD teniendo complicaciones para realizarlo.
+Prepare metaprompts para cumplir el desarrollo con la siguiente logica:
+`Se repite este ciclo en cada historia de usuario`
+> Epica/US/Tickes -> Identificar pruebas unitarias backend -> Implementar TDD -> Implementar Codigo -> Obtencion querys para optimizar indices para consultas y datos pruebas -> Implementar BDD con cucumber -> Desarrollo de Frontend -> pruebas de interfaces (Manual).
+
+### Prompt para detectar pruebas unitarias
+```Prompt
+Como experto en prompt engineer, generame un metaprompt de un PM que 
+analice una lista de tickets de desarrollo backend, entregando una lista
+ de prubeas unitarias que se necesitan para cumplir el desarrollo de 
+cada ticket backend. Utiliza las mejores practicas y esta lista debe 
+ayudar para implementar la etapa RED de un TDD. 
+```
+`Meta-prompt`
+```Meta-prompt
+# Role
+Actúa como un **Technical Product Manager (TPM) Senior** experto en desarrollo Backend y metodologías ágiles, específicamente en **Test Driven Development (TDD)**. Tu capacidad es desglosar requisitos de negocio abstractos en especificaciones técnicas granulares y verificables.
+
+# Objetivo
+Tu tarea es analizar una lista de **Tickets de Desarrollo Backend** (User Stories, Bugs o Tasks) y generar una lista exhaustiva de **Casos de Prueba Unitaria** necesarios para cada uno.
+
+# Contexto: La Etapa RED del TDD
+El equipo de desarrollo va a comenzar la etapa **RED** del ciclo TDD. Esto significa que necesitan saber exactamente qué pruebas escribir (y ver fallar) antes de escribir una sola línea de lógica de negocio. Tu salida servirá como la "especificación ejecutable" para los desarrolladores.
+
+# Instrucciones de Análisis
+Para cada ticket proporcionado, realiza los siguientes pasos:
+
+1.  **Análisis de Criterios de Aceptación:** Identifica las reglas de negocio, validaciones de entrada, transformaciones de datos y salidas esperadas.
+2.  **Identificación de Escenarios:** Divide el análisis en tres categorías:
+    * **Happy Path:** El flujo ideal donde todo funciona correctamente.
+    * **Edge Cases:** Valores límite, listas vacías, formatos extraños pero válidos.
+    * **Error Handling (Sad Path):** Entradas inválidas, fallos de dependencias (BD caída, timeout de API externa), violaciones de restricciones.
+3.  **Abstracción Técnica:** Asume que se usarán Mocks para dependencias externas (Base de datos, APIs de terceros). No necesitas escribir código, pero sí la lógica de la aserción.
+
+# Formato de Salida
+Para cada ticket, genera una tabla o lista estructurada con el siguiente formato:
+
+### Ticket ID: [Nombre del Ticket]
+
+| Categoría | Nombre Sugerido del Test (Descriptivo) | Input / Contexto (Given) | Acción (When) | Resultado Esperado / Aserción (Then) |
+| :--- | :--- | :--- | :--- | :--- |
+| Happy Path | `shouldCreateUserWhenDataIsValid` | JSON con email válido y pass fuerte | Llamar método `createUser()` | Retorna UserID; guarda en BD; envía evento de bienvenida. |
+| Edge Case | `shouldTrimWhitespaceFromEmail` | Email con espacios " user@mail.com " | Llamar método `createUser()` | Guarda "user@mail.com" sin espacios. |
+| Error | `shouldThrowExceptionWhenEmailExists` | Email ya existente en BD (Mock) | Llamar método `createUser()` | Lanza `DuplicateResourceException`. |
+
+# Restricciones y Mejores Prácticas
+* **Nomenclatura:** Usa nombres de tests que describan el comportamiento (ej. `should...When...`).
+* **Atomicidad:** Cada prueba debe verificar una sola condición lógica.
+* **Independencia:** Asume que cada test corre en aislamiento.
+* **Claridad:** El desarrollador debe poder leer la columna "Resultado Esperado" y escribir la aserción inmediatamente.
+
+# INPUT
+A continuación, analizarás los siguientes tickets:
+
+[PEGA TU LISTA DE TICKETS AQUÍ]
+```

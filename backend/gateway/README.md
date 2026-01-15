@@ -100,14 +100,14 @@ The service will start on **port 8080**.
 | GET | `http://localhost:8080/webjars/swagger-ui/index.html` | Swagger UI |
 | GET | `http://localhost:8080/v3/api-docs` | OpenAPI JSON |
 
-### Routed Endpoints
+### Routed Endpoints (MVP)
 
 | Pattern | Target Service | Port |
 |---------|----------------|------|
 | `/api/iam/**` | Identity Service | 8081 |
 | `/api/doc/**` | Document Core Service | 8082 |
 
-**Note**: Routes use `stripPrefix(2)`, meaning:
+**Nota:** Todas las rutas usan `stripPrefix(2)`, significando:
 - `/api/iam/users` → `http://localhost:8081/users`
 - `/api/doc/documents` → `http://localhost:8082/documents`
 
@@ -142,16 +142,18 @@ Invoke-RestMethod -Uri http://localhost:8080/health
 | `server.port` | 8080 | Gateway server port |
 | `spring.application.name` | gateway-service | Application name |
 
-## Port Mapping
+## Port Mapping (MVP)
 
 | Service | Port |
 |---------|------|
 | **Gateway** | **8080** |
-| Identity | 8081 |
-| Document Core | 8082 |
-| Audit Log | 8083 |
-| Broker | 8084 |
-| Vault | 8085 |
+| Identity Service | 8081 |
+| Document Core Service | 8082 |
+| MinIO API | 9000 |
+| MinIO Console | 9001 |
+| PostgreSQL | 5432 |
+
+**Nota MVP:** Redis, MongoDB, Kafka, Vault y sus puertos asociados han sido eliminados de la infraestructura para acelerar la entrega. Se implementarán en fases posteriores.
 
 ## Global Response Headers
 

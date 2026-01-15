@@ -1,5 +1,7 @@
 ## P6 — Búsqueda básica sin IA
 
+> Estado: **MVP (prioridad: básico)** — La búsqueda por permisos se mantiene en MVP con queries síncronas y joins. Optimización avanzada que dependa de pipelines o colas queda Post-MVP.
+
 ### [US-SEARCH-002] La búsqueda respeta permisos y no filtra existencia
 ---
 #### Base de datos

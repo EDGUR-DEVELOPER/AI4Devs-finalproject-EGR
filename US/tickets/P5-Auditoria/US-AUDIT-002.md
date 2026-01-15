@@ -1,5 +1,7 @@
 ## P5 — Auditoría: logs inmutables + UI mínima
 
+> Estado: **Post-MVP** — Auditoría asíncrona (MongoDB + Kafka + Audit Log) ha sido retirada para el MVP. Implementar en MVP persistencia mínima en PostgreSQL si se requiere trazabilidad básica. Replanificar la solución completa en Post-MVP.
+
 ### [US-AUDIT-002] Persistir auditoría como registro inmutable
 ---
 #### Base de datos

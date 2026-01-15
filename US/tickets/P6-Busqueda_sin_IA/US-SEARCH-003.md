@@ -1,5 +1,7 @@
 ## P6 — Búsqueda básica sin IA
 
+> Estado: **MVP** — La UI básica de búsqueda se mantiene en MVP consumiendo la API síncrona. Funcionalidades avanzadas de indexación o enriquecimiento asíncrono quedan para Post-MVP.
+
 ### [US-SEARCH-003] UI mínima de búsqueda
 ---
 #### Backend

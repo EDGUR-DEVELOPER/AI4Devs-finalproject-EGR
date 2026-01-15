@@ -1,5 +1,7 @@
 ## P6 — Búsqueda básica sin IA
 
+> Estado: **MVP (funcionalidad básica)** — Búsqueda por texto se mantiene en MVP usando índices en PostgreSQL. Las capacidades avanzadas que dependan de indexación asíncrona o de pipelines con Kafka quedan Post-MVP.
+
 ### [US-SEARCH-001] Buscar documentos (API) por texto
 ---
 #### Base de datos

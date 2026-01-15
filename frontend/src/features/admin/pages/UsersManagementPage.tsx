@@ -27,8 +27,11 @@ export const UsersManagementPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [userToDeactivate, setUserToDeactivate] = useState<UserToDeactivate | null>(null);
 
+    // Estado de filtro
+    const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+
     // Hooks de datos y operaciones
-    const { users, isLoading, error, refetch, updateUserLocally } = useAdminUsers();
+    const { users, isLoading, error, refetch, updateUserLocally } = useAdminUsers(statusFilter);
     const { roles } = useAdminRoles();
     const { createUser, isCreating } = useCreateUser();
     const { deactivateUser, isDeactivating } = useDeactivateUser();
@@ -115,6 +118,27 @@ export const UsersManagementPage: React.FC = () => {
                             </svg>
                             {FORM_LABELS.CREATE_USER}
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex items-center gap-4">
+                        <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
+                            Filtrar por estado:
+                        </label>
+                        <select
+                            id="statusFilter"
+                            value={statusFilter || ''}
+                            onChange={(e) => setStatusFilter(e.target.value || undefined)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        >
+                            <option value="">Todos los usuarios</option>
+                            <option value="ACTIVOS">Solo Activos</option>
+                            <option value="INACTIVOS">Solo Inactivos</option>
+                        </select>
                     </div>
                 </div>
             </div>

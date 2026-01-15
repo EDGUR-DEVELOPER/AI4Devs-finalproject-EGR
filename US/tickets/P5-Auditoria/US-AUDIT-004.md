@@ -1,5 +1,7 @@
 ## P5 — Auditoría: logs inmutables + UI mínima
 
+> Estado: **Post-MVP (UI parcial en MVP opcional)** — La visualización completa de auditoría depende de la persistencia y indexación (Post-MVP). En MVP solo considerar una UI mínima que consuma la API básica si se implementa persistencia sincrónica.
+
 ### [US-AUDIT-004] UI mínima de auditoría
 ---
 #### Backend
