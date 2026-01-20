@@ -11,8 +11,3 @@
 CREATE INDEX IF NOT EXISTS idx_roles_org_activo_lookup 
 ON roles(organizacion_id, activo, id) 
 WHERE activo = TRUE;
-
--- Comentario descriptivo para documentación
-COMMENT ON INDEX idx_roles_org_activo_lookup IS 
-'Índice compuesto para optimizar búsquedas de roles activos por organización. 
-Usado en validaciones de asignación de roles (US-ADMIN-002).';

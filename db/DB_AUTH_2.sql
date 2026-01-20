@@ -3,52 +3,11 @@
 -- Propósito: Soportar JWT con claims de organizacion_id + roles[]
 -- =============================================================================
 
--- -----------------------------------------------------------------------------
--- 5. TABLA: roles (Catálogo de Roles)
--- Define roles globales y específicos de organización
--- -----------------------------------------------------------------------------
-CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
-    codigo VARCHAR(50) NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    organizacion_id INT REFERENCES organizaciones(id) ON DELETE CASCADE,
-    activo BOOLEAN NOT NULL DEFAULT TRUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    -- Constraint: código debe ser único dentro del scope (global o por organización)
-    CONSTRAINT ux_rol_codigo_org UNIQUE (codigo, organizacion_id),
-    CONSTRAINT ck_rol_codigo_formato CHECK (codigo ~ '^[A-Z_]+$'),
-    CONSTRAINT ck_rol_nombre_longitud CHECK (LENGTH(TRIM(nombre)) >= 2)
-);
-
 -- Índice para búsquedas de roles activos por organización
 CREATE INDEX idx_roles_organizacion ON roles(organizacion_id) WHERE activo = TRUE;
 
 -- Índice para búsqueda de roles globales activos
 CREATE INDEX idx_roles_globales ON roles(id) WHERE organizacion_id IS NULL AND activo = TRUE;
-
-COMMENT ON TABLE roles IS 'Catálogo de roles del sistema. organizacion_id NULL = rol global aplicable a todas las orgs';
-COMMENT ON COLUMN roles.codigo IS 'Identificador técnico usado en JWT claims (ej: ADMIN, USER, VIEWER). UPPER_SNAKE_CASE';
-COMMENT ON COLUMN roles.organizacion_id IS 'NULL para roles globales del sistema, NOT NULL para roles custom por organización';
-COMMENT ON CONSTRAINT ux_rol_codigo_org ON roles IS 'Garantiza que el código de rol sea único dentro de su scope (global o por org)';
-
--- -----------------------------------------------------------------------------
--- 6. TABLA: usuarios_roles (Asignación de Roles Multi-Organización)
--- Relación N:M entre usuarios y roles, discriminada por organización
--- -----------------------------------------------------------------------------
-CREATE TABLE usuarios_roles (
-    id BIGSERIAL PRIMARY KEY,
-    usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    rol_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    organizacion_id INT NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-    activo BOOLEAN NOT NULL DEFAULT TRUE,
-    fecha_asignacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    asignado_por BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
-    
-    -- Constraint: un usuario no puede tener el mismo rol dos veces en la misma organización
-    CONSTRAINT ux_usuario_rol_org UNIQUE (usuario_id, rol_id, organizacion_id)
-);
 
 -- Índice compuesto para query crítico del login: obtener roles por usuario + org
 CREATE INDEX idx_usuarios_roles_lookup ON usuarios_roles(usuario_id, organizacion_id) 
@@ -61,40 +20,6 @@ CREATE INDEX idx_usuarios_roles_asignador ON usuarios_roles(asignado_por)
 -- Índice para listados por organización (US-ADMIN-003)
 CREATE INDEX idx_usuarios_roles_org ON usuarios_roles(organizacion_id) 
     WHERE activo = TRUE;
-
-COMMENT ON TABLE usuarios_roles IS 'Asignación de roles a usuarios en el contexto de una organización específica';
-COMMENT ON COLUMN usuarios_roles.organizacion_id IS 'Discriminador organizacional: el rol solo aplica en esta organización';
-COMMENT ON COLUMN usuarios_roles.asignado_por IS 'Usuario administrador que otorgó este rol (para auditoría)';
-COMMENT ON CONSTRAINT ux_usuario_rol_org ON usuarios_roles IS 'Previene asignaciones duplicadas del mismo rol al mismo usuario en la misma org';
-
--- -----------------------------------------------------------------------------
--- 7. FUNCIÓN: Obtener roles activos de un usuario en una organización
--- Retorna array de códigos de roles optimizado para insertar en JWT
--- Performance crítica: este query se ejecuta en CADA login
--- -----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION obtener_roles_usuario_organizacion(
-    p_usuario_id BIGINT,
-    p_organizacion_id INT
-)
-RETURNS VARCHAR[] AS $$
-DECLARE
-    v_roles VARCHAR[];
-BEGIN
-    SELECT ARRAY_AGG(r.codigo ORDER BY r.codigo)
-    INTO v_roles
-    FROM usuarios_roles ur
-    INNER JOIN roles r ON r.id = ur.rol_id
-    WHERE ur.usuario_id = p_usuario_id
-      AND ur.organizacion_id = p_organizacion_id
-      AND ur.activo = TRUE
-      AND r.activo = TRUE;
-    
-    -- Retornar array vacío si no hay roles (evitar NULL en JWT)
-    RETURN COALESCE(v_roles, ARRAY[]::VARCHAR[]);
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-COMMENT ON FUNCTION obtener_roles_usuario_organizacion IS 'Retorna array de códigos de roles activos para un usuario en una organización específica. Usado en generación de JWT (US-AUTH-002)';
 
 -- -----------------------------------------------------------------------------
 -- 8. VISTA: Contexto completo de usuario para generación de token
@@ -114,8 +39,6 @@ INNER JOIN organizaciones o ON o.id = uo.organizacion_id
 WHERE u.fecha_eliminacion IS NULL
   AND uo.estado = 'ACTIVO'
   AND o.estado = 'ACTIVO';
-
-COMMENT ON VIEW v_contexto_usuario_token IS 'Vista optimizada para generación de JWT. Incluye roles[] directamente (US-AUTH-002)';
 
 -- =============================================================================
 -- DATOS SEMILLA: Roles Base del Sistema (US-AUTH-002)

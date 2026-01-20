@@ -120,5 +120,3 @@ VALUES (202, 2, 2, true, NOW(), 201);  -- USER
 --   - 201: 1 rol (ADMIN) - ACTIVO
 --   - 202: 1 rol (USER) - ACTIVO
 -- -----------------------------------------------------------------------------
-
-COMMENT ON TABLE usuarios IS 'Datos semilla para US-ADMIN-003: Incluye usuarios con múltiples configuraciones de roles y estados';
