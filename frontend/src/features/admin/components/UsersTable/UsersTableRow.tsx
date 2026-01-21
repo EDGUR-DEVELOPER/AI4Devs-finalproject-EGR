@@ -3,7 +3,7 @@ import type { AdminUser } from '../../types/user.types';
 import type { AvailableRole } from '../../types/role.types';
 import { StatusBadge } from '../StatusBadge';
 import { RoleBadge, RoleDropdown } from '../RoleAssignment';
-import { UI_MESSAGES, FORM_LABELS } from '../../constants/messages';
+import { UI_MESSAGES } from '../../constants/messages';
 
 interface UsersTableRowProps {
     /** Usuario a mostrar */

@@ -4,6 +4,12 @@ spring:
     name: gateway-service
   main:
     web-application-type: reactive
+  
+  # Deshabilitar default resource handling (WebFlux)
+  # El gateway no sirve contenido estático - solo redirige requests
+  webflux:
+    resources:
+      add-mappings: false
 
 # CORS Configuration
 cors:
@@ -50,6 +56,16 @@ springdoc:
     version: 0.0.1-SNAPSHOT
     contact:
       name: DocFlow Team
+
+# Spring Boot Actuator Configuration (WebFlux)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,routes
+  endpoint:
+    health:
+      show-details: always
 
 # Logging Configuration
 logging:

@@ -9,6 +9,7 @@ Este documento describe la configuración de Docker Compose para el entorno de d
 - [Configuración](#configuración)
 - [Comandos de Uso](#comandos-de-uso)
 - [Servicios Incluidos](#servicios-incluidos)
+- [Arquitectura de Red](#arquitectura-de-red)
 - [Interfaces Web](#interfaces-web)
 - [Conexión desde Microservicios](#conexión-desde-microservicios)
 - [Troubleshooting](#troubleshooting)
@@ -49,7 +50,9 @@ Este `docker-compose.yml` levanta la infraestructura necesaria para desarrollo l
 
 - **Docker Desktop** ≥ 4.0 (Windows/Mac) o **Docker Engine** ≥ 20.10 (Linux)
 - **Docker Compose** ≥ 2.0 (incluido en Docker Desktop)
-- **Puertos disponibles**: 5432, 6379, 8200, 9000, 9001, 9090, 9092, 9093, 27017
+- **Puertos disponibles**: 80 (frontend), 8080 (gateway), 5432 (postgres), 9000-9001 (minio)
+
+**Nota de Seguridad:** Los microservicios backend internos (Identity, Document Core) NO exponen puertos externamente. Solo son accesibles a través del API Gateway.
 
 ### Verificar instalación
 
@@ -310,7 +313,79 @@ docker exec -it docflow-redis redis-cli
 ⚠️ **Advertencia**: El modo desarrollo NO es seguro para producción.
 
 ---
+## 🌐 Arquitectura de Red
 
+### Principio de Seguridad: Gateway como Único Punto de Entrada
+
+DocFlow implementa una arquitectura de red segura donde **solo el API Gateway está expuesto externamente**. Los microservicios internos (Identity, Document Core) solo son accesibles dentro de la red Docker.
+
+```
+┌──────────────────────────────────────────────────────┐
+│  Cliente Externo (Navegador/API Client)                   │
+└───────────────────────┬─────────────────────────────┘
+                          │
+                          │ HTTP (puertos expuestos)
+                          │
+       ┌──────────────────┴──────────────────┐
+       │      Frontend (puerto 80)           │
+       │  API Gateway (puerto 8080) ✅      │  ← Único punto expuesto
+       └─────────────────┬──────────────────┘
+                          │
+         Red Docker Interna (docflow-network)
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+   ┌─────┴─────┐  ┌─────┴─────┐  ┌───┴───┐
+   │ Identity  │  │  Document  │  │ Infra │
+   │  Service  │  │Core Service│  │(PG/S3)│
+   │ (8081) ❌ │  │  (8082) ❌ │  └───────┘
+   └──────────┘  └───────────┘
+   NO expuestos   NO expuestos
+```
+
+### Puertos Expuestos al Host
+
+| Servicio | Puerto | Acceso | Descripción |
+|----------|--------|--------|---------------|
+| Frontend | 80 | Público | Aplicación web React |
+| Gateway | 8080 | Público | Único punto de entrada backend |
+| PostgreSQL | 5432 | Desarrollo | Base de datos (para admin/debug) |
+| MinIO API | 9000 | Desarrollo | Object storage API |
+| MinIO Console | 9001 | Desarrollo | Interfaz web MinIO |
+
+### Servicios Internos (Solo Red Docker)
+
+| Servicio | Puerto | Acceso | Descripción |
+|----------|--------|--------|---------------|
+| Identity Service | 8081 | Interno | Solo accesible vía Gateway |
+| Document Core | 8082 | Interno | Solo accesible vía Gateway |
+
+### Beneficios de esta Arquitectura
+
+- 🛡️ **Seguridad mejorada**: Superficie de ataque reducida
+- 🔒 **Control centralizado**: Todo el tráfico pasa por el Gateway
+- 📊 **Monitoring simplificado**: Un solo punto para logs y métricas
+- 🚫 **Prevención de bypass**: Imposible acceder directamente a microservicios
+
+### Cómo Acceder a Servicios Internos
+
+**Desde el Gateway (recomendado):**
+```bash
+# Acceso a Identity Service
+curl http://localhost:8080/api/identity/...
+
+# Acceso a Document Core
+curl http://localhost:8080/api/documents/...
+```
+
+**Para debugging (acceso directo al contenedor):**
+```bash
+# Ejecutar comando dentro del contenedor
+docker compose exec identity-service wget -qO- http://localhost:8081/actuator/health
+docker compose exec document-core-service wget -qO- http://localhost:8082/actuator/health
+```
+
+---
 ## 🌐 Interfaces Web
 
 | Servicio | URL | Credenciales |

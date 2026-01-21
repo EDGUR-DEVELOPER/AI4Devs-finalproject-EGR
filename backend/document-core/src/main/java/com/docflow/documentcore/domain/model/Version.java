@@ -30,7 +30,6 @@ import java.util.Map;
 @Entity
 @Table(name = "versiones")
 @EntityListeners(TenantEntityListener.class)
-@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = Integer.class))
 @Filter(name = "tenantFilter", condition = "organizacion_id = :tenantId")
 @Getter
 @Setter

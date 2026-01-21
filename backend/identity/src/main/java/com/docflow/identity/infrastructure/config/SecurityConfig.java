@@ -51,7 +51,9 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
                     "/health",
-                    "/hello"
+                    "/hello",
+                    "/actuator/health",
+                    "/actuator/**"
                 ).permitAll()
                 // Todos los demás endpoints requieren autenticación JWT
                 .anyRequest().authenticated()

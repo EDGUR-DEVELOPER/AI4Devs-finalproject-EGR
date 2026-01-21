@@ -482,10 +482,10 @@ Como experto en desarrollo de frontend, implementa un dashboard en frontend
 
 ---
 ## Logica para el desarrollo de la aplicacion despues de la experiencia del desarrollo de las primeras 2 epicas.
-En el proceso del desarrollo se tuvo complicaciones para la implementacios del TDD/BDD. no se obtenia pruebas unitarios entendibles. Y sin uso correcto del BDD teniendo complicaciones para realizarlo.
+En el proceso del desarrollo se tuvo complicaciones para la implementacios del TDD/BDD, generar/actualizar documentacion de lo que se va desarrollando. no se obtenia pruebas unitarios entendibles. Y sin uso correcto del BDD teniendo complicaciones para realizarlo.
 Prepare metaprompts para cumplir el desarrollo con la siguiente logica:
-`Se repite este ciclo en cada historia de usuario`
-> Epica/US/Tickes -> Identificar pruebas unitarias backend -> Implementar TDD -> Implementar Codigo -> Obtencion querys para optimizar indices para consultas y datos pruebas -> Implementar BDD con cucumber -> Desarrollo de Frontend -> pruebas de interfaces (Manual).
+`Se repite este ciclo en cada historia de usuario cumpliendo los tickets:`
+> Epica/US/Tickes -> Identificar tickets para desarrollo frontend/backend -> Implementar desarrollo paralelo de frontend/backend.
 
 ### Prompt para detectar pruebas unitarias
 ```Prompt
@@ -537,4 +537,105 @@ Para cada ticket, genera una tabla o lista estructurada con el siguiente formato
 A continuación, analizarás los siguientes tickets:
 
 [PEGA TU LISTA DE TICKETS AQUÍ]
+```
+
+### Instructions
+You are an expert in prompt engineering.
+
+Given the following prompt, prepare it using best-practice structure (role, objective, etc.) and formatting to achieve a precise and comprehensive result. Stick strictly to the requested objective by carefully analyzing what is asked in the original prompt. Give me result in spanish
+
+### Original Prompt:
+como experto en tecnico de levantar aplicacion y redaccion de textos tecnicos, generame un texto explicando como levantar la aplicacion, identifica los archivos README dentro de las carpetas de los proyectos y da una explicacion paso a paso para levantar la aplicacion, tambien indicando con un hiperlink el acceso de los readme para tener el contexto para levantar el entorno.
+
+`Prompt para dockerizar las aplicaciones para el deploy local.`
+```
+Rol: DevOps/Ingeniero de despliegue especialista en Docker.
+
+Objetivo: Dockerizar los proyectos backend y frontend del repositorio, aplicar buenas prácticas de contenedorización (multi-stage builds, usuarios no root, variables de entorno, volúmenes, healthchecks, redes) y actualizar la documentación para explicar cómo levantar el entorno localmente.
+
+Contexto de entrada (lo que recibe el ejecutor):
+
+Código fuente en: frontend, backend/*.
+Archivo raíz a actualizar: docker-compose.yml.
+READMEs disponibles para contexto: README.md, README.md, README.md, README.md, y README-docker.md.
+Restricciones / Requisitos técnicos:
+
+Java 21 + Maven para servicios backend; Node 18+ para frontend.
+Imágenes optimizadas (multi-stage builds). Evitar imágenes enormes (usar distroless o OpenJDK slim/alpine según compatibilidad).
+No almacenar secretos en repositorios; usar .env o variables en CI.
+Exponer puertos documentados en READMEs y mantener consistencia con docker-compose.yml.
+Salud: añadir HEALTHCHECK en Dockerfiles o healthcheck en docker-compose.yml.
+Usar redes Docker dedicadas y volúmenes para datos persistentes (Postgres/MinIO/Mongo si aplica).
+Construcción reproducible: aceptar --build-arg donde aplique.
+Entregables esperados (archivos y cambios concretos):
+
+Dockerfile por cada microservicio backend (ej.: backend/gateway/Dockerfile, backend/document-core/Dockerfile, backend/identity/Dockerfile).
+Dockerfile para frontend (ej.: frontend/Dockerfile) con build estático y servidor ligero (nginx).
+Actualización del archivo raíz docker-compose.yml para orquestar:
+Servicios backend y frontend (build o image).
+Redes y volúmenes.
+Variables de entorno desde .env y .env.example.
+Healthchecks y restart policies.
+.env.example en la raíz con variables necesarias para levantar localmente.
+Actualizaciones en los README relacionados para incluir secciones:
+"Run locally with Docker" en README.md y cada backend/*/README.md.
+Enlace y pasos referenciando el docker-compose.yml y README-docker.md.
+Checklist de aceptación en un nuevo archivo DEPLOYMENT_CHECKLIST.md en la raíz.
+Paso a paso (tareas accionables):
+
+Crear Dockerfile para cada backend:
+Multi-stage: build con Maven (mvn -DskipTests package) y runtime con openjdk:21-jdk-slim o imagen mínima compatible.
+Ejecutable JAR en /app/app.jar, usar usuario no root, exponer SERVER_PORT por ENV.
+Incluir HEALTHCHECK que llame a /actuator/health o /health.
+Crear Dockerfile para frontend:
+Stage build con node:18-alpine, npm ci && npm run build.
+Stage runtime con nginx:alpine, copiar dist a /usr/share/nginx/html, configurar nginx.conf básico y healthcheck.
+Actualizar docker-compose.yml:
+Añadir servicios con build: apuntando a cada carpeta.
+Mapear puertos locales según documentación.
+Definir depends_on con condition: service_started o healthchecks (según versión compose).
+Volúmenes para persistencia (por ejemplo, MinIO, Postgres, Mongo si existen).
+Añadir .env.example con variables claves (DB URLs, ports, MINIO endpoint, JWT secrets placeholder).
+Actualizar READMEs:
+Insertar sección "Levantar con Docker" con comandos:
+cp [.env.example](http://_vscodecontentref_/19) .env (editar si es necesario)
+docker compose up --build -d
+docker compose logs -f <service>
+Añadir enlaces relativos a docker-compose.yml y a los README de servicios.
+Crear DEPLOYMENT_CHECKLIST.md con pasos de verificación (endpoints health, puertos, logs).
+Proveer ejemplos de comandos para pruebas locales (curl a endpoints /health y acceso frontend).
+Formato de salida requerido (qué debe devolver el ejecutor):
+
+Patch/commit que añada/actualice los Dockerfiles, docker-compose.yml, .env.example, DEPLOYMENT_CHECKLIST.md y edite los READMEs indicados.
+Un mensaje de commit descriptivo (ej.: "chore: dockerize frontend and backend, add compose and docs").
+Incluir en la PR/patch un fragmento de docker compose up y pasos rápidos para validar (comandos y endpoints).
+Criterios de aceptación (tests manuales mínimos):
+
+docker compose up --build -d termina sin errores.
+curl http://localhost:<frontend-port> devuelve la página estática.
+curl http://localhost:<service-port>/health devuelve 200/ok para cada backend.
+Logs de servicios muestran arranque correcto (docker compose logs <service>).
+Documentación actualizada con pasos reproducibles en entorno Windows (PowerShell) y Unix (bash).
+Buenas prácticas y consideraciones de seguridad:
+
+No incluir secretos en .env.example. Documentar dónde ponerlos (ej.: .env o gestor de secretos).
+Ejecutar procesos con usuario no root dentro de contenedores.
+Limitar variables expuestas y usar EXPOSE solo para documentación.
+Añadir labels de metadata (org.opencontainers.image.*) opcionalmente.
+Añadir instrucciones para limpiar recursos: docker compose down -v --remove-orphans.
+Ejemplos de comandos a incluir en los READMEs (usar exactamente):
+
+Preparar variables:
+cp [.env.example](http://_vscodecontentref_/25) .env
+Levantar:
+docker compose up --build -d
+Ver logs:
+docker compose logs -f gateway
+Parar y limpiar:
+docker compose down -v
+Salida solicitada al agente que ejecute este prompt (outputs esperados):
+
+Un paquete de cambios listo para commit (lista de archivos añadidos/actualizados).
+Un fragmento de README por cada servicio con la sección "Levantar con Docker".
+Un DEPLOYMENT_CHECKLIST.md con pasos de verificación y comandos.
 ```

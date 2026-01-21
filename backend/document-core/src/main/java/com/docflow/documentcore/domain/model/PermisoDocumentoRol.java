@@ -25,7 +25,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "permiso_documento_rol")
 @EntityListeners(TenantEntityListener.class)
-@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = Integer.class))
+
 @Filter(name = "tenantFilter", condition = "organizacion_id = :tenantId")
 @Getter
 @Setter
