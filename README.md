@@ -1,12 +1,90 @@
+🚀 Inicio rápido
+
+Sigue estos pasos para levantar rápidamente el entorno de desarrollo local usando Docker Compose. Incluye comandos para Windows (PowerShell) y Unix (bash), comprobaciones rápidas y enlaces a los README por componente para más detalle.
+
+📌 Requisitos previos
+
+- Java 21 (opcional si ejecutas servicios fuera de Docker)
+- Maven (para builds backend)
+- Node 18+ (para frontend local con Vite)
+- Docker y Docker Compose
+
+⏱ Quick start — Levantar con Docker Compose
+
+1. Crear `.env` a partir del ejemplo:
+
+bash:
+```bash
+cp .env.example .env
+```
+
+2. Levantar todos los servicios:
+
+```bash
+docker compose up --build -d
+```
+
+3. Ver estado y logs:
+
+```bash
+docker compose ps
+docker compose logs -f gateway
+```
+
+4. Parar y limpiar:
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+🔗 Enlaces rápidos a documentación por componente
+
+- [README-docker.md](README-docker.md) — Detalles del `docker compose` y servicios orquestados
+- [frontend/README.md](frontend/README.md) — Instrucciones del frontend (Vite, scripts, build)
+- [backend/gateway/README.md](backend/gateway/README.md) — API Gateway y configuración
+- [backend/document-core/README.md](backend/document-core/README.md) — Document Core
+- [backend/identity/README.md](backend/identity/README.md) — IAM / Identity
+
+🛠 Resolución de problemas comunes
+
+- Puerto ocupado: usa `docker compose ps` y modifica puertos en `.env` si hace falta.
+- Variables faltantes: asegúrate de tener `.env` (usa `.env.example`).
+- Fallo en build Maven: ejecutar `mvn clean package` localmente para ver errores.
+- Fallo en npm: eliminar `node_modules` y ejecutar `npm ci` o `npm install`.
+- Logs: `docker compose logs -f <service>` o revisar salida de `mvn spring-boot:run`.
+
+## Notas
+### Puertos asumidos: 
+- backend: http://localhost:8080
+- frontend: http://localhost:80
+
+### Ejecuta estos comandos para insertar datos de usuarios de prueba. 
+```bash
+docker cp db/QueryTest.sql docflow-postgres:/tmp/QueryTest.sql
+```
+```bash
+docker compose exec -T postgres psql -U docflow -d docflow -f /tmp/QueryTest.sql
+```
+
+#### Usuario Prueba
+- User: `una-org@test.com`
+- password: `password`
+
+### En desarrollo: 🚧
+- Solo se tiene el modulo gestion de usuarios.
+- Breve avance: el equipo está enfocando el MVP en los cuatro componentes críticos: `identity`, `document-core`, `gateway` y el `frontend`. La infraestructura están operativos; las tareas de autenticación, gestión de documentos y el gateway están en progreso según la bitácora. Para detalles y estado por ticket, ver [US/bitacora.md](US/bitacora.md).
+
+---
+
 ## Índice
-- [Ficha del proyecto](#-ficha-del-proyecto)
-- [Descripción general del producto](#descripción-general-del-producto)
-- [Arquitectura del Sistema](#arquitectura-del-sistema)
-- [Modelo de Datos](#modelo-de-datos)
-- [Especificación de la API](#especificación-de-la-api)
-- [Historias de Usuario](#historias-de-usuario)
-- [Tickets de Trabajo](#tickets-de-trabajo)
-- [Reglas de desarrollo](#reglas-de-desarrollo)
+ - [Ficha del proyecto](#-ficha-del-proyecto)
+ - [Descripción general del producto](#descripción-general-del-producto)
+ - [Arquitectura del Sistema](#arquitectura-del-sistema)
+ - [Modelo de Datos](#modelo-de-datos)
+ - [Especificación de la API](#especificación-de-la-api)
+ - [Historias de Usuario](#historias-de-usuario)
+ - [Tickets de Trabajo](#tickets-de-trabajo)
+ - [Reglas de desarrollo](#reglas-de-desarrollo)
 
 # 📂 Ficha del proyecto
 * 📌**Nombre:** Eduardo Guardado Ruiz

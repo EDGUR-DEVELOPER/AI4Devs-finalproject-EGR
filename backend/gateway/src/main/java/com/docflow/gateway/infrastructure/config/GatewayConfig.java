@@ -24,8 +24,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GatewayConfig {
 
-    private static final String IAM_SERVICE_URI = "http://localhost:8081";
-    private static final String DOC_SERVICE_URI = "http://localhost:8082";
+    // Use environment variables set by Docker Compose for production container names
+    // FALLBACK: localhost for local development
+    private static final String IAM_SERVICE_URI = System.getenv().getOrDefault("IDENTITY_SERVICE_URL", "http://localhost:8081");
+    private static final String DOC_SERVICE_URI = System.getenv().getOrDefault("DOCUMENT_SERVICE_URL", "http://localhost:8082");
 
     private final CorsProperties corsProperties;
     private final CorsOriginValidator corsOriginValidator;

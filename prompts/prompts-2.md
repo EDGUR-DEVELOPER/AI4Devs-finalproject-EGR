@@ -539,14 +539,6 @@ A continuación, analizarás los siguientes tickets:
 [PEGA TU LISTA DE TICKETS AQUÍ]
 ```
 
-### Instructions
-You are an expert in prompt engineering.
-
-Given the following prompt, prepare it using best-practice structure (role, objective, etc.) and formatting to achieve a precise and comprehensive result. Stick strictly to the requested objective by carefully analyzing what is asked in the original prompt. Give me result in spanish
-
-### Original Prompt:
-como experto en tecnico de levantar aplicacion y redaccion de textos tecnicos, generame un texto explicando como levantar la aplicacion, identifica los archivos README dentro de las carpetas de los proyectos y da una explicacion paso a paso para levantar la aplicacion, tambien indicando con un hiperlink el acceso de los readme para tener el contexto para levantar el entorno.
-
 `Prompt para dockerizar las aplicaciones para el deploy local.`
 ```
 Rol: DevOps/Ingeniero de despliegue especialista en Docker.
