@@ -1,11 +1,90 @@
+🚀 Inicio rápido
+
+Sigue estos pasos para levantar rápidamente el entorno de desarrollo local usando Docker Compose. Incluye comandos para Windows (PowerShell) y Unix (bash), comprobaciones rápidas y enlaces a los README por componente para más detalle.
+
+📌 Requisitos previos
+
+- Java 21 (opcional si ejecutas servicios fuera de Docker)
+- Maven (para builds backend)
+- Node 18+ (para frontend local con Vite)
+- Docker y Docker Compose
+
+⏱ Quick start — Levantar con Docker Compose
+
+1. Crear `.env` a partir del ejemplo:
+
+bash:
+```bash
+cp .env.example .env
+```
+
+2. Levantar todos los servicios:
+
+```bash
+docker compose up --build -d
+```
+
+3. Ver estado y logs:
+
+```bash
+docker compose ps
+docker compose logs -f gateway
+```
+
+4. Parar y limpiar:
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+🔗 Enlaces rápidos a documentación por componente
+
+- [README-docker.md](README-docker.md) — Detalles del `docker compose` y servicios orquestados
+- [frontend/README.md](frontend/README.md) — Instrucciones del frontend (Vite, scripts, build)
+- [backend/gateway/README.md](backend/gateway/README.md) — API Gateway y configuración
+- [backend/document-core/README.md](backend/document-core/README.md) — Document Core
+- [backend/identity/README.md](backend/identity/README.md) — IAM / Identity
+
+🛠 Resolución de problemas comunes
+
+- Puerto ocupado: usa `docker compose ps` y modifica puertos en `.env` si hace falta.
+- Variables faltantes: asegúrate de tener `.env` (usa `.env.example`).
+- Fallo en build Maven: ejecutar `mvn clean package` localmente para ver errores.
+- Fallo en npm: eliminar `node_modules` y ejecutar `npm ci` o `npm install`.
+- Logs: `docker compose logs -f <service>` o revisar salida de `mvn spring-boot:run`.
+
+## Notas
+### Puertos asumidos: 
+- backend: http://localhost:8080
+- frontend: http://localhost:80
+
+### Ejecuta estos comandos para insertar datos de usuarios de prueba. 
+```bash
+docker cp db/QueryTest.sql docflow-postgres:/tmp/QueryTest.sql
+```
+```bash
+docker compose exec -T postgres psql -U docflow -d docflow -f /tmp/QueryTest.sql
+```
+
+#### Usuario Prueba
+- User: `una-org@test.com`
+- password: `password`
+
+### En desarrollo: 🚧
+- Solo se tiene el modulo gestion de usuarios.
+- Breve avance: el equipo está enfocando el MVP en los cuatro componentes críticos: `identity`, `document-core`, `gateway` y el `frontend`. La infraestructura están operativos; las tareas de autenticación, gestión de documentos y el gateway están en progreso según la bitácora. Para detalles y estado por ticket, ver [US/bitacora.md](US/bitacora.md).
+
+---
+
 ## Índice
-- [Ficha del proyecto](#-ficha-del-proyecto)
-- [Descripción general del producto](#descripción-general-del-producto)
-- [Arquitectura del Sistema](#arquitectura-del-sistema)
-- [Modelo de Datos](#modelo-de-datos)
-- [Especificación de la API](#especificación-de-la-api)
-- [Historias de Usuario](#historias-de-usuario)
-- [Tickets de Trabajo](#tickets-de-trabajo)
+ - [Ficha del proyecto](#-ficha-del-proyecto)
+ - [Descripción general del producto](#descripción-general-del-producto)
+ - [Arquitectura del Sistema](#arquitectura-del-sistema)
+ - [Modelo de Datos](#modelo-de-datos)
+ - [Especificación de la API](#especificación-de-la-api)
+ - [Historias de Usuario](#historias-de-usuario)
+ - [Tickets de Trabajo](#tickets-de-trabajo)
+ - [Reglas de desarrollo](#reglas-de-desarrollo)
 
 # 📂 Ficha del proyecto
 * 📌**Nombre:** Eduardo Guardado Ruiz
@@ -63,6 +142,12 @@ El propósito principal de DocFlow es resolver la dicotomía entre **seguridad b
 * **Alertas:** Avisos claros sobre versiones obsoletas con redirección a la versión vigente.
 
 Esta es una propuesta arquitectónica detallada y profesional para **DocFlow**. Se ha priorizado la modularidad (DMS core con IA opcional), la seguridad (RBAC y auditoría), la escalabilidad (patrones asíncronos) y la mantenibilidad (Clean Architecture).
+
+## Reglas de desarrollo
+
+Las reglas de desarrollo para backend, frontend, base de datos e infraestructura están centralizadas en el índice de reglas del proyecto:
+
+- Ver [.github/RULES.md](.github/RULES.md)
 
 # Arquitectura del Sistema
 
@@ -507,6 +592,8 @@ erDiagram
         string nombre_completo
         boolean mfa_habilitado
         datetime fecha_eliminacion
+        datetime fecha_creacion
+        datetime fecha_actualizacion
     }
 
     Usuario_Organizacion {
@@ -522,6 +609,7 @@ erDiagram
         int organizacion_id FK
         string nombre
         string descripcion
+        datetime fecha_creacion
         %% JSONB eliminado aquí a favor de relación estricta
     }
 
@@ -531,6 +619,7 @@ erDiagram
         string nombre_legible
         string modulo "Agrupador: Seguridad, Billing, Docs"
         string descripcion
+        datetime fecha_creacion
     }
 
     Rol_Tiene_Permiso {
@@ -555,6 +644,7 @@ erDiagram
         string ruta_jerarquia "LTREE"
         datetime fecha_creacion
         datetime fecha_eliminacion
+        datetime fecha_actualizacion
     }
 
     Documento {
@@ -568,6 +658,7 @@ erDiagram
         jsonb metadatos_globales
         datetime fecha_creacion
         datetime fecha_eliminacion
+        datetime fecha_actualizacion
     }
 
     Version {
@@ -629,6 +720,7 @@ erDiagram
         bigint usuario_id FK
         string codigo_evento
         jsonb detalles_cambio
+        string direccion_ip
         datetime fecha_evento
     }
 
@@ -686,6 +778,8 @@ El actor autenticado en el sistema.
 * **nombre_completo** (`VARCHAR(100)`, Not Null).
 * **mfa_habilitado** (`BOOLEAN`, Default False): Bandera para 2FA.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Para Soft Delete. Si tiene fecha, el usuario está "borrado".
+* **fecha_creacion** (`TIMESTAMPTZ`, Not Null, Default NOW()): Fecha de creación del registro.
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Not Null, Default NOW()): Fecha de última actualización. Se actualiza automáticamente vía trigger.
 
 #### 3. `Usuario_Organizacion` (Membresía multi-organizacion)
 Define a qué organizaciones pertenece un usuario (incluido un usuario administrador) y resuelve la organización predeterminada usada en el login.
@@ -704,12 +798,14 @@ Define perfiles funcionales personalizados por la organización.
 * **organizacion_id** (`INT`, FK -> `Organizacion`).
 * **nombre** (`VARCHAR(50)`, Not Null): Ej. "Administrador Legal", "Auditor Externo".
 * **descripcion** (`TEXT`, Nullable).
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación del rol.
 
 #### 5. `Permiso_Catalogo`
 Lista maestra e inmutable de capacidades del sistema (System Capabilities).
 * **id** (`INT`, PK).
 * **slug** (`VARCHAR(60)`, Unique): Identificador técnico (ej. `users.create`, `docs.export`, `billing.view`).
 * **modulo** (`VARCHAR(50)`): Agrupador lógico para UI (ej. "Seguridad", "Gestión Documental").
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de registro del permiso en el catálogo.
 
 #### 6. `Rol_Tiene_Permiso`
 Tabla intermedia (Many-to-Many) para asignar capacidades a roles.
@@ -735,7 +831,9 @@ Estructura jerárquica para organizar la información.
 * **nombre** (`VARCHAR(255)`, Not Null).
 * **ruta_jerarquia** (`LTREE` o `VARCHAR`, Indexado): Materialización del path (ej. `1.5.20`) para consultas de árbol optimizadas sin recursividad profunda.
 * **propietario_id** (`BIGINT`, FK -> `Usuario`).
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación de la carpeta.
 * **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de última modificación (renombre, movimiento).
 
 #### 9. `Documento`
 La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
@@ -746,6 +844,9 @@ La entidad lógica. Representa el "sobre" que contiene la historia del archivo.
 * **nombre** (`VARCHAR(255)`, Not Null).
 * **metadatos_globales** (`JSONB`, Default `{}`): Campos definidos por el usuario (Tags, Cliente, Fecha Vencimiento). Indexado con GIN.
     * *Ejemplo:* `{"cliente": "Acme Corp", "tags": ["urgente", "legal"], "numero_factura": "F-2023-001"}`
+* **fecha_creacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de creación del documento.
+* **fecha_eliminacion** (`TIMESTAMPTZ`, Nullable): Soft Delete (Papelera de reciclaje).
+* **fecha_actualizacion** (`TIMESTAMPTZ`, Default NOW()): Fecha de última modificación de metadatos.
 
 #### 10. `Version`
 La entidad física. Representa un archivo inmutable en el tiempo.
@@ -808,7 +909,7 @@ Traza histórica inmutable.
 * **codigo_evento** (`VARCHAR(50)`, Not Null): Ej. `DOC_CREATED`, `DOC_DELETED`, `ACL_CHANGED`.
 * **detalles_cambio** (`JSONB`): Snapshot de los datos. Ej: `{ "antes": { "nombre": "A" }, "despues": { "nombre": "B" } }`.
     * *Ejemplo:* `{"campo": "estado", "valor_anterior": "borrador", "valor_nuevo": "publicado"}`
-* **direccion_ip** (`VARCHAR(45)`): IPv4 o IPv6.
+* **direccion_ip** (`VARCHAR(45)`, Nullable): IPv4 o IPv6 del cliente que realizó la acción.
 * **fecha_evento** (`TIMESTAMPTZ`, Default NOW()).
 
 # Especificación de la API
@@ -1330,394 +1431,3 @@ Response 201 (application/json):
     "creado_en": "2025-12-16T10:15:30Z"
 }
 ```
-
-# Historias de Usuario
-
-## Épicas priorizadas (MVP)
-
-1. **P0 — Autenticación + Organizacion (multi-organizacion)**
-    - Alcance: login, token con claims, aislamiento de datos por organización y manejo de sesión.
-2. **P1 — Administración (UI mínima Admin/Usuario)**
-    - Alcance: UI mínima para administrar usuarios/roles dentro de una organización.
-3. **P2 — Permisos granulares (ACL) por carpeta/documento**
-    - Alcance: permisos por objeto, herencia (si aplica) y enforcement en API/UI.
-4. **P3 — Gestión de carpetas (API + UI mínima)**
-    - Alcance: crear/navegar jerarquía de carpetas por organizacion.
-5. **P4 — Documentos + versionado lineal (API + UI mínima)**
-    - Alcance: subir documentos, crear nuevas versiones y consultar versión actual.
-6. **P5 — Auditoría (logs inmutables + vista Admin mínima)**
-    - Alcance: registrar eventos críticos y permitir consulta básica.
-7. **P6 — Búsqueda básica (sin IA, respetando permisos)**
-    - Alcance: búsqueda por nombre/metadatos con control de acceso.
-
----
-
-### P0 — Historias de Usuario (Autenticación + Organizacion)
-
-**[US-AUTH-001] Login multi-organizacion (organización predeterminada)**
-- **Narrativa:** Como usuario, quiero iniciar sesión y que el sistema use mi organización predeterminada, para que el acceso sea simple y consistente.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario válido con exactamente una organización activa, Cuando envío `POST /auth/login` con credenciales válidas, Entonces recibo `200` con un token.
-    - *Scenario 1b:* Dado un usuario válido perteneciente a múltiples organizaciones activas y con una organización marcada como predeterminada, Cuando envío `POST /auth/login` con credenciales válidas, Entonces recibo `200` con un token emitido para la organización predeterminada.
-    - *Scenario 2:* Dado un usuario válido perteneciente a 2 organizaciones activas y sin una organización predeterminada, Cuando envío `POST /auth/login`, Entonces recibo `409` indicando configuración inválida.
-    - *Scenario 2b:* Dado un usuario válido perteneciente a más de 2 organizaciones activas, Cuando envío `POST /auth/login`, Entonces recibo `409` indicando que el caso no está soportado en el MVP.
-    - *Scenario 2c:* Dado un usuario autenticado con múltiples organizaciones activas, Cuando envío `POST /auth/switch` indicando otra `organizacion_id` válida, Entonces recibo `200` con un nuevo token en el contexto de esa organización.
-    - *Scenario 3:* Dado credenciales inválidas, Cuando envío `POST /auth/login`, Entonces recibo `401`.
-    - *Scenario 4:* Dado un usuario válido sin organizaciones activas, Cuando envío `POST /auth/login`, Entonces recibo `403` con un error indicando que no pertenece a ninguna organización activa.
-- **Notas Técnicas/Datos:** `organizacion_id` debe validarse contra pertenencia del usuario (y contra organización activa) en `POST /auth/switch`.
-
-**[US-AUTH-002] Token con claims de organizacion y roles**
-- **Narrativa:** Como sistema, quiero emitir un token con `usuario_id`, `organizacion_id` y roles/permisos, para que la autorización sea consistente en toda la plataforma.
-- **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un login exitoso, Cuando se emite el token, Entonces incluye `usuario_id` y `organizacion_id` y al menos un rol.
-- **Notas Técnicas/Datos:** Definir claim estándar (por ejemplo `org_id`, `roles`).
-
-**[US-AUTH-003] Middleware de autenticación para endpoints protegidos**
-- **Narrativa:** Como sistema, quiero validar el token en cada request protegida, para que solo usuarios autenticados accedan a recursos.
-- **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un request sin token a un endpoint protegido, Cuando se procesa, Entonces recibo `401`.
-  - *Scenario 2:* Dado un token inválido/alterado, Cuando se procesa, Entonces recibo `401`.
-
-**[US-AUTH-004] Aislamiento de datos por organización (organizacion isolation)**
-- **Narrativa:** Como organización, quiero que los datos estén aislados entre organizacions, para garantizar seguridad y cumplimiento.
-- **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un token del organizacion A, Cuando intento acceder/crear recursos en el organizacion B, Entonces recibo `404` (o `403`) sin filtrar datos.
-- **Notas Técnicas/Datos:** En queries/escrituras, `organizacion_id` debe venir del token (no del cliente).
-
-**[US-AUTH-005] UI mínima de Login (Admin/Usuario)**
-- **Narrativa:** Como usuario, quiero una pantalla de login simple, para acceder al sistema sin usar herramientas externas.
-- **Criterios de Aceptación:**
-  - *Scenario 1:* Dado credenciales válidas, Cuando inicio sesión desde la UI, Entonces se almacena el token y accedo a la pantalla principal.
-    - *Scenario 1b:* Dado credenciales válidas y múltiples organizaciones, Cuando inicio sesión, Entonces el sistema usa la organización predeterminada y accedo a la pantalla principal (o veo un error claro si falta predeterminada o hay >2 organizaciones activas).
-  - *Scenario 2:* Dado credenciales inválidas, Cuando inicio sesión, Entonces veo un mensaje de error y permanezco en login.
-
-**[US-AUTH-006] Manejo de sesión expirada**
-- **Narrativa:** Como usuario, quiero que el sistema detecte la expiración de mi sesión, para reautenticarme de forma clara.
-- **Criterios de Aceptación:**
-  - *Scenario 1:* Dado un token expirado, Cuando hago una petición protegida desde la UI, Entonces se redirige a login con un mensaje “sesión expirada”.
-
----
-
-### P1 — Historias de Usuario (Administración: UI mínima Admin/Usuario)
-
-**[US-ADMIN-001] Crear usuario (API) dentro del organizacion**
-- **Narrativa:** Como administrador, quiero crear un usuario en mi organización, para habilitar su acceso a DocFlow.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador autenticado del organizacion A, Cuando creo un usuario con email válido, Entonces recibo `201` y el usuario pertenece al organizacion A.
-    - *Scenario 2:* Dado un email ya existente, Cuando intento crear el usuario, Entonces recibo `400/409` por duplicidad (email global).
-- **Notas Técnicas/Datos:** Para multi-org, el “pertenece al organizacion A” se implementa creando un registro en `Usuario_Organizacion` (membresía). Unicidad por `email`.
-
-**[US-ADMIN-002] Asignar rol a usuario (API) en el organizacion**
-- **Narrativa:** Como administrador, quiero asignar un rol a un usuario, para controlar sus capacidades.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario del organizacion A, Cuando asigno un rol válido del organizacion A, Entonces recibo `200` y el rol queda efectivo.
-    - *Scenario 2:* Dado un usuario de otro organizacion, Cuando intento asignar roles, Entonces recibo `404` (o `403`) sin exponer datos.
-
-**[US-ADMIN-003] Listar usuarios (API) del organizacion con roles**
-- **Narrativa:** Como administrador, quiero listar los usuarios de mi organización con sus roles, para administrar accesos.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador autenticado, Cuando solicito la lista, Entonces solo veo usuarios del organizacion actual.
-
-**[US-ADMIN-004] Desactivar usuario (API) sin borrado**
-- **Narrativa:** Como administrador, quiero desactivar un usuario, para revocar acceso manteniendo historial.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario desactivado, Cuando intenta iniciar sesión, Entonces recibe `403`.
-    - *Scenario 2:* Dado un usuario desactivado, Cuando intento usar endpoints con token previo (si existiera), Entonces recibe `401/403`.
-
-**[US-ADMIN-005] UI mínima de gestión de usuarios**
-- **Narrativa:** Como administrador, quiero una pantalla simple para crear/listar/desactivar usuarios, para operar el sistema sin scripts.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador, Cuando navego a “Usuarios”, Entonces veo una tabla simple con email, estado y roles.
-
----
-
-### P2 — Historias de Usuario (Permisos granulares: ACL por carpeta/documento)
-
-**[US-ACL-001] Definir niveles de acceso estándar (catálogo mínimo)**
-- **Narrativa:** Como sistema, quiero un conjunto mínimo y consistente de niveles de acceso, para evaluar permisos de forma uniforme.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado el sistema inicializado, Cuando se consultan niveles, Entonces existen al menos `LECTURA`, `ESCRITURA`, `ADMINISTRACION`.
-- **Notas Técnicas/Datos:** El nivel controla acciones (ver/listar/descargar vs. subir/modificar vs. administrar permisos).
-
-**[US-ACL-002] Conceder permiso de carpeta a usuario (crear ACL)**
-- **Narrativa:** Como administrador, quiero conceder un permiso sobre una carpeta a un usuario, para controlar acceso por área.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un admin del organizacion A, Cuando asigno `LECTURA` a un usuario del organizacion A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
-    - *Scenario 2:* Dado un usuario/carpeta de otro organizacion, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
-
-**[US-ACL-003] Revocar permiso de carpeta (eliminar ACL)**
-- **Narrativa:** Como administrador, quiero revocar un permiso sobre una carpeta, para retirar accesos.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con acceso por ACL, Cuando revoco el permiso, Entonces el usuario deja de poder acceder (`403`).
-
-**[US-ACL-004] Permiso recursivo en carpeta (herencia simple)**
-- **Narrativa:** Como administrador, quiero que un permiso de carpeta pueda aplicarse a subcarpetas, para evitar configuraciones repetitivas.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un permiso con `recursivo=true` en una carpeta padre, Cuando el usuario accede a una subcarpeta, Entonces el permiso aplica.
-    - *Scenario 2:* Dado `recursivo=false`, Cuando accede a una subcarpeta, Entonces no aplica.
-
-**[US-ACL-005] Conceder permiso explícito a documento**
-- **Narrativa:** Como administrador, quiero asignar un permiso directamente a un documento, para manejar excepciones de acceso.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un documento en una carpeta, Cuando asigno `LECTURA` explícita a un usuario, Entonces el usuario puede acceder a ese documento.
-
-**[US-ACL-006] Regla de precedencia de permisos (Documento > Carpeta)**
-- **Narrativa:** Como sistema, quiero una regla clara de precedencia, para resolver conflictos de permisos.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un permiso explícito de documento para un usuario, Cuando se evalúa el acceso al documento, Entonces ese permiso explícito se usa como fuente de verdad.
-    - *Scenario 2:* Dado que NO existe permiso explícito de documento, Cuando se evalúa el acceso, Entonces se usa el permiso de carpeta (incluyendo herencia si aplica).
-- **Notas Técnicas/Datos:** Regla simple para MVP: `Permiso_Documento` (si existe) > `Permiso_Carpeta`.
-
-**[US-ACL-007] Enforzar permisos de lectura en endpoints de consulta/descarga**
-- **Narrativa:** Como sistema, quiero bloquear lecturas sin permiso, para proteger información.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario sin `LECTURA`, Cuando lista una carpeta o descarga un documento, Entonces recibe `403`.
-
-**[US-ACL-008] Enforzar permisos de escritura en endpoints de creación/actualización**
-- **Narrativa:** Como sistema, quiero bloquear escrituras sin permiso, para evitar cambios no autorizados.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario sin `ESCRITURA`, Cuando intenta subir documento o crear subcarpeta, Entonces recibe `403`.
-
-**[US-ACL-009] UI muestra capacidades (acciones habilitadas) por carpeta/documento**
-- **Narrativa:** Como usuario, quiero que la UI habilite o deshabilite acciones según mis permisos, para evitar errores.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con solo `LECTURA`, Cuando navega una carpeta, Entonces la UI deshabilita “Subir” y “Administrar permisos”.
-
----
-
-### P3 — Historias de Usuario (Gestión de carpetas: API + UI mínima)
-
-**[US-FOLDER-001] Crear carpeta (API) en el organizacion actual**
-- **Narrativa:** Como usuario con permisos, quiero crear una carpeta en mi organización, para organizar documentos.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con `ESCRITURA` (o `ADMINISTRACION`) en la carpeta padre, Cuando crea una carpeta, Entonces recibe `201` y la carpeta pertenece al organizacion del token.
-    - *Scenario 2:* Dado un usuario sin permiso en la carpeta padre, Cuando crea una carpeta, Entonces recibe `403`.
-
-**[US-FOLDER-002] Listar contenido de carpeta (API) con visibilidad por permisos**
-- **Narrativa:** Como usuario, quiero listar subcarpetas y documentos visibles, para navegar la estructura documental.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con `LECTURA`, Cuando lista una carpeta, Entonces solo ve elementos permitidos.
-    - *Scenario 2:* Dado un usuario sin `LECTURA`, Cuando lista una carpeta, Entonces recibe `403`.
-
-**[US-FOLDER-003] Mover documento a otra carpeta (API)**
-- **Narrativa:** Como usuario con permisos, quiero mover un documento entre carpetas, para mantener orden.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado `ESCRITURA` en carpeta origen y destino, Cuando muevo un documento, Entonces su `carpeta_id` se actualiza y la acción queda auditada.
-    - *Scenario 2:* Dado falta de permiso en origen o destino, Cuando muevo un documento, Entonces recibo `403`.
-
-**[US-FOLDER-004] Eliminar carpeta vacía (soft delete) (API)**
-- **Narrativa:** Como administrador, quiero eliminar una carpeta vacía, para mantener higiene sin perder trazabilidad.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado una carpeta sin hijos ni documentos, Cuando la elimino, Entonces queda marcada con `fecha_eliminacion`.
-    - *Scenario 2:* Dado una carpeta con contenido, Cuando la elimino, Entonces recibo `409` (o `400`) indicando que debe vaciarse primero.
-
-**[US-FOLDER-005] UI mínima de navegación por carpetas**
-- **Narrativa:** Como usuario, quiero una vista tipo explorador para entrar/salir de carpetas, para encontrar mis documentos.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario autenticado, Cuando entra a una carpeta desde la UI, Entonces ve su contenido y puede navegar a subcarpetas.
-
----
-
-### P4 — Historias de Usuario (Documentos + versionado lineal: API + UI mínima)
-
-**[US-DOC-001] Subir documento (API) crea documento + versión 1**
-- **Narrativa:** Como usuario con permisos, quiero subir un documento a una carpeta, para centralizarlo y compartirlo.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado `ESCRITURA` en la carpeta, Cuando subo un archivo, Entonces recibo `201` con `documento_id` y `version_actual` con `numero_secuencial=1`.
-    - *Scenario 2:* Dado sin permisos, Cuando subo, Entonces recibo `403`.
-
-**[US-DOC-002] Descargar versión actual (API)**
-- **Narrativa:** Como usuario con `LECTURA`, quiero descargar la versión actual, para usar el documento.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado `LECTURA`, Cuando descargo, Entonces recibo `200` con el binario.
-    - *Scenario 2:* Dado sin `LECTURA`, Cuando descargo, Entonces recibo `403`.
-
-**[US-DOC-003] Subir nueva versión (API) incrementa secuencia**
-- **Narrativa:** Como usuario con permisos, quiero subir una nueva versión, para mantener historial sin sobrescribir.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un documento existente y `ESCRITURA`, Cuando subo una nueva versión, Entonces se crea una nueva versión con `numero_secuencial` incrementado y pasa a ser `version_actual`.
-
-**[US-DOC-004] Listar versiones (API) ordenadas**
-- **Narrativa:** Como usuario, quiero listar el historial de versiones, para entender la evolución del documento.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un documento, Cuando consulto versiones, Entonces recibo una lista ordenada ascendente por `numero_secuencial`.
-
-**[US-DOC-005] Cambiar versión actual (API) (rollback)**
-- **Narrativa:** Como usuario autorizado, quiero marcar una versión anterior como actual, para revertir cambios.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un documento con múltiples versiones y permiso requerido, Cuando selecciono una versión anterior, Entonces `version_actual_id` cambia y se registra auditoría.
-
-**[US-DOC-006] UI mínima de carga y ver historial**
-- **Narrativa:** Como usuario, quiero subir documentos y ver su historial desde la UI, para operar sin herramientas externas.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado permisos, Cuando subo desde la UI, Entonces el documento aparece en la carpeta.
-    - *Scenario 2:* Dado un documento con versiones, Cuando abro “Versiones”, Entonces veo el listado y cuál es la actual.
-
----
-
-### P5 — Historias de Usuario (Auditoría: logs inmutables + UI mínima)
-
-**[US-AUDIT-001] Emitir evento de auditoría en acciones críticas**
-- **Narrativa:** Como sistema, quiero emitir un evento/auditoría por cada acción crítica, para tener trazabilidad.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado la acción “crear carpeta”, Cuando se completa, Entonces se genera un evento con `codigo_evento`, `organizacion_id` y `usuario_id`.
-    - *Scenario 2:* Dado la acción “subir documento”, Cuando se completa, Entonces se genera un evento similar.
-
-**[US-AUDIT-002] Persistir auditoría como registro inmutable**
-- **Narrativa:** Como administrador, quiero que la auditoría sea inmutable, para confiar en su integridad.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un evento generado, Cuando se persiste, Entonces queda almacenado con timestamp y no puede editarse por endpoints del MVP.
-
-**[US-AUDIT-003] Consultar auditoría (API) con paginación y fechas**
-- **Narrativa:** Como administrador, quiero consultar la auditoría por rango de fechas, para investigar actividad.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un admin del organizacion A, Cuando consulta auditoría con `desde/hasta`, Entonces recibe solo eventos del organizacion A.
-    - *Scenario 2:* Dado paginación, Cuando solicita página siguiente, Entonces recibe resultados consistentes.
-
-**[US-AUDIT-004] UI mínima de auditoría**
-- **Narrativa:** Como administrador, quiero una vista simple de auditoría, para revisar eventos sin herramientas externas.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un administrador autenticado, Cuando abre “Auditoría”, Entonces ve una lista/tabla con `codigo_evento`, usuario, fecha y entidad afectada.
-
----
-
-### P6 — Historias de Usuario (Búsqueda básica sin IA)
-
-**[US-SEARCH-001] Buscar documentos (API) por texto**
-- **Narrativa:** Como usuario, quiero buscar documentos por texto (nombre/metadatos), para encontrarlos rápidamente.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un término de búsqueda, Cuando consulto, Entonces recibo una lista de documentos del organizacion actual.
-
-**[US-SEARCH-002] La búsqueda respeta permisos y no filtra existencia**
-- **Narrativa:** Como organización, quiero que la búsqueda no devuelva documentos no autorizados, para evitar filtraciones.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario sin `LECTURA` sobre un documento, Cuando busca términos que coinciden, Entonces el documento no aparece en resultados.
-
-**[US-SEARCH-003] UI mínima de búsqueda**
-- **Narrativa:** Como usuario, quiero una barra de búsqueda y resultados clicables, para abrir documentos sin navegar carpetas.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un término, Cuando busco desde la UI, Entonces veo resultados y puedo abrir el documento si tengo permisos.
-
-# Tickets de Trabajo
-
-## P0 — Autenticación + Organizacion
-
-### [US-AUTH-001] Login multi-organizacion (organización predeterminada)
----
-#### Base de datos
----
-* **Título:** Crear modelo de membresía usuario–organización para login
-* **Objetivo:** Persistir pertenencias y predeterminada para resolver el organizacion al autenticar.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementa (o ajusta) tablas/columnas mínimas para `Usuario`, `Organizacion` y `Usuario_Organizacion` con `estado` y `es_predeterminada`. Debe permitir consultar “organizaciones activas” por usuario y su predeterminada.
-* **Entregables:**
-    - Migración SQL con `Usuario_Organizacion( usuario_id, organizacion_id, estado, es_predeterminada, fecha_asignacion )`.
-    - Definición de “ACTIVO” para membresía (y organización, si aplica).
----
-* **Título:** Garantizar unicidad de organización predeterminada activa por usuario
-* **Objetivo:** Evitar configuraciones inválidas (múltiples predeterminadas activas).
-* **Tipo:** Tarea
-* **Descripción corta:** Agrega la restricción/índice único parcial para asegurar como máximo 1 membresía activa marcada como predeterminada por usuario.
-* **Entregables:**
-    - Índice único parcial `ux_usuario_org_default_activa` (o equivalente en tu tecnología de migraciones).
-    - Nota breve en doc técnica de la regla que hace cumplir.
----
-* **Título:** Datos semilla para probar escenarios de Organizacion (0,1,2,>2 organizaciones)
-* **Objetivo:** Facilitar QA y pruebas automatizadas reproduciendo escenarios del criterio de aceptación.
-* **Tipo:** Tarea
-* **Descripción corta:** Crea datos de ejemplo: usuario sin orgs activas, usuario con 1 org activa, usuario con 2 orgs activas con y sin predeterminada, y usuario con >2 orgs activas.
-**Entregables:**
-    - Script de seed (SQL o fixture) para los 5 escenarios.
-    - Documentación de credenciales/datos de prueba (solo entorno local).
----
-#### Backend
----
-* **Título:** Implementar servicio de validación de credenciales
-* **Objetivo:** Autenticar usuario por email/contraseña para habilitar `POST /auth/login`.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementa lookup por email y verificación segura de contraseña. Debe devolver “credenciales inválidas” sin filtrar detalles.
-* **Entregables:**
-    - Método/servicio `authenticate(email, contrasena)`.
-    - Mapeo de error a `401` para credenciales inválidas.
----
-* **Título:** Implementar resolución de organización en login (reglas MVP)
-* **Objetivo:** Seleccionar el `organizacion_id` correcto según membresías activas y predeterminada.
-* **Tipo:** Tarea
-* **Descripción corta:** Dado `usuario_id`, obtiene membresías activas y aplica reglas: 0→403, 1→ok, 2→requiere predeterminada, >2→409. No debe depender de input del cliente.
-* **Entregables:**
-    - Función/servicio `resolveLoginOrganization(usuario_id)`.
-    - Errores normalizados: `SIN_ORGANIZACION` (403) y `Organizacion_CONFIG_INVALIDA` (409).
----
-* **Título:** Emitir token en contexto de organización
-* **Objetivo:** Generar token “emitido para la organización” seleccionada.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementa emisión de token incluyendo, como mínimo, `usuario_id` y `organizacion_id` (claim acordado). La expiración debe ser consistente con `expira_en`.
-* **Entregables:**
-    - Servicio `issueToken({ usuario_id, organizacion_id })`.
-    - Configuración de expiración y secreto/llave (por entorno).
----
-* **Título:** Implementar endpoint `POST /auth/login` con contrato de respuesta
-* **Objetivo:** Cumplir escenarios 1, 1b, 2, 2b, 3 y 4.
-* **Tipo:** Historia
-* **Descripción corta:** Endpoint que valida credenciales, resuelve organización, emite token y devuelve estructura de respuesta. Debe devolver `401/403/409` según corresponda.
-* **Entregables:**
-    - Ruta/controlador `POST /auth/login`.
-    - Respuesta 200 con `token` (y, si aplica por contrato, `tipo_token`, `expira_en`, `organizaciones`).
----
-* **Título:** Implementar autorización mínima para `POST /auth/switch`
-* **Objetivo:** Requerir sesión válida para cambiar de organización.
-* **Tipo:** Tarea
-* **Descripción corta:** Protege el endpoint con verificación de token (mínima para este caso) y extrae `usuario_id` desde el token para validar membresía.
-* **Entregables:**
-    - Middleware/guard mínimo para token en `/auth/switch`.
-    - Extracción de `usuario_id` y `organizacion_id` desde claims.
----
-* **Título:** Implementar endpoint `POST /auth/switch` con validación de membresía
-* **Objetivo:** Cumplir escenario 2c (cambio de organizacion emitiendo nuevo token).
-* **Tipo:** Historia
-* **Descripción corta:** Valida que `organizacion_id` solicitada pertenece al usuario y está activa. Emite un nuevo token en ese contexto y devuelve `200`.
-* **Entregables:**
-    - Ruta/controlador `POST /auth/switch`.
-    - Validación de pertenencia activa + manejo de errores (`403` o `404` según convención definida).
----
-* **Título:** Normalizar errores y códigos de negocio para autenticación/Organizacion
-* **Objetivo:** Hacer verificables y consistentes las respuestas de error.
-* **Tipo:** Tarea
-* **Descripción corta:** Centraliza el shape de error (`codigo`, `mensaje`) y asegura que `/auth/login` use `SIN_ORGANIZACION` (403) y `Organizacion_CONFIG_INVALIDA` (409), y credenciales inválidas usen `401`.
-* **Entregables:**
-    - Mapper/handler de errores para auth.
-    - Casos de prueba de serialización de error.
----
-* **Título:** Pruebas unitarias de resolución de organización (0/1/2/>2)
-* **Objetivo:** Asegurar reglas MVP y prevenir regresiones.
-* **Tipo:** QA
-* **Descripción corta:** Tests puros sobre `resolveLoginOrganization` cubriendo todos los escenarios de aceptación y bordes (p. ej. 2 activas con 2 predeterminadas → invalida).
-* **Entregables:**
-    - Suite de unit tests con 5 escenarios mínimos.
-    - Reporte de cobertura (si existe en el stack).
----
-* **Título:** Pruebas de integración de `POST /auth/login` (200/401/403/409)
-* **Objetivo:** Verificar endpoint y contrato HTTP extremo a extremo.
-* **Tipo:** QA
-* **Descripción corta:** Ejecuta requests reales contra el servidor con datos seed, validando status codes y campos requeridos de la respuesta.
-* **Entregables:**
-    - Tests de integración para escenarios 1, 1b, 2, 2b, 3, 4.
-    - Validación del shape de respuesta 200.
----
-* **Título:** Pruebas de integración de `POST /auth/switch` (200 + validación de pertenencia)
-* **Objetivo:** Verificar que el cambio de organización solo funciona con membresía activa.
-* **Tipo:** QA
-* **Descripción corta:** Con token inicial, solicita cambio a otra org válida y verifica nuevo token; intenta cambiar a org no perteneciente/inactiva y verifica rechazo.
-* **Entregables:**
-    - Tests de integración para escenario 2c y negativos.
-    - Verificación de que el nuevo token refleja el `organizacion_id` solicitado.
----
-#### Frontend
----
-* **Título:** Sin cambios de UI para US-AUTH-001
-* **Objetivo:** Aclarar alcance: esta historia define comportamiento de API, no pantalla.
-* **Tipo:** Tarea
-* **Descripción corta:** No se implementa UI en esta historia. La pantalla de login corresponde a `US-AUTH-005`.
-* **Entregables:**
-    - Confirmación de “no aplica” en planning.
-    - (Opcional) Colección de requests para probar la API (Postman/HTTP) si el equipo la usa.
