@@ -1,0 +1,1395 @@
+openapi: 3.0.0
+info:
+  title: DocFlow API
+  description: |
+    REST API for DocFlow — Intelligent Document Management System (DMS).
+    
+    DocFlow is a modular, API-First document management infrastructure designed to serve as a central repository
+    for advanced document lifecycle management, versioning, and semantic search capabilities.
+    
+    The platform implements a **microservices architecture** with the following core domains:
+    - **Identity & Authentication**: Multi-organization support with JWT-based stateless authentication (Identity Service)
+    - **Document Management**: Core document lifecycle management, versioning, and storage (Document-Core Service)
+    - **API Gateway**: Single entry point routing to backend microservices (Gateway Service)
+    - **Audit & Compliance**: Activity tracking and audit logging (AuditLog Service)
+    
+    ## Architecture & Design Principles
+    - **Hexagonal Architecture** (Ports & Adapters): Clear separation between domain logic, application services, and infrastructure
+    - **Domain-Driven Design (DDD)**: Business-centric modeling with ubiquitous language
+    - **RBAC (Role-Based Access Control)**: Fine-grained permission management across resources
+    - **Stateless Authentication**: JWT tokens with organization context
+    
+    ## Tech Stack
+    - **Backend**: Java 21, Spring Boot 3.4.2+, Spring Cloud Gateway, Spring WebFlux
+    - **Frontend**: React 19+, Vite, TypeScript, Tailwind CSS, Zustand (state management)
+    - **Database**: PostgreSQL 16, MongoDB (for audit logs)
+    - **Storage**: MinIO (S3-compatible object storage for documents)
+    - **Documentation**: SpringDoc OpenAPI 2.7.0
+    
+    ## Development Conventions
+    - **Code Style**: Java 21 conventions, PascalCase for classes, camelCase for methods/variables
+    - **Testing**: TDD approach, JUnit 5 + Mockito, integration tests with Testcontainers
+    - **Error Handling**: Specific exceptions, global error handlers, OWASP-compliant validation
+    - **Logging**: Structured logging (INFO, WARN, ERROR), no sensitive data in logs
+    
+  version: 0.1.0
+  contact:
+    name: DocFlow Development Team
+    email: docflow-team@example.com
+  license:
+    name: ISC
+    
+servers:
+  - url: http://localhost:8080
+    description: Gateway (Development) - Routes to all backend services
+  - url: http://localhost:8081
+    description: Identity Service (Development) - Authentication & authorization
+  - url: http://localhost:8082
+    description: Document-Core Service (Development) - Document management
+
+paths:
+  /api/v1/auth/login:
+    post:
+      summary: User login with multi-organization support
+      description: |
+        Authenticate a user and obtain a JWT token. Supports multi-organization contexts.
+        If user belongs to only one organization, it is selected automatically.
+        If user has multiple organizations without a default, a 409 CONFLICT is returned.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: User has no active organizations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User has multiple organizations without default selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /api/v1/auth/switch:
+    post:
+      summary: Switch active organization
+      description: Change the current organization context for the authenticated user. Returns a new JWT token with the updated organization context.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchOrganizationRequest'
+      responses:
+        '200':
+          description: Organization switched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /documents:
+    get:
+      summary: List all documents
+      description: Retrieve a paginated list of documents for the current organization with optional filtering and sorting
+      tags:
+        - Documents
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of documents per page
+        - in: query
+          name: folder
+          schema:
+            type: string
+          description: Filter by folder ID
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Full-text search in document name and metadata
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [name, createdAt, updatedAt, size]
+            default: createdAt
+          description: Field to sort by
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: Successfully retrieved documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      summary: Upload a new document
+      description: Upload a document file (PDF, DOCX, etc.) to the document management system. Supports versioning for existing documents.
+      tags:
+        - Documents
+      parameters:
+        - in: query
+          name: folderId
+          schema:
+            type: string
+          description: Optional parent folder ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUploadRequest'
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid file or metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /documents/{id}:
+    get:
+      summary: Get document details
+      description: Retrieve detailed information about a specific document, including metadata, version history, and permissions
+      tags:
+        - Documents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Document ID
+      responses:
+        '200':
+          description: Successfully retrieved document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetailsResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    put:
+      summary: Update document metadata
+      description: Update document metadata (name, description, tags, etc.). Does not affect versioning.
+      tags:
+        - Documents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Document ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    delete:
+      summary: Delete or soft-delete a document
+      description: Mark a document as deleted (soft-delete). Can be permanently deleted if specified.
+      tags:
+        - Documents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Document ID
+        - in: query
+          name: permanent
+          schema:
+            type: boolean
+            default: false
+          description: Permanently delete document (cannot be recovered)
+      responses:
+        '204':
+          description: Document deleted successfully
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /documents/{id}/versions:
+    get:
+      summary: Get document version history
+      description: Retrieve all versions of a document with metadata about each version
+      tags:
+        - Document Versions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Document ID
+      responses:
+        '200':
+          description: Successfully retrieved version history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionListResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /documents/{id}/versions/{versionId}:
+    get:
+      summary: Download specific document version
+      description: Download a specific version of a document
+      tags:
+        - Document Versions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Document ID
+        - in: path
+          name: versionId
+          required: true
+          schema:
+            type: string
+          description: Version ID
+      responses:
+        '200':
+          description: File retrieved successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document or version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /folders:
+    get:
+      summary: List all folders
+      description: Retrieve folder structure for the current organization
+      tags:
+        - Folders
+      parameters:
+        - in: query
+          name: parentId
+          schema:
+            type: string
+          description: Filter by parent folder ID (empty for root folders)
+      responses:
+        '200':
+          description: Successfully retrieved folders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderListResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      summary: Create a new folder
+      description: Create a new folder in the document hierarchy
+      tags:
+        - Folders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+      responses:
+        '201':
+          description: Folder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+        '400':
+          description: Invalid folder data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /folders/{id}:
+    get:
+      summary: Get folder details
+      description: Retrieve folder metadata and contents
+      tags:
+        - Folders
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Folder ID
+      responses:
+        '200':
+          description: Successfully retrieved folder
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderDetailsResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /permissions:
+    get:
+      summary: List permissions
+      description: Retrieve permission matrix for resources (documents, folders)
+      tags:
+        - Permissions
+      parameters:
+        - in: query
+          name: resourceId
+          schema:
+            type: string
+          description: Filter by resource ID
+        - in: query
+          name: resourceType
+          schema:
+            type: string
+            enum: [document, folder]
+          description: Filter by resource type
+      responses:
+        '200':
+          description: Successfully retrieved permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionListResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      summary: Grant permission
+      description: Grant a role a specific permission on a resource
+      tags:
+        - Permissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantPermissionRequest'
+      responses:
+        '201':
+          description: Permission granted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionResponse'
+        '400':
+          description: Invalid permission data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /audit/logs:
+    get:
+      summary: Get audit logs
+      description: Retrieve activity audit logs for compliance and tracking (admin only)
+      tags:
+        - Audit
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of logs per page
+        - in: query
+          name: userId
+          schema:
+            type: string
+          description: Filter by user ID
+        - in: query
+          name: action
+          schema:
+            type: string
+          description: Filter by action type (CREATE, UPDATE, DELETE, etc.)
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs from this date onwards
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs until this date
+      responses:
+        '200':
+          description: Successfully retrieved audit logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '401':
+          description: Unauthorized - token missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /health:
+    get:
+      summary: Service health check
+      description: Check the health status of the API Gateway and connected services
+      tags:
+        - System
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: One or more services unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    # Authentication Schemas
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          format: password
+          description: User password (plaintext, sent over HTTPS only)
+      required:
+        - email
+        - password
+    
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+        refreshToken:
+          type: string
+          nullable: true
+          description: Optional refresh token for token renewal
+        userId:
+          type: string
+          description: Authenticated user ID
+        organizationId:
+          type: string
+          description: Current active organization ID
+        organizationName:
+          type: string
+          description: Current active organization name
+        email:
+          type: string
+          format: email
+          description: User email
+        roles:
+          type: array
+          items:
+            type: string
+          description: User roles in current organization
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+      required:
+        - token
+        - userId
+        - organizationId
+        - email
+        - roles
+    
+    SwitchOrganizationRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          description: Target organization ID to switch to
+      required:
+        - organizationId
+    
+    # Document Schemas
+    DocumentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        metadata:
+          $ref: '#/components/schemas/PaginationMetadata'
+      required:
+        - data
+        - metadata
+    
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique document identifier (UUID)
+        name:
+          type: string
+          description: Document name
+        description:
+          type: string
+          nullable: true
+          description: Document description
+        folderId:
+          type: string
+          nullable: true
+          description: Parent folder ID
+        fileType:
+          type: string
+          description: MIME type (e.g., application/pdf)
+        fileSize:
+          type: integer
+          description: File size in bytes
+        version:
+          type: integer
+          description: Current version number
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        createdBy:
+          type: string
+          description: User ID who created the document
+        tags:
+          type: array
+          items:
+            type: string
+          description: Document tags for categorization
+        isLocked:
+          type: boolean
+          description: Whether document is locked from editing
+      required:
+        - id
+        - name
+        - fileType
+        - fileSize
+        - version
+        - createdAt
+    
+    DocumentResponse:
+      allOf:
+        - $ref: '#/components/schemas/Document'
+    
+    DocumentDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/Document'
+        - type: object
+          properties:
+            versions:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocumentVersion'
+            permissions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Permission'
+            metadata:
+              type: object
+              additionalProperties: true
+              description: Custom metadata key-value pairs
+    
+    DocumentUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Document file (PDF, DOCX, etc.)
+        name:
+          type: string
+          description: Optional custom document name (defaults to filename)
+        description:
+          type: string
+          nullable: true
+          description: Optional document description
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional tags
+      required:
+        - file
+    
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Document name
+        description:
+          type: string
+          nullable: true
+          description: Document description
+        tags:
+          type: array
+          items:
+            type: string
+          description: Document tags
+        isLocked:
+          type: boolean
+          description: Lock/unlock document
+    
+    DocumentVersion:
+      type: object
+      properties:
+        versionId:
+          type: string
+          description: Unique version identifier
+        versionNumber:
+          type: integer
+          description: Sequential version number
+        createdAt:
+          type: string
+          format: date-time
+          description: Version creation timestamp
+        createdBy:
+          type: string
+          description: User ID who created this version
+        comment:
+          type: string
+          nullable: true
+          description: Version change comment
+        fileSize:
+          type: integer
+          description: File size for this version
+      required:
+        - versionId
+        - versionNumber
+        - createdAt
+    
+    DocumentVersionListResponse:
+      type: object
+      properties:
+        documentId:
+          type: string
+          description: Document ID
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentVersion'
+      required:
+        - documentId
+        - versions
+    
+    # Folder Schemas
+    FolderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Folder'
+        metadata:
+          $ref: '#/components/schemas/PaginationMetadata'
+      required:
+        - data
+        - metadata
+    
+    Folder:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique folder identifier (UUID)
+        name:
+          type: string
+          description: Folder name
+        description:
+          type: string
+          nullable: true
+          description: Folder description
+        parentId:
+          type: string
+          nullable: true
+          description: Parent folder ID (null for root)
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        createdBy:
+          type: string
+          description: User ID who created the folder
+        documentCount:
+          type: integer
+          description: Number of documents in this folder
+        subfolderCount:
+          type: integer
+          description: Number of subfolders
+      required:
+        - id
+        - name
+        - createdAt
+    
+    FolderResponse:
+      allOf:
+        - $ref: '#/components/schemas/Folder'
+    
+    FolderDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/Folder'
+        - type: object
+          properties:
+            documents:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+            subfolders:
+              type: array
+              items:
+                $ref: '#/components/schemas/Folder'
+            permissions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Permission'
+    
+    CreateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Folder name
+        description:
+          type: string
+          nullable: true
+          description: Optional folder description
+        parentId:
+          type: string
+          nullable: true
+          description: Optional parent folder ID
+      required:
+        - name
+    
+    # Permission Schemas
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique permission identifier
+        resourceId:
+          type: string
+          description: Document or folder ID
+        resourceType:
+          type: string
+          enum: [document, folder]
+          description: Type of resource
+        roleId:
+          type: string
+          description: Role ID granted permission
+        action:
+          type: string
+          enum: [read, create, update, delete, share]
+          description: Permitted action
+        grantedAt:
+          type: string
+          format: date-time
+          description: Permission grant timestamp
+        grantedBy:
+          type: string
+          description: User ID who granted the permission
+      required:
+        - id
+        - resourceId
+        - resourceType
+        - roleId
+        - action
+    
+    PermissionResponse:
+      allOf:
+        - $ref: '#/components/schemas/Permission'
+    
+    PermissionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        metadata:
+          $ref: '#/components/schemas/PaginationMetadata'
+      required:
+        - data
+        - metadata
+    
+    GrantPermissionRequest:
+      type: object
+      properties:
+        resourceId:
+          type: string
+          description: Document or folder ID
+        resourceType:
+          type: string
+          enum: [document, folder]
+          description: Type of resource
+        roleId:
+          type: string
+          description: Role ID to grant permission to
+        action:
+          type: string
+          enum: [read, create, update, delete, share]
+          description: Action to permit
+        cascadeToChildren:
+          type: boolean
+          default: false
+          description: If true and resource is folder, apply to all children
+      required:
+        - resourceId
+        - resourceType
+        - roleId
+        - action
+    
+    # Audit Schemas
+    AuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        metadata:
+          $ref: '#/components/schemas/PaginationMetadata'
+      required:
+        - data
+        - metadata
+    
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Audit log entry ID
+        userId:
+          type: string
+          description: User who performed the action
+        action:
+          type: string
+          enum: [CREATE, READ, UPDATE, DELETE, DOWNLOAD, SHARE, LOGIN, LOGOUT]
+          description: Action performed
+        resourceType:
+          type: string
+          enum: [document, folder, user, permission]
+          description: Type of resource affected
+        resourceId:
+          type: string
+          description: ID of affected resource
+        resourceName:
+          type: string
+          description: Name of affected resource
+        changeDetails:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Details of what changed (before/after values)
+        ipAddress:
+          type: string
+          nullable: true
+          description: User IP address
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string
+        timestamp:
+          type: string
+          format: date-time
+          description: When the action occurred
+        organizationId:
+          type: string
+          description: Organization context
+        status:
+          type: string
+          enum: [success, failure]
+          description: Whether action succeeded
+      required:
+        - id
+        - userId
+        - action
+        - resourceType
+        - timestamp
+    
+    # System Schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+          description: Overall system status
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [UP, DOWN]
+              responseTime:
+                type: integer
+                description: Response time in milliseconds
+              message:
+                type: string
+                nullable: true
+      required:
+        - status
+        - timestamp
+    
+    PaginationMetadata:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of records
+        page:
+          type: integer
+          description: Current page number (1-based)
+        limit:
+          type: integer
+          description: Records per page
+        totalPages:
+          type: integer
+          description: Total number of pages
+        hasNext:
+          type: boolean
+          description: Whether there are more pages
+        hasPrev:
+          type: boolean
+          description: Whether there are previous pages
+      required:
+        - total
+        - page
+        - limit
+        - totalPages
+    
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code/identifier
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+        path:
+          type: string
+          description: Request path that caused the error
+        status:
+          type: integer
+          description: HTTP status code
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Additional error details (validation errors, etc.)
+      required:
+        - error
+        - message
+        - status
+
+tags:
+  - name: Authentication
+    description: User authentication and organization management endpoints
+  - name: Documents
+    description: Document management operations (CRUD, search, versioning)
+  - name: Document Versions
+    description: Document version history and version-specific operations
+  - name: Folders
+    description: Folder management and document organization
+  - name: Permissions
+    description: Role-based access control and permission management
+  - name: Audit
+    description: Audit logging and compliance tracking (admin only)
+  - name: System
+    description: System health and status endpoints
+
+security:
+  - bearerAuth: []
+
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: |
+      JWT Bearer token obtained from the /api/v1/auth/login endpoint.
+      Include in request headers as: Authorization: Bearer <token>
