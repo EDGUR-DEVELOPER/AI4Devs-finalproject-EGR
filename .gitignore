@@ -463,23 +463,6 @@ log/
 *.out
 
 # ------------------------------------
-# Package Manager Locks (Optional)
-# ------------------------------------
-# Uncomment if you don't want to commit lock files
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
-
-# ------------------------------------
-# Debugging
-# ------------------------------------
-*.dmp
-*.stacktrace
-heapdump-*
-core
-core.*
-
-# ------------------------------------
 # AI/ML Models (if applicable)
 # ------------------------------------
 *.h5
