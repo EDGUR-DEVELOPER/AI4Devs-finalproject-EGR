@@ -148,6 +148,190 @@ Las reglas detalladas para el desarrollo de la aplicación frontend se encuentra
 - [.github/rules-frontend.md](../.github/rules-frontend.md)
 - Índice general de reglas del proyecto: [.github/RULES.md](../.github/RULES.md)
 
+## ACL (Access Control List) Patterns
+
+### Feature Structure
+The ACL feature demonstrates the recommended patterns for implementing dropdown selectors with backend data:
+
+```
+features/acl/
+├── components/        # UI-specific components
+│   └── NivelAccesoSelect.tsx   # Reusable dropdown selector component
+├── hooks/            # Custom React hooks
+│   └── useNivelesAcceso.ts     # Hook with caching & data fetching
+├── services/         # API communication layer
+│   └── nivelAccesoService.ts   # HTTP service with error handling
+├── types/            # TypeScript interfaces
+│   └── index.ts      # Domain models (INivelAcceso, CodigoNivelAcceso)
+└── __tests__/        # Comprehensive test coverage
+    ├── useNivelesAcceso.test.ts
+    ├── NivelAccesoSelect.test.tsx
+    └── acl.integration.test.ts
+```
+
+### Data Fetching with Caching
+
+**Custom Hook Pattern** (`useNivelesAcceso.ts`):
+```typescript
+interface UseNivelesAccesoReturn {
+  niveles: INivelAcceso[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export const useNivelesAcceso = (
+  enableCache: boolean = true,
+  cacheTTL: number = 24 * 60 * 60 * 1000 // 24 hours default
+): UseNivelesAccesoReturn => {
+  // Auto-fetch on mount
+  // localStorage caching with configurable TTL
+  // Graceful error handling
+  // Manual refetch capability
+};
+```
+
+**Key Features:**
+- **Automatic fetching** on component mount via `useEffect`
+- **localStorage caching** with configurable time-to-live (TTL)
+- **Cache expiration** logic to prevent stale data
+- **Manual refetch** function to invalidate cache and reload
+- **Optimized** to prevent unnecessary API calls
+- **Typed return** with loading and error states
+
+### API Service Pattern
+
+**HTTP Service** (`nivelAccesoService.ts`):
+```typescript
+export const aclApi = {
+  getNivelesAcceso: async (): Promise<INivelAcceso[]> => {
+    // GET /api/acl/niveles
+    // Extract data from envelope: response.data.data
+    // Handle errors with Spanish messages
+  },
+
+  getNivelAccesoByCodigo: async (codigo: CodigoNivelAcceso): Promise<INivelAcceso> => {
+    // GET /api/acl/niveles/{codigo}
+  }
+};
+```
+
+**Service Characteristics:**
+- **Object-based export** (not class-based)
+- **Async methods** with Promise return types
+- **Error handling** with user-friendly Spanish messages
+- **Type-safe** with full TypeScript support
+- **Centralized axios instance** from `@core/shared/api/axiosInstance`
+
+### Component Implementation
+
+**Reusable Dropdown** (`NivelAccesoSelect.tsx`):
+```typescript
+export interface NivelAccesoSelectProps {
+  value: CodigoNivelAcceso | '';
+  onChange: (codigo: CodigoNivelAcceso) => void;
+  label?: string;
+  disabled?: boolean;
+  required?: boolean;
+  error?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  placeholder?: string;
+  showDefaultOption?: boolean;
+}
+
+export const NivelAccesoSelect: React.FC<NivelAccesoSelectProps> = ({
+  value,
+  onChange,
+  label,
+  disabled,
+  required,
+  error,
+  size,
+  className,
+  placeholder,
+  showDefaultOption
+}) => {
+  const { niveles, loading, error: fetchError, refetch } = useNivelesAcceso();
+  // Component implementation with:
+  // - Integrated hook for data management
+  // - Tailwind CSS styling with size variants
+  // - Error handling with retry capability
+  // - Full accessibility support
+  // - Loading and empty states
+};
+```
+
+**Component Features:**
+- **Integrated hook usage** for automatic data fetching
+- **Multiple error sources** (validation + API)
+- **Loading state** with visual feedback
+- **Disabled state** support
+- **Size variants** (sm, md, lg)
+- **Accessibility**: labels, aria-invalid, aria-describedby
+- **Empty state** messaging
+- **Retry functionality** for API errors
+
+### Testing Strategy
+
+**Hook Testing** (40+ test cases):
+- Data fetching and initial state
+- Cache validation and TTL expiration
+- Error handling and recovery
+- Refetch functionality
+- State transitions
+- Configuration options
+
+**Component Testing** (30+ test cases):
+- Rendering and option display
+- Selection change handling
+- Loading states
+- Error display and retry
+- Disabled state
+- Size and styling variants
+- Accessibility compliance
+- Keyboard navigation
+
+**Integration Testing** (15+ scenarios):
+- Complete user flows
+- Form integration
+- Multi-component interactions
+- Performance with caching
+- Error recovery workflows
+
+```typescript
+// Example: Hook test for caching
+it('should use cached data on subsequent calls', async () => {
+  const { result: result1 } = renderHook(() => useNivelesAcceso());
+  await waitFor(() => expect(result1.current.loading).toBe(false));
+  
+  const { result: result2 } = renderHook(() => useNivelesAcceso());
+  await waitFor(() => expect(result2.current.loading).toBe(false));
+  
+  // Should return cached data without additional API calls
+  expect(result2.current.niveles).toEqual(mockNiveles);
+});
+```
+
+### Constants Organization
+
+**Permission Constants** (`src/common/constants/permissions.ts`):
+```typescript
+export const PERMISSION_CODES = {
+  LECTURA: 'LECTURA',
+  ESCRITURA: 'ESCRITURA',
+  ADMINISTRACION: 'ADMINISTRACION',
+} as const;
+
+export const PERMISSION_LABELS: Record<CodigoNivelAcceso, string> = {
+  LECTURA: 'Lectura',
+  ESCRITURA: 'Escritura',
+  ADMINISTRACION: 'Administración',
+};
+
+export type PermissionCodeKey = keyof typeof PERMISSION_CODES;
+```
+
 ## 📝 Licencia
 
 Proyecto privado - Todos los derechos reservados
