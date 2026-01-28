@@ -556,21 +556,8 @@ La estrategia de pruebas sigue la **Pirámide de Testing** para asegurar calidad
 | Tipo de Test | Ámbito | Herramientas | Descripción |
 | :--- | :--- | :--- | :--- |
 | **Unitarios** | Backend | JUnit 5, Mockito | Pruebas aisladas de lógica de dominio y casos de uso. Cobertura mínima del 80%. |
-| **Unitarios** | Frontend | Vitest / Jest, React Testing Library | Verificación de renderizado de componentes y lógica de hooks. |
-| **Integración** | Backend | **TestContainers**, Spring Boot Test | Levanta contenedores reales de PostgreSQL/Kafka/Mongo en Docker efímero para probar repositorios y flujo de mensajes. |
 | **Contrato** | API | **Pact** | Verifica que los microservicios cumplan el contrato API acordado entre Consumidor (Frontend/Otros servicios) y Proveedor, evitando rupturas en cambios. |
 | **End-to-End (E2E)** | Sistema | **Cypress** / Playwright | Simula flujos de usuario completos: "Usuario hace login, sube documento y busca documento". Se ejecutan en el pipeline de CI/CD (Stage/QA). |
-| **Seguridad (SAST/DAST)** | Pipeline | SonarQube, OWASP ZAP | Análisis estático de código en busca de vulnerabilidades y escaneo dinámico de la API en ejecución. |
-
-### Ejemplo de Caso de Test de Integración (Backend)
-
-Usando `TestContainers`, al probar el `DocumentService`:
-
-1.  El test arranca un contenedor PostgreSQL limpio y un MinIO (S3 mock).
-2.  Llama al método `createDocument()`.
-3.  Verifica que el registro existe en PostgreSQL.
-4.  Verifica que el archivo binario está en MinIO.
-5.  Destruye los contenedores al finalizar.
 
 # Modelo de Datos
 ```mermaid

@@ -11,6 +11,8 @@ DocFlow implements a **multi-organization, role-based access control (RBAC)** ar
 - **Storage**: PostgreSQL for relational data, MinIO (S3-compatible) for binary documents
 - **Core Concepts**: Multi-tenancy, document versioning, soft deletes, audit logging
 
+**Total Entities**: 10 (Organization, User, UserOrganization, Role, Permission, Folder, Document, NivelAcceso, DocumentVersion, AuditLog)
+
 ---
 
 ## Model Descriptions
@@ -228,7 +230,41 @@ Represents a document with versioning support. Current version is tracked; previ
 
 ---
 
-### 8. DocumentVersion
+### 8. NivelAcceso (Access Level)
+Represents a catalog of access levels for Role-Based Access Control (RBAC). Defines standard permission levels: LECTURA (Read), ESCRITURA (Write), and ADMINISTRACION (Administration).
+
+**Fields:**
+- `id`: UUID - Unique access level identifier (Primary Key)
+- `codigo`: String (max 50 characters) - Invariable code [LECTURA, ESCRITURA, ADMINISTRACION] (Unique)
+- `nombre`: String (max 100 characters) - Display name of the access level
+- `descripcion`: Text (nullable) - Detailed description of permissions granted
+- `accionesPermitidas`: JSONB/Array - List of allowed actions (e.g., ["ver", "listar", "descargar"])
+- `orden`: Integer - Display order for UI listings
+- `activo`: Boolean - Whether this level is currently active (default: true)
+- `createdAt`: DateTime - Access level creation timestamp
+- `updatedAt`: DateTime - Last access level update timestamp
+
+**Validation Rules:**
+- Codigo must be one of: LECTURA, ESCRITURA, ADMINISTRACION
+- Codigo is unique and invariable (cannot be changed after creation)
+- Nombre is required, 1-100 characters
+- accionesPermitidas must be a valid JSON array of strings
+- Standard levels are seeded via database migrations (idempotent)
+
+**Standard Access Levels:**
+1. **LECTURA**: View, list, and download documents (read-only)
+   - Actions: `["ver", "listar", "descargar"]`
+2. **ESCRITURA**: Upload new versions, rename, modify metadata
+   - Actions: `["ver", "listar", "descargar", "subir", "modificar", "crear_version"]`
+3. **ADMINISTRACION**: Full control including delete and permission management
+   - Actions: `["ver", "listar", "descargar", "subir", "modificar", "crear_version", "eliminar", "administrar_permisos", "cambiar_version_actual"]`
+
+**Relationships:**
+- `permissions`: One-to-many with Permission (roles/users with this access level)
+
+---
+
+### 9. DocumentVersion
 Represents a specific version of a document. Supports complete versioning history with linear progression.
 
 **Fields:**
@@ -258,7 +294,7 @@ Represents a specific version of a document. Supports complete versioning histor
 
 ---
 
-### 9. AuditLog
+### 10. AuditLog
 Represents immutable audit trail entries for compliance, tracking all user actions on documents and system operations.
 
 **Fields:**
@@ -379,6 +415,18 @@ erDiagram
         DateTime deletedAt
     }
     
+    NivelAcceso {
+        UUID id PK
+        String codigo UK
+        String nombre
+        String descripcion
+        JSONB accionesPermitidas
+        Integer orden
+        Boolean activo
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    
     DocumentVersion {
         UUID id PK
         UUID documentId FK
@@ -423,6 +471,8 @@ erDiagram
     User ||--o{ AuditLog : "performs"
 
     Role ||--o{ Permission : "grants"
+    
+    Permission }o--|| NivelAcceso : "uses access level"
     
     Folder ||--o{ Folder : "contains subfolders"
     Folder ||--o{ Document : "contains documents"
@@ -534,7 +584,7 @@ erDiagram
 
 ## Migration & Evolution
 
-- **Database**: Use Liquibase or Flyway for versioned migrations
+- **Database**: Use Flyway for versioned migrations
 - **Backward Compatibility**: New fields are nullable; old consumers unaffected
 - **Adding Permissions**: Extend Permission.action enum and update RBAC logic
 - **Archiving**: Implement retention policies on AuditLog and DocumentVersion
