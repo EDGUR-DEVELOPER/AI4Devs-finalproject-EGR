@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.docflow.identity.domain.model.object.EstadoOrganizacion;
+
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;

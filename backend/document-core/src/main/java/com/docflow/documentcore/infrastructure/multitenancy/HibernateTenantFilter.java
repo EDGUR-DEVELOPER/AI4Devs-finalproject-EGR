@@ -35,7 +35,7 @@ public class HibernateTenantFilter {
     /**
      * Habilita el filtro Hibernate para el tenant actual del contexto.
      * 
-     * @throws com.docflow.documentcore.domain.exceptions.TenantContextMissingException
+     * @throws com.docflow.documentcore.domain.exception.TenantContextMissingException
      *         si no hay tenant en el contexto actual
      */
     public void enableTenantFilter() {

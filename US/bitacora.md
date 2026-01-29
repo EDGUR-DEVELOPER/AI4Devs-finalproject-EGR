@@ -12,11 +12,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **40%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario completados) |
-| **Tickets MVP** | 10/30 completados |
+| **Progreso MVP** | 🟡 **33%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario + Catálogo de niveles ACL completados) |
+| **Tickets MVP** | 11/33 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
-| **Días restantes** | 7 días (9 ene 2026 → 16 ene 2026) |
-| **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) |
+| **Estado de Fecha** | 28 Ene 2026 - 12 días POST-MVP inicial (proyecto en evolución continua) |
+| **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) → **Velocidad real alcanzada**: 0.58 tickets/día post-MVP (1 ticket en 19 días, pero con amplitud y complejidad aumentada) |
 
 ### Stack Principal
 
@@ -194,10 +194,11 @@ Dic 31 ────────────────────────�
 
 #### Día 7 (7 Ene)
 
-- [ ] **US-ACL-001**: Catálogo de niveles de acceso
+- [x] **US-ACL-001**: Catálogo de niveles de acceso ✅
     * *Detalle técnico:* Crear tabla `niveles_acceso` con valores: `LECTURA`, `ESCRITURA`, `ADMINISTRACION`. Endpoint `GET /niveles-acceso`. Seed inicial via Flyway/Liquibase.
     * *Servicio:* `document-core-service`
     * *Dependencia:* US-AUTH-004
+    * *Estado:* Completado el 28 Ene 2026
 
 - [ ] **US-ACL-002**: Otorgar permiso en carpeta (API)
     * *Detalle técnico:* Crear tabla `acl_carpetas` (carpeta_id, usuario_id, nivel_acceso_id, recursivo). Endpoint `POST /carpetas/{id}/permisos`. Validar que carpeta pertenezca al tenant.
@@ -360,10 +361,10 @@ Dic 31 ────────────────────────�
 ## 3. Registro de Progreso (Gap Analysis)
 
 * **🔴 Por Desarrollar:**  
-US-ADMIN-005, US-ACL-001, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
+US-ADMIN-005, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
 
 * **🟢 Desarrollado:**  
-INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004
+INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ACL-001
 
 ### 🟡 Post-MVP (9 tickets) - Implementar después del 16 Ene
 
@@ -394,20 +395,32 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
 | US-AUTH-006 | Manejo de sesión expirada (Interceptor Axios, limpieza de estado, redirección a login y alerta UX) | 8 Ene 2026 |
 | US-ADMIN-001 | Crear usuario (API, endpoint `/admin/users`, validación de email, hash de contraseña, asociación a organización, error handling RFC 7807) | 9 Ene 2026 |
 | US-ADMIN-002 | Asignar rol a usuario (API, endpoint `/admin/users/{userId}/roles`, migraciones, validaciones, seed roles base, pruebas unitarias e integración) | 9 Ene 2026 |
+| US-ACL-001 | Catálogo de niveles de acceso (Backend: tabla BD con JSONB, entidad, repositorio, servicio, mapper; Frontend: tipos TS, servicio HTTP, hook con caché, componente dropdown; Tests unitarios e integración; OpenAPI doc) | 28 Ene 2026 |
 
 ---
 
 
 ## 4. Próximos Pasos Recomendados
 
-1. Priorizar **US-ADMIN-005** (UI de Gestión de Usuarios) para habilitar la administración visual y pruebas end-to-end del flujo de usuarios.
-2. Iniciar la **Fase 3 (ACL)** con **US-ACL-001** (Catálogo de niveles de acceso), ya que es prerequisito para la gestión de permisos.
-3. Planificar el desarrollo de endpoints de carpetas y documentos en paralelo, una vez que la base de permisos esté lista.
-4. Mantener la cobertura de pruebas y la documentación actualizada para evitar bloqueos en QA y auditoría.
+1. **Priorizar US-ADMIN-005** (UI de Gestión de Usuarios) para completar el ciclo administrativo y habilitar pruebas end-to-end del módulo de usuarios.
+2. **Continuidad de ACL**: Implementar **US-ACL-002** a **US-ACL-008** (2-3 días) para construir el sistema completo de permisos (otorgar/revocar, recursivos, enforcement).
+3. **Gestión de Carpetas**: Una vez que los permisos estén listos, iniciar **US-FOLDER-001** a **US-FOLDER-005** en paralelo con documentos.
+4. **Documentos & Versionado**: Implementar el flujo completo de subida, descarga y versionado (**US-DOC-001** a **US-DOC-006**) con validación de permisos integrada.
+5. **Auditoría**: Activar el sistema de eventos y persistencia de auditoría (**US-AUDIT-001** a **US-AUDIT-003**) para rastreabilidad total.
+6. **Mantener cobertura de tests** y documentación actualizada para evitar bloqueos en QA y auditoría posterior.
 
 ---
 
 ## 5. Notas de Desarrollo
+
+### Día 28 (28 Ene 2026)
+
+- [x] **US-ACL-001** completado: Catálogo de niveles de acceso implementado en backend y frontend.
+    * **Backend**: Tabla `nivel_acceso` con JSONB, entidades de dominio inmutables, repositorio hexagonal, servicio de aplicación, validadores, DTO mappers, controlador REST con 5 endpoints (GET todos, GET por ID, GET por código, check permiso), excepciones globales, +43 test cases unitarios e integración con cobertura >90%.
+    * **Frontend**: Tipos TypeScript (INivelAcceso, CodigoNivelAcceso, AccionPermitida), servicio HTTP con `isAxiosError` guard, hook personalizado `useNivelesAcceso` con caché localStorage (TTL 24h), componente dropdown `NivelAccesoSelect` con accesibilidad WCAG, manejo de errores con reintentos, documentación completa.
+    * **Infraestructura**: Seed idempotente (S001__Seed_Niveles_Acceso.sql) con 3 niveles estándar, índices de performance, auditoría de cambios.
+    * **Documentación**: OpenAPI automático en Swagger, README en feature, actualización de estándares de frontend (frontend-standards.md), ejemplos de patrones reutilizables.
+    * **Impacto**: Desbloquea todo el sistema de permisos. Proporciona patrones reutilizables para futuras features ACL.
 
 ### Día 9 (9 Ene 2026)
 

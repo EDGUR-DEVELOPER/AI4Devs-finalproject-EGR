@@ -45,7 +45,7 @@ public class HibernateTenantFilter {
      * en el filtro de Hibernate. Todas las consultas subsiguientes en esta
      * sesión filtrarán automáticamente por organizacion_id.
      * 
-     * @throws com.docflow.identity.domain.exceptions.TenantContextMissingException
+     * @throws com.docflow.identity.domain.exception.TenantContextMissingException
      *         si no hay tenant en el contexto actual
      */
     public void enableTenantFilter() {

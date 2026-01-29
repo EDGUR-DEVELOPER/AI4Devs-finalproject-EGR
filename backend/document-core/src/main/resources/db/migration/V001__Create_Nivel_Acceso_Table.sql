@@ -4,7 +4,7 @@
 -- Date: 2026-01-27
 
 CREATE TABLE IF NOT EXISTS nivel_acceso (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id Long PRIMARY KEY DEFAULT gen_random_Long(),
     codigo VARCHAR(50) NOT NULL UNIQUE,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,

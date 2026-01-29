@@ -4,8 +4,6 @@ import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.repository.INivelAccesoRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Validator for NivelAcceso business rules
  * Centralizes validation logic for access levels
@@ -21,10 +19,10 @@ public class NivelAccesoValidator {
 
     /**
      * Validates that an access level exists by ID
-     * @param id Access level UUID
+     * @param id Access level Long
      * @throws IllegalArgumentException if not found
      */
-    public void validateExistsById(UUID id) {
+    public void validateExistsById(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Access level ID cannot be null");
         }

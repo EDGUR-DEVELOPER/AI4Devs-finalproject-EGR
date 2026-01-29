@@ -1,9 +1,17 @@
 package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.AssignRoleResponse;
-import com.docflow.identity.application.ports.*;
-import com.docflow.identity.domain.exceptions.ResourceNotFoundException;
-import com.docflow.identity.domain.model.*;
+import com.docflow.identity.domain.exception.ResourceNotFoundException;
+import com.docflow.identity.domain.model.UsuarioOrganizacionId;
+import com.docflow.identity.domain.model.UsuarioRol;
+import com.docflow.identity.domain.model.object.EstadoMembresia;
+import com.docflow.identity.domain.model.object.EstadoOrganizacion;
+import com.docflow.identity.domain.repository.OrganizacionRepository;
+import com.docflow.identity.domain.repository.RolRepository;
+import com.docflow.identity.domain.repository.UsuarioOrganizacionRepository;
+import com.docflow.identity.domain.repository.UsuarioRepository;
+import com.docflow.identity.domain.repository.UsuarioRolRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -46,7 +46,7 @@ public class Documento {
     private String descripcion;
     
     @Column(name = "organizacion_id", nullable = false)
-    private Integer organizacionId;
+    private Long organizacionId;
     
     @Column(name = "carpeta_id", nullable = false)
     private Long carpetaId;

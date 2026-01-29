@@ -3,8 +3,9 @@ package com.docflow.identity.infrastructure.adapters.rest;
 import com.docflow.identity.application.dto.*;
 import com.docflow.identity.application.services.AdminUserManagementService;
 import com.docflow.identity.application.services.RoleAssignmentService;
-import com.docflow.identity.domain.exceptions.PermisoInsuficienteException;
 import com.docflow.identity.application.services.JwtTokenService.TokenValidationResult;
+import com.docflow.identity.domain.exception.PermisoInsuficienteException;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

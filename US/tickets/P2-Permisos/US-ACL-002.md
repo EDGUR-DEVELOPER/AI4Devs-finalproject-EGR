@@ -4,279 +4,353 @@
 
 ---
 
-## 1. Resumen de Alcance Detectado
+**Narrativa:** Como administrador, quiero conceder un permiso sobre una carpeta a un usuario, para controlar acceso por área.
 
-### Capacidades Encontradas
-- Crear ACL (entrada de control de acceso) para una carpeta
-- Asignar un nivel de acceso específico a un usuario sobre una carpeta
-- Validación de pertenencia al mismo organizacion (aislamiento multi-tenant)
+**Criterios de Aceptación:**
+- *Scenario 1:* Dado un admin del organizacion A, Cuando asigno `LECTURA` a un usuario del organizacion A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
+- *Scenario 2:* Dado un usuario/carpeta de otro organizacion, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
 
-### Restricciones Implícitas
-- Solo administradores pueden asignar permisos
-- Usuario y carpeta deben pertenecer al mismo organizacion del token
-- No debe filtrar información de otros organizacions (404/403 genérico)
-- El permiso creado permite al usuario acceder según el nivel asignado
-
-### Riesgos o Ambigüedades
-- No se especifica si un usuario puede tener múltiples ACLs con diferentes niveles sobre la misma carpeta
-- **Suposición:** Un usuario tiene una única entrada ACL por carpeta (se actualiza si ya existe)
-- No se detalla el comportamiento si el usuario ya tiene el permiso
-- **Suposición:** Se actualiza el nivel si existe, o se devuelve éxito sin cambio
+**Notas Técnicas/Datos:** El permiso se almacena en una tabla de ACL y se valida en operaciones de lectura/escritura.
 
 ---
 
-## 2. Lista de Tickets Necesarios
+## [enhanced]
 
----
-### Base de Datos
----
+### Descripción Funcional Completa
 
-* **Título:** Crear tabla de ACL para carpetas
-* **Objetivo:** Persistir los permisos asignados a usuarios sobre carpetas.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar tabla `ACL_Carpeta` con campos: `id`, `carpeta_id` (FK), `usuario_id` (FK), `nivel_acceso_id` (FK), `recursivo` (boolean), `organizacion_id` (FK), `creado_por`, `fecha_creacion`, `fecha_modificacion`. Índice único en (`carpeta_id`, `usuario_id`).
-* **Entregables:**
-    - Migración SQL con tabla `ACL_Carpeta`.
-    - Índice único para evitar duplicados por usuario-carpeta.
-    - Foreign keys a tablas relacionadas.
-    - Índices para queries frecuentes.
+**Narrativa:** Como administrador de una organización, necesito otorgar permisos granulares sobre carpetas a usuarios específicos, para controlar el acceso a áreas de documentos de forma segura y auditable, permitiendo escalabilidad desde equipos pequeños hasta estructuras organizacionales complejas.
 
----
+**Objetivo Técnico:** Implementar un sistema de lista de control de acceso (ACL) a nivel de carpeta que permita:
+- Asignación de niveles de acceso (`LECTURA`, `ESCRITURA`, `ADMINISTRACION`) a usuarios
+- Aplicación recursiva opcional a subcarpetas
+- Validación de pertenencia a la misma organización
+- Precedencia clara: permiso explícito de documento > permiso de carpeta (recursivo o directo)
+- Auditoría inmutable de cambios de permisos
 
-* **Título:** Datos semilla para pruebas de ACL de carpetas
-* **Objetivo:** Facilitar pruebas automatizadas de escenarios ACL.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear fixtures con: carpetas de prueba en diferentes organizacions, usuarios de prueba, y combinaciones de ACL (con permiso, sin permiso, cross-organizacion).
-* **Entregables:**
-    - Script de seed para escenarios de ACL.
-    - Carpetas y usuarios de prueba por organizacion.
-    - Documentación de datos de prueba.
+### Criterios de Aceptación Ampliados
 
----
-### Backend
----
+| Scenario | Condición Inicial (Given) | Acción (When) | Resultado Esperado (Then) |
+|----------|--------------------------|--------------|--------------------------|
+| **2.1** | Admin de Org A con rol ADMIN, usuario y carpeta en Org A | Ejecuto `POST /api/carpetas/{id}/permisos` asignando `LECTURA` al usuario | Recibo `201` con registro ACL creado, usuario puede listar/ver carpeta, se registra evento de auditoría |
+| **2.2** | Mismo usuario con ACL `LECTURA` en carpeta | Intenta descargar documento en carpeta | Operación exitosa (`200`), descarga completada |
+| **2.3** | Mismo usuario con ACL `LECTURA` en carpeta | Intenta subir documento nuevo en carpeta | Operación rechazada (`403 Forbidden`) con mensaje "Requiere permiso de ESCRITURA" |
+| **2.4** | Usuario de Org B intenta crear ACL en carpeta de Org A | Ejecuto `POST /api/carpetas/{id}/permisos` desde token de Org B | Recibo `404 Not Found` sin revelar si carpeta existe |
+| **2.5** | Admin intenta asignar ACL a usuario de otra organización | Ejecuto POST con `usuario_id` que pertenece a Org B (contexto: Org A) | Recibo `404 Not Found` (usuario no existe en Org A) sin filtrar información |
+| **2.6** | Admin con ACL `ADMINISTRACION` en carpeta | Asigno `LECTURA` con `recursivo=true` a usuario | Subcarpetas heredan permiso; usuario puede listar/ver toda rama sin ACL explícita |
+| **2.7** | Usuario con `LECTURA` recursivo en carpeta padre, `ESCRITURA` explícita en subcarpeta | Intenta subir documento en subcarpeta | Operación exitosa (permiso explícito prevalece) |
+| **2.8** | ACL existente en carpeta | Admin intenta crear ACL duplicada (mismo usuario, mismo nivel) | Recibo `409 Conflict` indicando que el ACL ya existe |
+| **2.9** | ACL existente en carpeta | Admin actualiza nivel de `LECTURA` a `ADMINISTRACION` | Recibo `200` con ACL actualizado, auditoría registra cambio |
+| **2.10** | Multiple users with different permissions on same folder | Listado de usuarios autenticados accede a carpeta | Cada usuario ve solo contenido permitido por su nivel ACL |
 
-* **Título:** Crear modelo/entidad de ACL de Carpeta
-* **Objetivo:** Representar el permiso de carpeta en el dominio.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar entidad `AclCarpeta` con relaciones a `Carpeta`, `Usuario`, `NivelAcceso`. Incluir timestamps y campo `recursivo` para herencia.
-* **Entregables:**
-    - Entidad `AclCarpeta` con mapeo ORM.
-    - Relaciones Many-to-One correctamente configuradas.
-    - DTOs de request/response.
+### Campos de Base de Datos
 
----
+**Tabla: `acl_carpetas`**
 
-* **Título:** Implementar repositorio de ACL de Carpeta
-* **Objetivo:** Encapsular operaciones de persistencia de ACL.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear repositorio con métodos: `findByUserAndFolder()`, `findByFolder()`, `findByUser()`, `save()`, `delete()`. Todos los métodos deben filtrar por `organizacion_id`.
-* **Entregables:**
-    - Repositorio `AclCarpetaRepository`.
-    - Métodos CRUD con filtro de organizacion.
-    - Query optimizado para búsqueda por usuario y carpeta.
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|----------------|------------|
+| `id` | `UUID` | PRIMARY KEY | Identificador único del registro ACL |
+| `carpeta_id` | `UUID` | NOT NULL, FK → carpetas.id | Referencia a la carpeta |
+| `usuario_id` | `UUID` | NOT NULL, FK → usuarios.id | Referencia al usuario |
+| `organizacion_id` | `UUID` | NOT NULL, FK → organizaciones.id | Aislamiento por tenant (desnormalizado para queries rápidas) |
+| `nivel_acceso_id` | `UUID` | NOT NULL, FK → nivel_acceso.id | Referencia al catálogo de niveles (LECTURA, ESCRITURA, ADMINISTRACION) |
+| `recursivo` | `BOOLEAN` | NOT NULL, DEFAULT=false | Si `true`, aplica a subcarpetas heredadas |
+| `fecha_creacion` | `TIMESTAMP` | DEFAULT=NOW() | Auditoría |
+| `fecha_actualizacion` | `TIMESTAMP` | DEFAULT=NOW() | Auditoría |
+| **Índices** | | | `(carpeta_id, usuario_id)` UNIQUE, `(usuario_id, organizacion_id)`, `(organizacion_id, carpeta_id)` |
 
----
+**Restricciones de Integridad:**
+- Clave única compuesta: `(carpeta_id, usuario_id, nivel_acceso_id)` para evitar duplicación (incluyendo nivel, para permitir actualizar a diferente nivel)
+- Validar que `usuario_id` pertenece a la misma `organizacion_id`
+- Validar que `carpeta_id` pertenece a la misma `organizacion_id`
 
-* **Título:** Servicio de gestión de ACL de carpetas
-* **Objetivo:** Centralizar lógica de negocio para asignar permisos.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar servicio que valide: existencia de carpeta en organizacion, existencia de usuario en organizacion, validez del nivel de acceso. Si el ACL existe, actualizar; si no, crear.
-* **Entregables:**
-    - Servicio `AclCarpetaService`.
-    - Método `concederPermiso(carpetaId, usuarioId, nivelCodigo, recursivo)`.
-    - Validaciones de dominio y errores descriptivos.
+### Estructura de Datos de Solicitud/Respuesta (API)
 
----
+#### Request: Otorgar/Actualizar ACL
 
-* **Título:** Validación de pertenencia a organizacion para carpeta
-* **Objetivo:** Asegurar aislamiento multi-tenant en operaciones de ACL.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar o reutilizar servicio que valide que una carpeta pertenece al organizacion del token. Devolver 404 (no filtrar información) si no pertenece.
-* **Entregables:**
-    - Método `validarCarpetaEnOrganizacion(carpetaId, organizacionId)`.
-    - Error genérico 404 para no filtrar datos.
-
----
-
-* **Título:** Validación de pertenencia a organizacion para usuario destino
-* **Objetivo:** Evitar asignar permisos a usuarios de otros organizacions.
-* **Tipo:** Tarea
-* **Descripción corta:** Validar que el usuario al que se asigna el permiso tiene membresía activa en el organizacion del token.
-* **Entregables:**
-    - Método `validarUsuarioEnOrganizacion(usuarioId, organizacionId)`.
-    - Error 404 si usuario no pertenece (sin filtrar).
-
----
-
-* **Título:** Implementar endpoint `POST /carpetas/{id}/permisos` (crear ACL)
-* **Objetivo:** Cumplir scenario 1 y 2 de la historia.
-* **Tipo:** Historia
-* **Descripción corta:** Endpoint protegido que recibe `usuario_id` y `nivel_acceso` (y opcionalmente `recursivo`). Valida pertenencia, crea/actualiza ACL y devuelve 201/200.
-* **Entregables:**
-    - Ruta/controlador `POST /carpetas/{id}/permisos`.
-    - Request body: `{ usuario_id, nivel_acceso, recursivo }`.
-    - Respuestas: 201 (creado), 200 (actualizado), 404 (carpeta/usuario no encontrado), 403 (sin permisos admin).
-    - Documentación OpenAPI.
-
----
-
-* **Título:** Guard/Middleware de autorización para administradores
-* **Objetivo:** Proteger endpoint de asignación de permisos.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar guard que verifique que el usuario autenticado tiene rol de administrador o permiso `ADMINISTRACION` sobre la carpeta para poder asignar permisos.
-* **Entregables:**
-    - Guard `RequiereAdminOAdministracionCarpeta`.
-    - Integración con endpoint de permisos.
-    - Respuesta 403 si no tiene permisos.
-
----
-
-* **Título:** Pruebas unitarias del servicio de ACL de carpetas
-* **Objetivo:** Asegurar lógica de negocio correcta.
-* **Tipo:** QA
-* **Descripción corta:** Tests que cubran: crear nuevo ACL, actualizar ACL existente, validar carpeta inexistente, validar usuario de otro organizacion, validar nivel de acceso inválido.
-* **Entregables:**
-    - Suite de tests unitarios para `AclCarpetaService`.
-    - Mocks de repositorios y validadores.
-    - Cobertura de casos happy path y error.
-
----
-
-* **Título:** Pruebas de integración del endpoint de crear ACL
-* **Objetivo:** Verificar flujo completo y aislamiento multi-tenant.
-* **Tipo:** QA
-* **Descripción corta:** Tests E2E que verifiquen: admin puede crear ACL en su organizacion, no puede crear ACL en carpeta de otro organizacion (404), no puede asignar a usuario de otro organizacion (404).
-* **Entregables:**
-    - Tests de integración con datos seed.
-    - Verificación de aislamiento multi-tenant.
-    - Validación de persistencia correcta.
-
----
-### Frontend
----
-
-* **Título:** Servicio para gestionar ACL de carpetas
-* **Objetivo:** Consumir API de permisos desde el frontend.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar servicio con método `asignarPermisoCarpeta(carpetaId, usuarioId, nivelAcceso, recursivo)`. Manejar errores y transformar respuestas.
-* **Entregables:**
-    - Servicio `AclCarpetaService` en frontend.
-    - Tipos TypeScript para request/response.
-    - Manejo de errores HTTP.
-
----
-
-* **Título:** Modal/Formulario para asignar permiso a carpeta
-* **Objetivo:** Permitir a administradores asignar permisos desde la UI.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear modal con: selector de usuario (del organizacion), selector de nivel de acceso, checkbox para recursivo. Validar campos y mostrar feedback de éxito/error.
-* **Entregables:**
-    - Componente `AsignarPermisoCarpetaModal`.
-    - Integración con selector de usuarios.
-    - Integración con selector de niveles de acceso.
-    - Feedback visual de operación.
-
----
-
-* **Título:** Integrar acción "Administrar permisos" en vista de carpetas
-* **Objetivo:** Acceder al modal de permisos desde la navegación.
-* **Tipo:** Tarea
-* **Descripción corta:** Agregar botón/opción "Administrar permisos" en el menú contextual o toolbar de carpetas. Visible solo para usuarios con permiso de administración.
-* **Entregables:**
-    - Botón/menú "Administrar permisos".
-    - Condicional de visibilidad por permisos.
-    - Apertura del modal al hacer click.
-
----
-
-## 3. Flujo Recomendado de Ejecución
-
-```
-1. [BD] Crear tabla de ACL para carpetas
-   ↓
-2. [BD] Datos semilla para pruebas
-   ↓
-3. [BE] Crear modelo/entidad de ACL de Carpeta
-   ↓
-4. [BE] Implementar repositorio de ACL
-   ↓
-5. [BE] Validación de pertenencia a organizacion (carpeta + usuario)
-   ↓
-6. [BE] Servicio de gestión de ACL de carpetas
-   ↓
-7. [BE] Guard de autorización para administradores
-   ↓
-8. [BE] Implementar endpoint POST /carpetas/{id}/permisos
-   ↓
-9. [QA] Pruebas unitarias + integración
-   ↓
-10. [FE] Servicio para gestionar ACL
-   ↓
-11. [FE] Modal para asignar permiso
-   ↓
-12. [FE] Integrar acción en vista de carpetas
+```json
+{
+  "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+  "nivel_acceso_codigo": "LECTURA",
+  "recursivo": false,
+  "comentario_opcional": "Acceso a documentos de proyecto X"
+}
 ```
 
-### Dependencias entre Tickets
-- Requiere tabla `Carpeta` de épica P3 (Gestión de carpetas)
-- Requiere tabla `Nivel_Acceso` de US-ACL-001
-- Frontend depende de endpoint funcional
-- Guard depende de US-ACL-006 (evaluación de permisos) para verificar ADMINISTRACION
+#### Response: 201 Created / 200 OK (Update)
+
+```json
+{
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440111",
+    "carpeta_id": "770e8400-e29b-41d4-a716-446655440222",
+    "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "usuario": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "usuario@org.com",
+      "nombre": "Usuario Test"
+    },
+    "nivel_acceso": {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "codigo": "LECTURA",
+      "nombre": "Lectura / Consulta"
+    },
+    "recursivo": false,
+    "fecha_creacion": "2026-01-28T10:30:00Z",
+    "fecha_actualizacion": "2026-01-28T10:30:00Z"
+  },
+  "meta": {
+    "accion": "PERMISO_CREADO",
+    "timestamp": "2026-01-28T10:30:00Z"
+  }
+}
+```
+
+#### Response: 409 Conflict (Duplicate)
+
+```json
+{
+  "error": {
+    "codigo": "ACL_DUPLICATE",
+    "mensaje": "Ya existe un permiso para este usuario sobre esta carpeta",
+    "detalles": {
+      "carpeta_id": "770e8400-e29b-41d4-a716-446655440222",
+      "usuario_id": "550e8400-e29b-41d4-a716-446655440000"
+    }
+  }
+}
+```
+
+### Endpoints y Contratos
+
+#### 1. Otorgar Permiso a Usuario en Carpeta (Crear ACL)
+
+```http
+POST /api/carpetas/{carpeta_id}/permisos
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+  "nivel_acceso_codigo": "LECTURA",
+  "recursivo": false
+}
+```
+
+**Validaciones:**
+- Admin de la organización (verificar role en token)
+- `carpeta_id` existe y pertenece a la organización del token
+- `usuario_id` existe y pertenece a la misma organización
+- `nivel_acceso_codigo` es válido (existe en catálogo y está activo)
+- No existe ACL duplicado para este usuario en esta carpeta
+
+**Respuesta 201 Created:** ACL creado exitosamente
+
+**Respuesta 400 Bad Request:** Validación falló (usuario no de la org, nivel inválido, etc.)
+
+**Respuesta 403 Forbidden:** Usuario sin permisos ADMINISTRACION
+
+**Respuesta 404 Not Found:** Carpeta o usuario no existen (sin revelar cuál)
+
+**Respuesta 409 Conflict:** ACL duplicado para este usuario en carpeta
 
 ---
 
-## 4. Recomendación TDD/BDD
+#### 2. Actualizar Permiso (Cambiar Nivel o Recursividad)
 
-### Tickets con Pruebas Primero (TDD)
-- Servicio de gestión de ACL (lógica de negocio compleja)
-- Validaciones de pertenencia a organizacion
-- Repositorio de ACL
+```http
+PATCH /api/carpetas/{carpeta_id}/permisos/{usuario_id}
+Authorization: Bearer {token}
+Content-Type: application/json
 
-### Tickets para Escenarios BDD
-```gherkin
-Feature: Conceder permiso de carpeta a usuario
-  
-  Scenario: Admin concede permiso LECTURA a usuario de su organizacion
-    Given un administrador autenticado del organizacion "A"
-    And una carpeta "Documentos" del organizacion "A"
-    And un usuario "juan@test.com" del organizacion "A"
-    When asigno permiso "LECTURA" al usuario sobre la carpeta
-    Then recibo status 201
-    And el usuario puede listar la carpeta
+{
+  "nivel_acceso_codigo": "ESCRITURA",
+  "recursivo": true
+}
+```
 
-  Scenario: Admin intenta asignar permiso a carpeta de otro organizacion
-    Given un administrador autenticado del organizacion "A"
-    And una carpeta "Confidencial" del organizacion "B"
-    When intento asignar permiso sobre la carpeta
-    Then recibo status 404
-    And no se revela que la carpeta existe
+**Respuesta 200 OK:** ACL actualizado
 
-  Scenario: Admin intenta asignar permiso a usuario de otro organizacion
-    Given un administrador autenticado del organizacion "A"
-    And una carpeta "Documentos" del organizacion "A"
-    And un usuario "maria@test.com" del organizacion "B"
-    When intento asignar permiso al usuario
-    Then recibo status 404
+**Respuesta 404 Not Found:** ACL no existe
+
+---
+
+#### 3. Listar ACLs de una Carpeta
+
+```http
+GET /api/carpetas/{carpeta_id}/permisos
+Authorization: Bearer {token}
+```
+
+**Respuesta 200 OK:**
+```json
+{
+  "data": [
+    { /* ACL 1 */ },
+    { /* ACL 2 */ }
+  ],
+  "meta": {
+    "total": 2,
+    "carpeta_id": "770e8400-e29b-41d4-a716-446655440222"
+  }
+}
 ```
 
 ---
 
-## 5. Resumen de Archivos/Tickets
+#### 4. Revocar Permiso (Eliminar ACL) — Implementado en US-ACL-003
 
-| # | Capa | Ticket |
-|---|------|--------|
-| 1 | BD | Crear tabla de ACL para carpetas |
-| 2 | BD | Datos semilla para pruebas de ACL |
-| 3 | BE | Crear modelo/entidad de ACL de Carpeta |
-| 4 | BE | Implementar repositorio de ACL de Carpeta |
-| 5 | BE | Servicio de gestión de ACL de carpetas |
-| 6 | BE | Validación de pertenencia a organizacion (carpeta) |
-| 7 | BE | Validación de pertenencia a organizacion (usuario) |
-| 8 | BE | Implementar endpoint POST /carpetas/{id}/permisos |
-| 9 | BE | Guard/Middleware de autorización admin |
-| 10 | QA | Pruebas unitarias del servicio ACL |
-| 11 | QA | Pruebas de integración del endpoint |
-| 12 | FE | Servicio para gestionar ACL |
-| 13 | FE | Modal para asignar permiso a carpeta |
-| 14 | FE | Integrar acción "Administrar permisos" |
+```http
+DELETE /api/carpetas/{carpeta_id}/permisos/{usuario_id}
+Authorization: Bearer {token}
+```
+
+---
+
+### Archivos a Crear/Modificar
+
+#### Backend (Java/Spring Boot - `document-core-service`)
+
+**Persistencia:**
+- `src/main/resources/db/migration/V002__Create_ACL_Carpetas_Table.sql` — Nueva migración
+
+**Domain:**
+- `src/main/java/.../domain/model/acl/AclCarpeta.java` — Entidad de dominio inmutable
+- `src/main/java/.../domain/repository/IAclCarpetaRepository.java` — Interface de repositorio
+
+**Application:**
+- `src/main/java/.../application/service/AclCarpetaService.java` — Orquestación y validación
+- `src/main/java/.../application/validator/AclCarpetaValidator.java` — Reglas de negocio
+
+**Infrastructure:**
+- `src/main/java/.../infrastructure/adapter/persistence/entity/AclCarpetaEntity.java` — Entidad JPA
+- `src/main/java/.../infrastructure/adapter/persistence/jpa/AclCarpetaJpaRepository.java` — JPA Repository
+- `src/main/java/.../infrastructure/adapter/persistence/AclCarpetaRepositoryAdapter.java` — Adapter (Hexagonal)
+- `src/main/java/.../infrastructure/adapter/persistence/mapper/AclCarpetaMapper.java` — MapStruct mapper
+
+**API:**
+- `src/main/java/.../api/dto/CreateAclCarpetaDTO.java` — DTO de entrada
+- `src/main/java/.../api/dto/AclCarpetaDTO.java` — DTO de respuesta
+- `src/main/java/.../api/dto/AclCarpetaResponseDTO.java` — Respuesta con usuario embebido
+- `src/main/java/.../api/mapper/AclCarpetaDtoMapper.java` — MapStruct DTO mapper
+- `src/main/java/.../api/controller/AclCarpetaController.java` — Endpoints REST (métodos de crear, actualizar, listar)
+
+**Testing:**
+- `src/test/java/.../application/service/AclCarpetaServiceTest.java` — Tests unitarios
+
+**Documentación:**
+- Actualizar `ai-specs/specs/api-spec.yml` con endpoints de ACL de carpeta
+
+#### Frontend (React/TypeScript)
+
+**Servicios:**
+- `src/features/acl/services/aclCarpetaService.ts` — Servicio HTTP para ACL de carpeta
+
+**Hooks:**
+- `src/features/acl/hooks/useAclCarpeta.ts` — Hook para manejar ACL de carpeta (crear, actualizar, listar)
+
+**Tipos:**
+- `src/features/acl/types/index.ts` — Agregar tipos `IAclCarpeta`, `CreateAclCarpetaDTO`
+
+**Componentes:**
+- `src/features/acl/components/AclCarpetaModal.tsx` — Modal para otorgar permisos (form + dropdown usuario + nivel + checkbox recursivo)
+- `src/features/acl/components/AclCarpetaList.tsx` — Tabla de ACLs existentes con acciones (editar, eliminar)
+
+**Integración:**
+- `src/features/folders/components/FolderDetail.tsx` — Agregar sección de "Permisos" con `AclCarpetaList` y botón "Otorgar Permiso"
+
+---
+
+### Requisitos No Funcionales
+
+| Aspecto | Requerimiento |
+|--------|--------------|
+| **Seguridad** | 1. Validar `organizacion_id` en token contra carpeta y usuario (no confiar en cliente) 2. Prevenir escalada de privilegios (usuario no ADMIN no puede crear/modificar ACL) 3. No exponer información de usuario/carpeta si no existen o no pertenecen a org |
+| **Performance** | 1. Índice en `(carpeta_id, usuario_id)` para búsquedas rápidas 2. Caché en frontend del listado de ACL por carpeta (invalidar al crear/actualizar) 3. Query optimizada para listar con usuario embebido (JOIN, no N+1) |
+| **Auditoría** | 1. Emitir evento `ACL_CARPETA_CREADO`, `ACL_CARPETA_ACTUALIZADO` con `usuario_id`, `carpeta_id`, `nivel_anterior`, `nivel_nuevo` 2. Incluir cambio de `recursivo` en auditoría |
+| **Escalabilidad** | 1. Estructura flexible: soportar múltiples usuarios por carpeta 2. Índices para queries por usuario (listar todas las carpetas a las que tengo acceso) |
+| **Usabilidad** | 1. UI muestra nivel de acceso actual en tooltip/overlay 2. Confirmación antes de cambiar a nivel más restrictivo 3. Indicador visual de ACLs recursivos vs. directos |
+| **Integridad de Datos** | 1. Transacción atómica: crear ACL + registrar auditoría 2. Rollback automático si auditoría falla |
+
+---
+
+### Evaluador de Permisos (Integración con US-ACL-006)
+
+La implementación de US-ACL-002 proporciona datos para que **US-ACL-006** (Evaluador de Permisos) resuelva:
+
+```java
+// Pseudo-código
+PermissionLevel resolveEffectivePermission(Usuario usuario, Carpeta carpeta) {
+  // 1. Buscar ACL explícito en documento (si existe) → return ese
+  // 2. Buscar ACL directo en carpeta → return ese
+  // 3. Buscar ACL recursivo en carpeta padre → return ese
+  // 4. Buscar heredado en antepasados → return ese
+  // 5. Denegar acceso (NONE)
+}
+```
+
+---
+
+### Plan de Ejecución Recomendado
+
+1. **Paso 1 (Backend):** Crear migración de tabla, entidad, repositorio, servicio con validaciones
+2. **Paso 2 (Backend):** Implementar endpoints (crear, actualizar, listar)
+3. **Paso 3 (Testing):** Tests unitarios TDD (rojo → verde → refactor)
+4. **Paso 4 (Frontend):** Crear servicio HTTP, hook y componentes
+5. **Paso 5 (Integración):** Tests end-to-end validando ACL en operaciones de lectura/escritura
+6. **Paso 6 (Documentación):** Actualizar OpenAPI y README
+
+---
+
+### Validación de Completitud
+
+Para considerar US-ACL-002 **completada**, verificar:
+
+✅ **Especificación Funcional**
+- [ ] 10 escenarios de aceptación documentados con entrada/salida clara
+- [ ] Tabla de BD con restricciones y índices definidos
+- [ ] Estructura JSON de request/response con ejemplos reales
+- [ ] Endpoints REST con validaciones específicas
+
+✅ **Contratos de API**
+- [ ] POST para crear ACL con validaciones
+- [ ] PATCH para actualizar nivel/recursividad
+- [ ] GET para listar ACLs
+- [ ] Respuestas de error (400, 403, 404, 409) claras
+
+✅ **Arquitectura y Código**
+- [ ] Entidad de dominio inmutable (`AclCarpeta`)
+- [ ] Repositorio con queries optimizadas
+- [ ] Servicio de validación centralizado
+- [ ] Controlador REST mapeado correctamente
+- [ ] DTOs de entrada/salida con MapStruct
+
+✅ **Testing**
+- [ ] Tests unitarios de servicio y repositorio (TDD)
+- [ ] Tests de integración de endpoint
+- [ ] Validación de aislamiento por organización
+- [ ] Cobertura >90%
+
+✅ **Frontend**
+- [ ] Servicio HTTP con manejo de errores
+- [ ] Hook personalizado para estado de ACL
+- [ ] Modal de creación con formulario validado
+- [ ] Lista de ACLs con acciones (editar, eliminar)
+- [ ] Integración en UI de detalle de carpeta
+
+✅ **Documentación**
+- [ ] OpenAPI/Swagger actualizado
+- [ ] README de feature con ejemplos
+- [ ] Notas técnicas de evaluador de permisos
+- [ ] Ejemplos de payloads
+
+✅ **Requisitos No Funcionales**
+- [ ] Auditoría de cambios de ACL
+- [ ] Índices para performance
+- [ ] Validación de seguridad sin exponer info
+- [ ] Caché en frontend con invalidación
+
+---
+
+**Status:** Lista para estimación y desarrollo  
+**Complejidad Estimada:** Media-Alta (2-3 días con asistencia IA)  
+**Dependencias:** US-ACL-001 (catálogo de niveles completado), US-FOLDER-001 (carpetas existen)

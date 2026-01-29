@@ -208,7 +208,7 @@ paths:
   /api/acl/niveles/{id}:
     get:
       summary: Get access level by ID
-      description: Retrieve a specific access level by its UUID identifier
+      description: Retrieve a specific access level by its ID identifier
       tags:
         - ACL - Access Levels
       security:
@@ -219,7 +219,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
+            format: Long
           description: Access level unique identifier
       responses:
         '200':
@@ -229,7 +229,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/NivelAccesoDTO'
         '400':
-          description: Bad request - invalid UUID or access level not found
+          description: Bad request - invalid Long or access level not found
           content:
             application/json:
               schema:
@@ -303,8 +303,8 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Access level UUID
+            format: Long
+          description: Access level Long
         - in: path
           name: accion
           required: true
@@ -1078,7 +1078,7 @@ components:
       properties:
         id:
           type: string
-          description: Unique document identifier (UUID)
+          description: Unique document identifier (Long)
         name:
           type: string
           description: Document name
@@ -1251,7 +1251,7 @@ components:
       properties:
         id:
           type: string
-          description: Unique folder identifier (UUID)
+          description: Unique folder identifier (Long)
         name:
           type: string
           description: Folder name
@@ -1536,7 +1536,7 @@ components:
       properties:
         id:
           type: string
-          format: uuid
+          format: Long
           description: Unique access level identifier
         codigo:
           type: string

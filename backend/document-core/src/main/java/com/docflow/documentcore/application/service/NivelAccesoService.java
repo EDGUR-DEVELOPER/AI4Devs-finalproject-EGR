@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Application Service for NivelAcceso
@@ -29,11 +28,11 @@ public class NivelAccesoService {
 
     /**
      * Retrieve an access level by ID
-     * @param id Access level UUID
+     * @param id Access level Long
      * @return NivelAcceso domain object
      * @throws IllegalArgumentException if not found
      */
-    public NivelAcceso getById(UUID id) {
+    public NivelAcceso getById(Long id) {
         log.debug("Fetching access level by ID: {}", id);
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -73,11 +72,11 @@ public class NivelAccesoService {
 
     /**
      * Check if a specific action is permitted for a given access level
-     * @param nivelId Access level UUID
+     * @param nivelId Access level Long
      * @param accion Action name to check
      * @return true if permitted, false otherwise
      */
-    public boolean isAccionPermitida(UUID nivelId, String accion) {
+    public boolean isAccionPermitida(Long nivelId, String accion) {
         log.debug("Checking if action '{}' is permitted for nivel ID: {}", accion, nivelId);
         NivelAcceso nivel = getById(nivelId);
         return nivel.puedeRealizarAccion(accion);

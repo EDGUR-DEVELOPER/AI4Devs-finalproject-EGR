@@ -1,6 +1,6 @@
 package com.docflow.identity.application.services;
 
-import com.docflow.identity.domain.exceptions.TenantContextMissingException;
+import com.docflow.identity.domain.exception.TenantContextMissingException;
 import com.docflow.identity.infrastructure.multitenancy.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

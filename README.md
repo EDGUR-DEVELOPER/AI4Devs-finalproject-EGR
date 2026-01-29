@@ -453,8 +453,6 @@ Cada microservicio tendrá esta estructura interna para proteger el dominio.
   /application              # Casos de Uso (Orquestación)
     /dto                    # Data Transfer Objects (Input/Output)
     /ports                  # Interfaces (Input Ports / Output Ports)
-      /input                # Ej: CreateDocumentUseCase.java
-      /output               # Ej: DocumentRepositoryPort.java, EventPublisherPort.java
     /services               # Implementación de Casos de Uso
   /domain                   # Lógica de Negocio Pura (Sin Spring)
     /model                  # Entidades (Document, Version, Permission)
@@ -462,13 +460,8 @@ Cada microservicio tendrá esta estructura interna para proteger el dominio.
     /service                # Servicios de dominio (reglas complejas)
   /infrastructure           # Adaptadores (Implementación técnica)
     /adapters
-      /input
         /rest               # RestControllers (Spring MVC)
         /event_listener     # Kafka Listeners
-      /output
-        /persistence        # Implementación JPA/Mongo de los Repositorios
-          /entity           # Entidades JPA (@Entity)
-          /mapper           # Mappers (Entity <-> Domain Model)
         /broker             # Kafka Producers
         /storage            # Cliente S3/MinIO
     /config                 # Configuración de Spring (Beans, Security)

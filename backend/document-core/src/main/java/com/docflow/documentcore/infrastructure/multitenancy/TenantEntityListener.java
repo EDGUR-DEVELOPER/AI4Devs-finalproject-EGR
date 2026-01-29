@@ -1,10 +1,11 @@
 package com.docflow.documentcore.infrastructure.multitenancy;
 
-import com.docflow.documentcore.domain.exceptions.TenantContextMissingException;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import com.docflow.documentcore.domain.exception.TenantContextMissingException;
 
 import java.lang.reflect.Field;
 

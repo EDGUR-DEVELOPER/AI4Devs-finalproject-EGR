@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.time.OffsetDateTime;
 
+import com.docflow.identity.domain.model.object.EstadoUsuario;
+
 /**
  * Entidad Usuario del sistema DocFlow.
  * Representa un usuario que puede pertenecer a múltiples organizaciones.

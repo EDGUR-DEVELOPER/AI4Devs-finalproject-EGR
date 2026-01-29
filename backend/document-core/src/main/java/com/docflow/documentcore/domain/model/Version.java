@@ -43,7 +43,7 @@ public class Version {
     private Long documentoId;
     
     @Column(name = "organizacion_id", nullable = false)
-    private Integer organizacionId;
+    private Long organizacionId;
     
     @Column(name = "numero_secuencial", nullable = false)
     private Integer numeroSecuencial;

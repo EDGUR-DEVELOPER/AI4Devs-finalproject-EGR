@@ -2,7 +2,6 @@ package com.docflow.documentcore.domain.model.acl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Domain Entity: Access Level (Nivel de Acceso)
@@ -11,7 +10,7 @@ import java.util.UUID;
  */
 public class NivelAcceso {
     
-    private final UUID id;
+    private final Long id;
     private final CodigoNivelAcceso codigo;
     private final String nombre;
     private final String descripcion;
@@ -36,7 +35,7 @@ public class NivelAcceso {
     }
 
     // Getters
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
@@ -83,7 +82,7 @@ public class NivelAcceso {
     }
 
     public static class Builder {
-        private UUID id;
+        private Long id;
         private CodigoNivelAcceso codigo;
         private String nombre;
         private String descripcion;
@@ -93,7 +92,7 @@ public class NivelAcceso {
         private LocalDateTime fechaCreacion;
         private LocalDateTime fechaActualizacion;
 
-        public Builder id(UUID id) {
+        public Builder id(Long id) {
             this.id = id;
             return this;
         }

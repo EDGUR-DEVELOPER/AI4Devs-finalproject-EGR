@@ -5,7 +5,6 @@ import com.docflow.documentcore.domain.model.acl.NivelAcceso;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository Port (Interface) for NivelAcceso
@@ -15,10 +14,10 @@ public interface INivelAccesoRepository {
     
     /**
      * Find access level by unique ID
-     * @param id UUID identifier
+     * @param id Long identifier
      * @return Optional containing the access level if found
      */
-    Optional<NivelAcceso> findById(UUID id);
+    Optional<NivelAcceso> findById(Long id);
     
     /**
      * Find access level by unique codigo

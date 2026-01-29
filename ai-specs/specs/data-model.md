@@ -21,7 +21,7 @@ DocFlow implements a **multi-organization, role-based access control (RBAC)** ar
 Represents a tenant/organization within the DocFlow system. Supports multi-organization context.
 
 **Fields:**
-- `id`: UUID - Unique organization identifier (Primary Key)
+- `id`: Long - Unique organization identifier (Primary Key)
 - `name`: String (max 255 characters) - Organization name
 - `description`: String (max 500 characters, nullable) - Organization description
 - `status`: Enum [ACTIVE, INACTIVE, SUSPENDED] - Organization status
@@ -48,7 +48,7 @@ Represents a tenant/organization within the DocFlow system. Supports multi-organ
 Represents a system user who can authenticate and access documents within their organization(s).
 
 **Fields:**
-- `id`: UUID - Unique user identifier (Primary Key)
+- `id`: Long - Unique user identifier (Primary Key)
 - `email`: String (max 255 characters) - User email address
 - `password`: String - BCrypt-hashed password
 - `firstName`: String (max 100 characters) - User's first name
@@ -78,9 +78,9 @@ Represents a system user who can authenticate and access documents within their 
 Join table for many-to-many relationship between User and Organization, tracking membership and default organization.
 
 **Fields:**
-- `id`: UUID - Unique identifier (Primary Key)
-- `userId`: UUID - Foreign key to User
-- `organizationId`: UUID - Foreign key to Organization
+- `id`: Long - Unique identifier (Primary Key)
+- `userId`: Long - Foreign key to User
+- `organizationId`: Long - Foreign key to Organization
 - `isDefault`: Boolean - Whether this is user's default organization
 - `joinedAt`: DateTime - When user joined organization
 - `leftAt`: DateTime (nullable) - When user left organization (if soft-deleted)
@@ -101,8 +101,8 @@ Join table for many-to-many relationship between User and Organization, tracking
 Represents a role within an organization (e.g., Admin, Editor, Viewer). Defines sets of permissions.
 
 **Fields:**
-- `id`: UUID - Unique role identifier (Primary Key)
-- `organizationId`: UUID - Foreign key to Organization
+- `id`: Long - Unique role identifier (Primary Key)
+- `organizationId`: Long - Foreign key to Organization
 - `name`: String (max 100 characters) - Role name (e.g., "Administrator", "Editor")
 - `description`: String (max 500 characters, nullable) - Role description
 - `isSystem`: Boolean - Whether role is system-defined (cannot be deleted)
@@ -131,13 +131,13 @@ Represents a role within an organization (e.g., Admin, Editor, Viewer). Defines 
 Represents a granular permission granted to a role for a specific resource (document or folder).
 
 **Fields:**
-- `id`: UUID - Unique permission identifier (Primary Key)
-- `roleId`: UUID - Foreign key to Role
-- `resourceId`: UUID - ID of document or folder
+- `id`: Long - Unique permission identifier (Primary Key)
+- `roleId`: Long - Foreign key to Role
+- `resourceId`: Long - ID of document or folder
 - `resourceType`: Enum [DOCUMENT, FOLDER] - Type of resource
 - `action`: Enum [READ, CREATE, UPDATE, DELETE, SHARE, MANAGE_PERMISSIONS] - Permitted action
 - `grantedAt`: DateTime - When permission was granted
-- `grantedBy`: UUID (nullable) - User ID who granted permission
+- `grantedBy`: Long (nullable) - User ID who granted permission
 - `expiresAt`: DateTime (nullable) - Optional expiration date for temporary permissions
 
 **Validation Rules:**
@@ -164,12 +164,12 @@ Represents a granular permission granted to a role for a specific resource (docu
 Represents a hierarchical folder structure for organizing documents.
 
 **Fields:**
-- `id`: UUID - Unique folder identifier (Primary Key)
-- `organizationId`: UUID - Foreign key to Organization
+- `id`: Long - Unique folder identifier (Primary Key)
+- `organizationId`: Long - Foreign key to Organization
 - `name`: String (max 255 characters) - Folder name
 - `description`: String (max 500 characters, nullable) - Folder description
-- `parentId`: UUID (nullable) - Foreign key to parent Folder (null for root folders)
-- `createdBy`: UUID - Foreign key to User who created folder
+- `parentId`: Long (nullable) - Foreign key to parent Folder (null for root folders)
+- `createdBy`: Long - Foreign key to User who created folder
 - `createdAt`: DateTime - Folder creation timestamp
 - `updatedAt`: DateTime - Last folder update timestamp
 - `deletedAt`: DateTime (nullable) - Soft delete timestamp
@@ -194,21 +194,21 @@ Represents a hierarchical folder structure for organizing documents.
 Represents a document with versioning support. Current version is tracked; previous versions are archived.
 
 **Fields:**
-- `id`: UUID - Unique document identifier (Primary Key)
-- `organizationId`: UUID - Foreign key to Organization
-- `folderId`: UUID (nullable) - Foreign key to parent Folder
+- `id`: Long - Unique document identifier (Primary Key)
+- `organizationId`: Long - Foreign key to Organization
+- `folderId`: Long (nullable) - Foreign key to parent Folder
 - `name`: String (max 255 characters) - Document name
 - `description`: String (max 500 characters, nullable) - Document description
 - `contentType`: String (max 100 characters) - MIME type (e.g., "application/pdf")
 - `fileSize`: Long - Current file size in bytes
-- `currentVersionId`: UUID - Foreign key to current DocumentVersion
+- `currentVersionId`: Long - Foreign key to current DocumentVersion
 - `versionCount`: Integer - Total number of versions
 - `isLocked`: Boolean - Whether document is locked from editing
-- `lockedBy`: UUID (nullable) - User ID who locked document
+- `lockedBy`: Long (nullable) - User ID who locked document
 - `lockedAt`: DateTime (nullable) - When document was locked
 - `tags`: Array of String - Tags for categorization and search
 - `metadata`: JSON/Map - Custom metadata key-value pairs
-- `createdBy`: UUID - Foreign key to User who created document
+- `createdBy`: Long - Foreign key to User who created document
 - `createdAt`: DateTime - Document creation timestamp
 - `updatedAt`: DateTime - Last document update timestamp
 - `deletedAt`: DateTime (nullable) - Soft delete timestamp
@@ -234,7 +234,7 @@ Represents a document with versioning support. Current version is tracked; previ
 Represents a catalog of access levels for Role-Based Access Control (RBAC). Defines standard permission levels: LECTURA (Read), ESCRITURA (Write), and ADMINISTRACION (Administration).
 
 **Fields:**
-- `id`: UUID - Unique access level identifier (Primary Key)
+- `id`: Long - Unique access level identifier (Primary Key)
 - `codigo`: String (max 50 characters) - Invariable code [LECTURA, ESCRITURA, ADMINISTRACION] (Unique)
 - `nombre`: String (max 100 characters) - Display name of the access level
 - `descripcion`: Text (nullable) - Detailed description of permissions granted
@@ -268,14 +268,14 @@ Represents a catalog of access levels for Role-Based Access Control (RBAC). Defi
 Represents a specific version of a document. Supports complete versioning history with linear progression.
 
 **Fields:**
-- `id`: UUID - Unique version identifier (Primary Key)
-- `documentId`: UUID - Foreign key to Document
+- `id`: Long - Unique version identifier (Primary Key)
+- `documentId`: Long - Foreign key to Document
 - `versionNumber`: Integer - Sequential version number (1, 2, 3, ...)
 - `fileSize`: Long - File size for this version
 - `storagePath`: String - Path in MinIO/S3 for this version
 - `contentHash`: String - SHA256 hash of file content (for deduplication)
 - `changeComment`: String (max 500 characters, nullable) - What changed in this version
-- `createdBy`: UUID - Foreign key to User who created this version
+- `createdBy`: Long - Foreign key to User who created this version
 - `createdAt`: DateTime - Version creation timestamp
 - `downloadCount`: Integer - How many times this version was downloaded
 - `lastDownloadedAt`: DateTime (nullable) - When version was last downloaded
@@ -298,12 +298,12 @@ Represents a specific version of a document. Supports complete versioning histor
 Represents immutable audit trail entries for compliance, tracking all user actions on documents and system operations.
 
 **Fields:**
-- `id`: UUID - Unique audit log entry ID (Primary Key)
-- `organizationId`: UUID - Foreign key to Organization (for multi-tenancy filtering)
-- `userId`: UUID - Foreign key to User who performed action
+- `id`: Long - Unique audit log entry ID (Primary Key)
+- `organizationId`: Long - Foreign key to Organization (for multi-tenancy filtering)
+- `userId`: Long - Foreign key to User who performed action
 - `action`: Enum [CREATE, READ, UPDATE, DELETE, DOWNLOAD, SHARE, LOGIN, LOGOUT, PERMISSION_CHANGE, LOCK, UNLOCK] - Action performed
 - `resourceType`: Enum [DOCUMENT, FOLDER, USER, ROLE, PERMISSION, ORGANIZATION] - Type of resource
-- `resourceId`: UUID - ID of affected resource
+- `resourceId`: Long - ID of affected resource
 - `resourceName`: String - Name of affected resource (for human readability)
 - `changeDetails`: JSON/Map (nullable) - Before/after values for updates
 - `ipAddress`: String (nullable) - IP address of user
@@ -330,7 +330,7 @@ Represents immutable audit trail entries for compliance, tracking all user actio
 ```mermaid
 erDiagram
     Organization {
-        UUID id PK
+        Long id PK
         String name UK
         String description
         String status
@@ -340,7 +340,7 @@ erDiagram
     }
     
     User {
-        UUID id PK
+        Long id PK
         String email UK
         String password
         String firstName
@@ -353,17 +353,17 @@ erDiagram
     }
     
     UserOrganization {
-        UUID id PK
-        UUID userId FK
-        UUID organizationId FK
+        Long id PK
+        Long userId FK
+        Long organizationId FK
         Boolean isDefault
         DateTime joinedAt
         DateTime leftAt
     }
     
     Role {
-        UUID id PK
-        UUID organizationId FK
+        Long id PK
+        Long organizationId FK
         String name UK
         String description
         Boolean isSystem
@@ -372,51 +372,51 @@ erDiagram
     }
     
     Permission {
-        UUID id PK
-        UUID roleId FK
-        UUID resourceId
+        Long id PK
+        Long roleId FK
+        Long resourceId
         String resourceType
         String action
         DateTime grantedAt
-        UUID grantedBy
+        Long grantedBy
         DateTime expiresAt
     }
     
     Folder {
-        UUID id PK
-        UUID organizationId FK
-        UUID parentId
+        Long id PK
+        Long organizationId FK
+        Long parentId
         String name UK
         String description
-        UUID createdBy FK
+        Long createdBy FK
         DateTime createdAt
         DateTime updatedAt
         DateTime deletedAt
     }
     
     Document {
-        UUID id PK
-        UUID organizationId FK
-        UUID folderId FK
+        Long id PK
+        Long organizationId FK
+        Long folderId FK
         String name
         String description
         String contentType
         Long fileSize
-        UUID currentVersionId FK
+        Long currentVersionId FK
         Integer versionCount
         Boolean isLocked
-        UUID lockedBy
+        Long lockedBy
         DateTime lockedAt
         String[] tags
         JSON metadata
-        UUID createdBy FK
+        Long createdBy FK
         DateTime createdAt
         DateTime updatedAt
         DateTime deletedAt
     }
     
     NivelAcceso {
-        UUID id PK
+        Long id PK
         String codigo UK
         String nombre
         String descripcion
@@ -428,26 +428,26 @@ erDiagram
     }
     
     DocumentVersion {
-        UUID id PK
-        UUID documentId FK
+        Long id PK
+        Long documentId FK
         Integer versionNumber UK
         Long fileSize
         String storagePath UK
         String contentHash
         String changeComment
-        UUID createdBy FK
+        Long createdBy FK
         DateTime createdAt
         Integer downloadCount
         DateTime lastDownloadedAt
     }
     
     AuditLog {
-        UUID id PK
-        UUID organizationId FK
-        UUID userId FK
+        Long id PK
+        Long organizationId FK
+        Long userId FK
         String action
         String resourceType
-        UUID resourceId
+        Long resourceId
         String resourceName
         JSON changeDetails
         String ipAddress
@@ -537,7 +537,7 @@ erDiagram
 ### PostgreSQL (Relational Data)
 - Used for: Users, Organizations, Roles, Permissions, Folders, Documents, DocumentVersions, AuditLogs
 - Connection: `postgresql://docflow:docflow_secret@localhost:5432/docflow`
-- Supports: Full ACID transactions, JSON fields for metadata, UUID types
+- Supports: Full ACID transactions, JSON fields for metadata, Long types
 - Indexes on: `email`, `organizationId`, `createdAt`, `deletedAt` for query performance
 
 ### MongoDB (Audit Logs - Optional)
@@ -571,8 +571,8 @@ erDiagram
 - `timestamp` (in AuditLog): Immutable, matches action time
 
 ### ID Strategy
-- **Primary Keys**: UUID v4 (immutable, distributed-friendly)
-- **Foreign Keys**: UUID references
+- **Primary Keys**: Long v4 (immutable, distributed-friendly)
+- **Foreign Keys**: Long references
 - **No sequential IDs**: Enables decentralized generation
 
 ### Error Handling

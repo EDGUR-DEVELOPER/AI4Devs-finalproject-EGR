@@ -5,15 +5,15 @@
 
 INSERT INTO nivel_acceso (id, codigo, nombre, descripcion, acciones_permitidas, orden, activo, fecha_actualizacion, fecha_creacion )
 VALUES
-  ('550e8400-e29b-41d4-a716-446655440000', 'LECTURA', 'Lectura / Consulta', 
+  (1, 'LECTURA', 'Lectura / Consulta', 
    'Permite ver, listar y descargar documentos. Sin capacidad de modificación.',
    '["ver", "listar", "descargar"]'::jsonb, 1, true, NOW(), NOW()),
   
-  ('550e8400-e29b-41d4-a716-446655440001', 'ESCRITURA', 'Escritura / Modificación',
+  (2, 'ESCRITURA', 'Escritura / Modificación',
    'Permite subir nuevas versiones, renombrar y modificar metadatos de documentos.',
    '["ver", "listar", "descargar", "subir", "modificar", "crear_version"]'::jsonb, 2, true, NOW(), NOW()),
   
-  ('550e8400-e29b-41d4-a716-446655440003', 'ADMINISTRACION', 'Administración / Control Total',
+  (3, 'ADMINISTRACION', 'Administración / Control Total',
    'Acceso total: crear, modificar, eliminar carpetas/documentos y gestionar permisos granulares.',
    '["ver", "listar", "descargar", "subir", "modificar", "crear_version", "eliminar", "administrar_permisos", 
 	"cambiar_version_actual"]'::jsonb, 3, true, NOW(), NOW())

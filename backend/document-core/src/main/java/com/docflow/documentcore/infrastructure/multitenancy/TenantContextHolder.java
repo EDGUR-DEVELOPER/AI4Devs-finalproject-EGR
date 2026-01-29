@@ -1,6 +1,7 @@
 package com.docflow.documentcore.infrastructure.multitenancy;
 
-import com.docflow.documentcore.domain.exceptions.TenantContextMissingException;
+import com.docflow.documentcore.domain.exception.TenantContextMissingException;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**

@@ -25,8 +25,6 @@ src/main/java/com/docflow/documentcore/
 ├── application/                     # Application Layer
 │   ├── dto/                        # Data Transfer Objects
 │   ├── ports/
-│   │   ├── input/                  # Input ports (use cases)
-│   │   └── output/                 # Output ports (repositories)
 │   └── services/                   # Use case implementations
 ├── domain/                         # Domain Layer
 │   ├── exceptions/                 # Business exceptions
@@ -34,8 +32,6 @@ src/main/java/com/docflow/documentcore/
 │   └── service/                    # Domain services
 └── infrastructure/                 # Infrastructure Layer
     ├── adapters/
-    │   ├── input/rest/            # REST Controllers
-    │   └── output/persistence/    # JPA implementations
     └── config/                    # Spring configuration
 ```
 
@@ -74,23 +70,8 @@ java -jar target/document-core-service-0.0.1-SNAPSHOT.jar
 Once running, the service is available at:
 
 - **Base URL:** http://localhost:8082
-- **Hello Endpoint:** http://localhost:8082/hello
 - **Swagger UI:** http://localhost:8082/swagger-ui.html
 - **OpenAPI Docs:** http://localhost:8082/api-docs
-
-## Verify Installation
-
-After starting the service, verify it's running:
-
-```bash
-curl http://localhost:8082/hello
-```
-
-Expected response:
-
-```json
-{"message": "Hello Document Core"}
-```
 
 ## Configuration
 

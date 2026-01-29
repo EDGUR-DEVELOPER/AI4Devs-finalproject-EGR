@@ -1,8 +1,9 @@
 package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.ListUsersResponseDto;
-import com.docflow.identity.application.ports.UserWithRolesProjection;
-import com.docflow.identity.application.ports.UsuarioRepository;
+import com.docflow.identity.domain.model.object.UserWithRolesProjection;
+import com.docflow.identity.domain.repository.UsuarioRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
