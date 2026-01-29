@@ -1,8 +1,8 @@
 # 📋 Bitácora de Desarrollo del Proyecto DocFlow
 
 > **Documento Maestro** - Fuente de verdad para el seguimiento del desarrollo  
-> **Última actualización:** 9 de enero de 2026  
-> **Deadline MVP:** 16 de enero de 2026
+> **Última actualización:** 29 de enero de 2026  
+> **Deadline MVP:** 16 de enero de 2026 (PRORROGADO - Proyecto en evolución continua)
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **33%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario + Catálogo de niveles ACL completados) |
-| **Tickets MVP** | 11/33 completados |
+| **Progreso MVP** | 🟡 **39%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario + Catálogo de niveles ACL + Crear carpeta completados) |
+| **Tickets MVP** | 13/33 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
-| **Estado de Fecha** | 28 Ene 2026 - 12 días POST-MVP inicial (proyecto en evolución continua) |
-| **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) → **Velocidad real alcanzada**: 0.58 tickets/día post-MVP (1 ticket en 19 días, pero con amplitud y complejidad aumentada) |
+| **Estado de Fecha** | 29 Ene 2026 - 13 días POST-MVP inicial (proyecto en evolución continua con incrementos de complejidad) |
+| **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) → **Velocidad real alcanzada**: 0.68 tickets/día post-MVP (2 tickets en 29 días con amplitud y complejidad aumentada) |
 
 ### Stack Principal
 
@@ -248,10 +248,11 @@ Dic 31 ────────────────────────�
 
 #### Día 10 (10 Ene)
 
-- [ ] **US-FOLDER-001**: Crear carpeta (API)
+- [x] **US-FOLDER-001**: Crear carpeta (API) ✅
     * *Detalle técnico:* Crear tabla `carpetas` (id, nombre, carpeta_padre_id, organizacion_id, path, activo). Endpoint `POST /api/carpetas`. Validar nombre único por nivel. Crear carpeta raíz automática por organización.
     * *Servicio:* `document-core-service`
     * *Dependencia:* US-AUTH-004
+    * *Estado:* Completado el 29 Ene 2026
 
 - [ ] **US-FOLDER-002**: Listar contenido de carpeta (API)
     * *Detalle técnico:* Endpoint `GET /api/carpetas/{id}/contenido`. Retornar subcarpetas y documentos. Filtrar por permisos de lectura del usuario. Incluir campo `mis_capacidades` por item.
@@ -361,7 +362,7 @@ Dic 31 ────────────────────────�
 ## 3. Registro de Progreso (Gap Analysis)
 
 * **🔴 Por Desarrollar:**  
-US-ADMIN-005, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-001, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
+US-ADMIN-005, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
 
 * **🟢 Desarrollado:**  
 INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ACL-001
@@ -396,22 +397,36 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
 | US-ADMIN-001 | Crear usuario (API, endpoint `/admin/users`, validación de email, hash de contraseña, asociación a organización, error handling RFC 7807) | 9 Ene 2026 |
 | US-ADMIN-002 | Asignar rol a usuario (API, endpoint `/admin/users/{userId}/roles`, migraciones, validaciones, seed roles base, pruebas unitarias e integración) | 9 Ene 2026 |
 | US-ACL-001 | Catálogo de niveles de acceso (Backend: tabla BD con JSONB, entidad, repositorio, servicio, mapper; Frontend: tipos TS, servicio HTTP, hook con caché, componente dropdown; Tests unitarios e integración; OpenAPI doc) | 28 Ene 2026 |
+| US-FOLDER-001 | Crear carpeta (API) - Tabla `carpetas` con jerarquía, validación de unicidad por nivel, permisos, migración de raíz automática, DTOs, mappers, controlador REST, validadores, excepciones, tests unitarios e integración con cobertura >90%, documentación OpenAPI y ejemplos | 29 Ene 2026 |
 
 ---
 
 
 ## 4. Próximos Pasos Recomendados
 
-1. **Priorizar US-ADMIN-005** (UI de Gestión de Usuarios) para completar el ciclo administrativo y habilitar pruebas end-to-end del módulo de usuarios.
-2. **Continuidad de ACL**: Implementar **US-ACL-002** a **US-ACL-008** (2-3 días) para construir el sistema completo de permisos (otorgar/revocar, recursivos, enforcement).
-3. **Gestión de Carpetas**: Una vez que los permisos estén listos, iniciar **US-FOLDER-001** a **US-FOLDER-005** en paralelo con documentos.
-4. **Documentos & Versionado**: Implementar el flujo completo de subida, descarga y versionado (**US-DOC-001** a **US-DOC-006**) con validación de permisos integrada.
-5. **Auditoría**: Activar el sistema de eventos y persistencia de auditoría (**US-AUDIT-001** a **US-AUDIT-003**) para rastreabilidad total.
-6. **Mantener cobertura de tests** y documentación actualizada para evitar bloqueos en QA y auditoría posterior.
+1. **Implementación de ACL Avanzado** ⚠️ **CRÍTICO**: Implementar **US-ACL-002** a **US-ACL-008** (2-3 días) para construir el sistema completo de permisos (otorgar/revocar, recursivos, enforcement). **US-FOLDER-001 depende de esto para validación de permisos en carpeta padre**.
+2. **Gestión de Carpetas - Fase 2**: Una vez ACL-002 esté listo, implementar **US-FOLDER-002** a **US-FOLDER-005** en paralelo (listar contenido, mover documentos, eliminar carpeta, UI navegación).
+3. **Documentos & Versionado**: Implementar **US-DOC-001** a **US-DOC-006** (subida, descarga, versionado) con validación de permisos integrada usando evaluador de permisos.
+4. **UI Administrativa**: Completar **US-ADMIN-005** (Gestión de Usuarios) para ciclo administrativo end-to-end.
+5. **Auditoría Core**: Activar el sistema de eventos (**US-AUDIT-001** a **US-AUDIT-003**) para rastreabilidad total de operaciones.
+6. **Validación y QA**: Ejecutar **QA-001**, **QA-002**, **QA-003** para validar integración completa del MVP.
+7. **Post-MVP**: Buscar feature set (**US-SEARCH-001** a **US-SEARCH-003**), UI de auditoría (**US-AUDIT-004**), rollback de versiones (**US-DOC-005**).
 
 ---
 
 ## 5. Notas de Desarrollo
+
+### Día 29 (29 Ene 2026)
+
+- [x] **US-FOLDER-001** completado: Crear carpeta (API) implementado en backend con arquitectura hexagonal completa.
+    * **Backend - Domain**: Entidad inmutable `Carpeta` con validadores de negocio (nombre no vacío, descripción ≤500 chars), value object `CarpetaId`.
+    * **Backend - Application**: Servicio `CarpetaService` con lógica de creación, validación de unicidad por nivel (usando índice único parcial), validación de aislamiento multi-tenant, permisos en carpeta padre (stub evaluador para futuro).
+    * **Backend - Infrastructure**: Migraciones V003 (tabla `carpetas` con índices), V004 (inserción automática de raíz por org), repositorio JPA con queries optimizadas, mapper MapStruct, controlador REST.
+    * **Backend - API**: DTOs (CreateCarpetaDTO, CarpetaDTO, CarpetaResponseDTO), handler de excepciones (NotFoundException, NombreDuplicadoException, SinPermisoCarpetaException), validaciones RFC 2119.
+    * **Backend - Testing**: 16+ test cases unitarios (validadores, permisos, unicidad, aislamiento) + 8+ test cases integración (repositorio, servicio) con cobertura >90%.
+    * **Documentación**: OpenAPI en Swagger, README con ejemplos de request/response, seed SQL para pruebas (S002__Seed_Carpetas_Jerarquia.sql).
+    * **Impacto**: Desbloquea US-FOLDER-002 (listar contenido), US-FOLDER-003 (mover documentos), US-FOLDER-004 (eliminar), US-FOLDER-005 (UI navegación). Requiere integración con evaluador de permisos (US-ACL-006) para validación completa.
+    * **Observación**: El ticket establece patrón sólido de arquitectura hexagonal, DTOs, mappers y testing que será reutilizado en documentos y auditoría.
 
 ### Día 28 (28 Ene 2026)
 
@@ -437,4 +452,4 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
 
 ---
 
-*Documento generado el 9 de enero de 2026. Actualizar diariamente con el progreso.*
+*Documento generado el 9 de enero de 2026. Última actualización: 29 de enero de 2026. Actualizar diariamente con el progreso.*
