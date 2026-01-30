@@ -668,76 +668,18 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({ ... }) => 
 - Pasar `isAdmin` basado en verificación de rol de usuario
 - Obtener usuarios de la organización si no están disponibles en el componente
 
----
-
-### Paso 11: Actualizar Documentación Técnica
-
-**Acción:** Revisar y actualizar archivos de documentación técnica para reflejar cambios realizados durante la implementación.
-
-**Pasos de Implementación:**
-
-1. **Revisar Cambios:**
-   - Analizar todos los cambios de código: nuevos servicios, hooks, componentes, tipos
-   - Identificar qué archivos de documentación necesitan actualizaciones
-
-2. **Identificar Archivos de Documentación a Actualizar:**
-   - `ai-specs/specs/frontend-standards.mdc` — Patrones de características ACL, jerarquía de componentes
-   - `ai-specs/specs/api-spec.yml` — Endpoints de API para operaciones ACL (revisar contratos de backend)
-   - Feature README: `src/features/acl/README.md` (ya actualizado en Paso 9)
-
-3. **Actualizar Archivos de Documentación:**
-
-   **A. frontend-standards.mdc:**
-   - Agregar sección: "Patrón de Implementación de Características ACL"
-   - Documentar:
-     - Uso de Atomic Design (átomos → moléculas → organismos)
-     - Arquitectura impulsada por componentes para permisos
-     - Patrones de validación de formularios usados en AclCarpetaModal
-     - Gestión de estado con hook useAclCarpeta
-     - Patrones de manejo de errores en capa de servicio
-   - Agregar ejemplo: "Implementando Formularios de Características con Validación"
-   - Referencia: AclCarpetaModal como ejemplo
-
-   **B. api-spec.yml:**
-   - Documentar endpoints de ACL:
-     - `POST /api/carpetas/{carpeta_id}/permisos` — Crear ACL
-     - `PATCH /api/carpetas/{carpeta_id}/permisos/{usuario_id}` — Actualizar ACL
-     - `GET /api/carpetas/{carpeta_id}/permisos` — Listar ACLs
-     - `DELETE /api/carpetas/{carpeta_id}/permisos/{usuario_id}` — Eliminar ACL
-   - Incluir esquemas de solicitud/respuesta
-   - Documentar respuestas de error (400, 403, 404, 409)
-
-4. **Verificar Documentación:**
-   - Confirmar que todos los cambios se reflejan con precisión
-   - Verificar consistencia de estructura con documentación existente
-   - Asegurar que ejemplos de código sean válidos y probados
-
-5. **Reportar Actualizaciones:**
-   - Documentar qué archivos fueron actualizados y qué cambios se realizaron
-   - Nota: Toda la documentación debe estar en inglés según estándares
-
-**Referencias:**
-- Seguir `ai-specs/specs/documentation-standards.mdc`
-- Toda documentación debe estar en inglés
-
-**Notas:** Este paso es OBLIGATORIO antes de considerar la implementación completa.
-
----
-
 ## Orden de Implementación
 
-1. **Paso 0:** Crear Rama de Características (`feature/US-ACL-002-frontend`)
-2. **Paso 1:** Extender Definiciones de Tipos (`types/index.ts`)
-3. **Paso 2:** Crear Capa de Servicio HTTP (`services/aclCarpetaService.ts`)
-4. **Paso 3:** Crear Hook Personalizado (`hooks/useAclCarpeta.ts`)
-5. **Paso 4:** Crear Componentes Atómicos (`PermissionBadge.tsx`, `RecursiveIndicator.tsx`)
-6. **Paso 5:** Crear Componentes de Moléculas (`UserSelect.tsx`)
-7. **Paso 6:** Crear Componentes de Organismos (`AclCarpetaModal.tsx`, `AclCarpetaList.tsx`)
-8. **Paso 7:** Crear Componente de Integración de Características (`AclCarpetaSection.tsx`)
-9. **Paso 8:** Actualizar Exportaciones de Barril de Características (`index.ts`)
-10. **Paso 9:** Actualizar Documentación del Feature README (`README.md`)
-11. **Paso 10:** Integración en Característica de Carpetas (Opcional - diferir si es necesario)
-12. **Paso 11:** Actualizar Documentación Técnica (frontend-standards.mdc, api-spec.yml)
+1. **Paso 1:** Extender Definiciones de Tipos (`types/index.ts`)
+2. **Paso 2:** Crear Capa de Servicio HTTP (`services/aclCarpetaService.ts`)
+3. **Paso 3:** Crear Hook Personalizado (`hooks/useAclCarpeta.ts`)
+4. **Paso 4:** Crear Componentes Atómicos (`PermissionBadge.tsx`, `RecursiveIndicator.tsx`)
+5. **Paso 5:** Crear Componentes de Moléculas (`UserSelect.tsx`)
+6. **Paso 6:** Crear Componentes de Organismos (`AclCarpetaModal.tsx`, `AclCarpetaList.tsx`)
+7. **Paso 7:** Crear Componente de Integración de Características (`AclCarpetaSection.tsx`)
+8. **Paso 8:** Actualizar Exportaciones de Barril de Características (`index.ts`)
+9. **Paso 9:** Actualizar Documentación del Feature README (`README.md`)
+10. **Paso 10:** Integración en Característica de Carpetas (Opcional - diferir si es necesario)
 
 ---
 
