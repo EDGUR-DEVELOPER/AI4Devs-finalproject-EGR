@@ -223,7 +223,7 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                 {/* Usuario */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
                       {acl.usuario.nombre
                         .split(' ')
                         .slice(0, 2)

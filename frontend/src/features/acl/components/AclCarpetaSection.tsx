@@ -84,8 +84,7 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({
     error: aclError,
     createAcl,
     updateAcl,
-    deleteAcl,
-    refetch,
+    deleteAcl
   } = useAclCarpeta(carpetaId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,7 +126,7 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({
     try {
       if (editingAcl) {
         // Update mode
-        const updated = await updateAcl(editingAcl.usuario_id, payload);
+        await updateAcl(editingAcl.usuario_id, payload);
         onAclUpdated?.(editingAcl); // Call callback (will be same ACL object from hook)
       } else {
         // Create mode

@@ -196,7 +196,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
           <span className="flex items-center gap-2 truncate">
             {value ? (
               <>
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
                   {getInitials(value.nombre)}
                 </div>
                 <div className="truncate">
@@ -215,7 +215,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
 
           {/* Chevron icon */}
           <svg
-            className={`w-4 h-4 flex-shrink-0 transition-transform ${
+            className={`w-4 h-4 shrink-0 transition-transform ${
               isOpen ? 'rotate-180' : ''
             }`}
             viewBox="0 0 20 20"
@@ -274,7 +274,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
                       role="option"
                       aria-selected={value?.id === user.id}
                     >
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
                         {getInitials(user.nombre)}
                       </div>
                       <div className="truncate">
@@ -287,7 +287,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
                       </div>
                       {value?.id === user.id && (
                         <svg
-                          className="w-4 h-4 text-blue-600 ml-auto flex-shrink-0"
+                          className="w-4 h-4 text-blue-600 ml-auto shrink-0"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                           aria-hidden="true"

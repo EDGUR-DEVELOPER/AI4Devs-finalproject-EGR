@@ -213,7 +213,7 @@ export const NivelAccesoSelect: React.FC<NivelAccesoSelectProps> = ({
       {displayError && (
         <div className="mt-2 flex items-start gap-2">
           <svg
-            className="h-5 w-5 flex-shrink-0 text-red-500"
+            className="h-5 w-5 shrink-0 text-red-500"
             fill="currentColor"
             viewBox="0 0 20 20"
             aria-hidden="true"

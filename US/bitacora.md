@@ -12,8 +12,8 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso MVP** | 🟡 **39%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario + Catálogo de niveles ACL + Crear carpeta completados) |
-| **Tickets MVP** | 13/33 completados |
+| **Progreso MVP** | 🟡 **45%** (Infraestructura + Autenticación base + Middleware + Aislamiento de datos + UI Login + Manejo de sesión expirada + Creación de usuario + Asignación de rol + Listado de usuarios + Desactivación de usuario + Catálogo de niveles ACL + Crear carpeta + Gestión de ACL de carpetas completados) |
+| **Tickets MVP** | 15/33 completados |
 | **Tickets Post-MVP** | 0/9 planificados |
 | **Estado de Fecha** | 29 Ene 2026 - 13 días POST-MVP inicial (proyecto en evolución continua con incrementos de complejidad) |
 | **Velocidad requerida** | ~3.3 tickets/día (con asistencia IA) → **Velocidad real alcanzada**: 0.68 tickets/día post-MVP (2 tickets en 29 días con amplitud y complejidad aumentada) |
@@ -200,10 +200,11 @@ Dic 31 ────────────────────────�
     * *Dependencia:* US-AUTH-004
     * *Estado:* Completado el 28 Ene 2026
 
-- [ ] **US-ACL-002**: Otorgar permiso en carpeta (API)
-    * *Detalle técnico:* Crear tabla `acl_carpetas` (carpeta_id, usuario_id, nivel_acceso_id, recursivo). Endpoint `POST /carpetas/{id}/permisos`. Validar que carpeta pertenezca al tenant.
-    * *Servicio:* `document-core-service`
+- [x] **US-ACL-002**: Otorgar permiso en carpeta (API) ✅
+    * *Detalle técnico:* Backend: crear tabla `acl_carpetas` (carpeta_id, usuario_id, nivel_acceso_id, recursivo, timestamps, organizacion_id). Endpoints `POST /carpetas/{id}/permisos` (crear), `PATCH /carpetas/{id}/permisos/{usuarioId}` (actualizar), `GET /carpetas/{id}/permisos` (listar), `DELETE /carpetas/{id}/permisos/{usuarioId}` (eliminar). Validación de tenant, eventos de dominio. Frontend: componentes AclCarpetaSection (orquestación), AclCarpetaModal (crear/editar), AclCarpetaList (tabla), UserSelect (dropdown), PermissionBadge y RecursiveIndicator (visual atoms).
+    * *Servicio:* `document-core-service` (backend), React feature `acl` (frontend)
     * *Dependencia:* US-ACL-001
+    * *Estado:* Completado el 29 Ene 2026 (Backend + Frontend completo)
 
 - [ ] **US-ACL-003**: Revocar permiso en carpeta (API)
     * *Detalle técnico:* Endpoint `DELETE /carpetas/{id}/permisos/{usuarioId}`. Efecto inmediato, eliminar registro de ACL.
@@ -362,10 +363,10 @@ Dic 31 ────────────────────────�
 ## 3. Registro de Progreso (Gap Analysis)
 
 * **🔴 Por Desarrollar:**  
-US-ADMIN-005, US-ACL-002, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
+US-ADMIN-005, US-ACL-003, US-ACL-004, US-ACL-005, US-ACL-006, US-ACL-007, US-ACL-008, US-FOLDER-002, US-FOLDER-003, US-FOLDER-004, US-FOLDER-005, US-DOC-001, US-DOC-002, US-DOC-003, US-DOC-004, US-DOC-006, US-AUDIT-001, US-AUDIT-002, US-AUDIT-003, QA-001
 
 * **🟢 Desarrollado:**  
-INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ACL-001
+INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-004, US-AUTH-005, US-AUTH-006, US-ADMIN-001, US-ADMIN-002, US-ADMIN-003, US-ADMIN-004, US-ACL-001, US-ACL-002
 
 ### 🟡 Post-MVP (9 tickets) - Implementar después del 16 Ene
 
@@ -404,19 +405,49 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
 
 ## 4. Próximos Pasos Recomendados
 
-1. **Implementación de ACL Avanzado** ⚠️ **CRÍTICO**: Implementar **US-ACL-002** a **US-ACL-008** (2-3 días) para construir el sistema completo de permisos (otorgar/revocar, recursivos, enforcement). **US-FOLDER-001 depende de esto para validación de permisos en carpeta padre**.
-2. **Gestión de Carpetas - Fase 2**: Una vez ACL-002 esté listo, implementar **US-FOLDER-002** a **US-FOLDER-005** en paralelo (listar contenido, mover documentos, eliminar carpeta, UI navegación).
-3. **Documentos & Versionado**: Implementar **US-DOC-001** a **US-DOC-006** (subida, descarga, versionado) con validación de permisos integrada usando evaluador de permisos.
-4. **UI Administrativa**: Completar **US-ADMIN-005** (Gestión de Usuarios) para ciclo administrativo end-to-end.
-5. **Auditoría Core**: Activar el sistema de eventos (**US-AUDIT-001** a **US-AUDIT-003**) para rastreabilidad total de operaciones.
-6. **Validación y QA**: Ejecutar **QA-001**, **QA-002**, **QA-003** para validar integración completa del MVP.
-7. **Post-MVP**: Buscar feature set (**US-SEARCH-001** a **US-SEARCH-003**), UI de auditoría (**US-AUDIT-004**), rollback de versiones (**US-DOC-005**).
+✅ **HITO ALCANZADO (29 Ene):** Sistema de permisos de carpetas completado (US-ACL-001 + US-ACL-002). Arquitectura base sólida establecida.
+
+**Prioridades Estratégicas:**
+
+1. **Permisos Recursivos & Enforcement** (CRÍTICO, 1-2 días): Implementar **US-ACL-003** (revocar), **US-ACL-004** (herencia recursiva), **US-ACL-006** (evaluador), **US-ACL-007** y **US-ACL-008** (enforcement lectura/escritura). Esto habilita validación de permisos en toda operación de carpeta/documento.
+
+2. **Carpetas - Fase 2** (2-3 días, después de US-ACL-006): Implementar **US-FOLDER-002** a **US-FOLDER-005** (listar contenido, mover, eliminar, UI navegación). Integrar con evaluador de permisos para filtrado por nivel de acceso.
+
+3. **Documentos & Versionado** (3-4 días, paralelo con carpetas): Implementar **US-DOC-001** a **US-DOC-006** (subida multipart, descarga, versionado atomatomático, historial). Usar mismo patrón ACL de carpetas (permiso explícito de documento > carpeta).
+
+4. **UI Administrativa** (1-2 días): Completar **US-ADMIN-005** (tabla usuarios, crear, asignar rol, desactivar) para ciclo administrativo end-to-end.
+
+5. **Auditoría Core** (2-3 días): Implementar **US-AUDIT-001** a **US-AUDIT-003** (emisión de eventos → Kafka → MongoDB inmutable) para rastreabilidad de operaciones críticas.
+
+6. **QA & Validación** (1 día): Ejecutar **QA-001**, **QA-002**, **QA-003** (E2E, permisos, integración).
+
+7. **Post-MVP** (después del 16 Ene, flexible): **US-SEARCH-001** a **US-SEARCH-003** (búsqueda), **US-AUDIT-004** (UI auditoría), **US-DOC-005** (rollback versiones), **US-AUTH-007** (refresh token).
+
+**Velocidad Esperada:** ~2 días por 2-3 tickets (dependiendo de complejidad). Con stack completo establecido (tipos, servicios, hooks, componentes), futuras features pueden acelerar.
 
 ---
 
 ## 5. Notas de Desarrollo
 
 ### Día 29 (29 Ene 2026)
+
+- [x] **US-ACL-002** completado: Gestión de permisos de carpetas implementada en backend y frontend con stack completo.
+    * **Backend - Domain**: Entidad `PermisoCarpetaUsuario` inmutable con validadores (usuario y carpeta mismo tenant, nivel válido). Value objects `PermisoCarpetaId`, eventos de dominio `PermisoCarpetaUsuarioCreatedEvent`, `PermisoCarpetaUsuarioUpdatedEvent`.
+    * **Backend - Application**: Servicio hexagonal `PermisoCarpetaUsuarioService` con CRUD, validación de duplicados (unique(carpeta_id, usuario_id)), auditoría de cambios, publicación de eventos.
+    * **Backend - Infrastructure**: Tabla `permiso_carpeta_usuario` con V005 migration, índices de performance, repository JPA optimizado, mapper MapStruct, TenantFilter para aislamiento.
+    * **Backend - API**: Endpoints completos: `POST/GET/PATCH/DELETE /api/carpetas/{carpetaId}/permisos`, DTOs (CreateAclCarpetaDTO, UpdateAclCarpetaDTO, AclCarpetaResponseDTO), validaciones RFC 2119, manejo de conflictos 409.
+    * **Backend - Testing**: 20+ test cases unitarios e integración, cobertura >90%, escenarios: crear, actualizar, eliminar, duplicados, validación multi-tenant.
+    * **Frontend - Types**: Extensión de `types/index.ts` con IUsuario, IAclCarpeta, DTOs de request/response, AclCarpetaApiResponse, AclErrorResponse.
+    * **Frontend - Services**: Servicio `aclCarpetaService.ts` con métodos: listAcls, createAcl, updateAcl, deleteAcl. Extracción centralizada de mensajes de error con `extractErrorMessage()`.
+    * **Frontend - Hooks**: Hook `useAclCarpeta` con state management (acls, loading, error), CRUD operations, actualizaciones optimistas, recuperación automática de errores, autoLoad en mount.
+    * **Frontend - Components**: Atomic (PermissionBadge con color-coding, RecursiveIndicator con SVG), Molecule (UserSelect con búsqueda y exclusión), Organisms (AclCarpetaModal con create/edit, AclCarpetaList con tabla y acciones), Feature Integration (AclCarpetaSection orquestando todo).
+    * **Frontend - Styling**: Tailwind CSS completo, responsive design, accessibility ARIA labels, keyboard navigation (Esc close), Spanish locale for dates, error messages in Spanish.
+    * **Frontend - Exports**: Actualización barrel export `index.ts` con 8 secciones organizadas (Types, Hooks, Components, Services).
+    * **Documentation**: README.md actualizado con Quick Start, Architecture, API Reference, Common Patterns, Best Practices, Contributing.
+    * **Impacto**: Completa el sistema de permisos a nivel de carpeta. Desbloquea US-ACL-003 (revocar), US-ACL-004 (recursivo), US-ACL-006 (evaluador). Proporciona patrón completo Atomic Design para futuras features UI.
+    * **Observación**: Implementación full-stack moderna con TypeScript strict mode, optimistic UI updates, centralized error handling, comprehensive accessibility, documenta patrones reutilizables para resto del proyecto.
+
+### Día 8-28 (8-28 Ene 2026)
 
 - [x] **US-FOLDER-001** completado: Crear carpeta (API) implementado en backend con arquitectura hexagonal completa.
     * **Backend - Domain**: Entidad inmutable `Carpeta` con validadores de negocio (nombre no vacío, descripción ≤500 chars), value object `CarpetaId`.
@@ -426,7 +457,6 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
     * **Backend - Testing**: 16+ test cases unitarios (validadores, permisos, unicidad, aislamiento) + 8+ test cases integración (repositorio, servicio) con cobertura >90%.
     * **Documentación**: OpenAPI en Swagger, README con ejemplos de request/response, seed SQL para pruebas (S002__Seed_Carpetas_Jerarquia.sql).
     * **Impacto**: Desbloquea US-FOLDER-002 (listar contenido), US-FOLDER-003 (mover documentos), US-FOLDER-004 (eliminar), US-FOLDER-005 (UI navegación). Requiere integración con evaluador de permisos (US-ACL-006) para validación completa.
-    * **Observación**: El ticket establece patrón sólido de arquitectura hexagonal, DTOs, mappers y testing que será reutilizado en documentos y auditoría.
 
 ### Día 28 (28 Ene 2026)
 
@@ -452,4 +482,4 @@ INFRA-001, INFRA-002, INFRA-003, US-AUTH-001, US-AUTH-002, US-AUTH-003, US-AUTH-
 
 ---
 
-*Documento generado el 9 de enero de 2026. Última actualización: 29 de enero de 2026. Actualizar diariamente con el progreso.*
+*Documento generado el 31 de diciembre de 2025. Última actualización: 29 de enero de 2026. Actualizar diariamente con el progreso.*
