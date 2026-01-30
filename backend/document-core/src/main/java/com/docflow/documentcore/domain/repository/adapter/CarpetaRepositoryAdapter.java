@@ -2,9 +2,9 @@ package com.docflow.documentcore.domain.repository.adapter;
 
 import com.docflow.documentcore.application.mapper.CarpetaMapper;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.entity.CarpetaEntity;
 import com.docflow.documentcore.domain.repository.CarpetaJpaRepository;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
-import com.docflow.documentcore.infrastructure.adapter.entity.CarpetaEntity;
 
 import org.springframework.stereotype.Component;
 

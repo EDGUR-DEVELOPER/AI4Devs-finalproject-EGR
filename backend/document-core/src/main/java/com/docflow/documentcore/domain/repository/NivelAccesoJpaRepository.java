@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.docflow.documentcore.infrastructure.adapter.entity.NivelAccesoEntity;
+import com.docflow.documentcore.domain.model.entity.NivelAccesoEntity;
 
 import java.util.List;
 import java.util.Optional;

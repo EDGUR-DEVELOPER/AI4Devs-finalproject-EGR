@@ -1,7 +1,7 @@
 package com.docflow.documentcore.application.mapper;
 
 import com.docflow.documentcore.domain.model.Carpeta;
-import com.docflow.documentcore.infrastructure.adapter.entity.CarpetaEntity;
+import com.docflow.documentcore.domain.model.entity.CarpetaEntity;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

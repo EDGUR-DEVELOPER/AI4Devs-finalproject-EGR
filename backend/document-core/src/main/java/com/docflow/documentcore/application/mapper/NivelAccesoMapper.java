@@ -2,7 +2,7 @@ package com.docflow.documentcore.application.mapper;
 
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.acl.NivelAcceso;
-import com.docflow.documentcore.infrastructure.adapter.entity.NivelAccesoEntity;
+import com.docflow.documentcore.domain.model.entity.NivelAccesoEntity;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

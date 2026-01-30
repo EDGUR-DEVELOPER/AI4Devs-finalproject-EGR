@@ -2,20 +2,6 @@
 
 ### [US-ACL-002] Conceder permiso de carpeta a usuario (crear ACL)
 
----
-
-**Narrativa:** Como administrador, quiero conceder un permiso sobre una carpeta a un usuario, para controlar acceso por área.
-
-**Criterios de Aceptación:**
-- *Scenario 1:* Dado un admin del organizacion A, Cuando asigno `LECTURA` a un usuario del organizacion A sobre una carpeta, Entonces el usuario puede listar/ver esa carpeta.
-- *Scenario 2:* Dado un usuario/carpeta de otro organizacion, Cuando intento asignar permisos, Entonces recibo `404/403` sin filtrar información.
-
-**Notas Técnicas/Datos:** El permiso se almacena en una tabla de ACL y se valida en operaciones de lectura/escritura.
-
----
-
-## [enhanced]
-
 ### Descripción Funcional Completa
 
 **Narrativa:** Como administrador de una organización, necesito otorgar permisos granulares sobre carpetas a usuarios específicos, para controlar el acceso a áreas de documentos de forma segura y auditable, permitiendo escalabilidad desde equipos pequeños hasta estructuras organizacionales complejas.
@@ -48,11 +34,11 @@
 
 | Campo | Tipo | Restricciones | Descripción |
 |-------|------|----------------|------------|
-| `id` | `UUID` | PRIMARY KEY | Identificador único del registro ACL |
-| `carpeta_id` | `UUID` | NOT NULL, FK → carpetas.id | Referencia a la carpeta |
-| `usuario_id` | `UUID` | NOT NULL, FK → usuarios.id | Referencia al usuario |
-| `organizacion_id` | `UUID` | NOT NULL, FK → organizaciones.id | Aislamiento por tenant (desnormalizado para queries rápidas) |
-| `nivel_acceso_id` | `UUID` | NOT NULL, FK → nivel_acceso.id | Referencia al catálogo de niveles (LECTURA, ESCRITURA, ADMINISTRACION) |
+| `id` | `Long` | PRIMARY KEY | Identificador único del registro ACL |
+| `carpeta_id` | `Long` | NOT NULL, FK → carpetas.id | Referencia a la carpeta |
+| `usuario_id` | `Long` | NOT NULL, FK → usuarios.id | Referencia al usuario |
+| `organizacion_id` | `Long` | NOT NULL, FK → organizaciones.id | Aislamiento por tenant (desnormalizado para queries rápidas) |
+| `nivel_acceso_id` | `Long` | NOT NULL, FK → nivel_acceso.id | Referencia al catálogo de niveles (LECTURA, ESCRITURA, ADMINISTRACION) |
 | `recursivo` | `BOOLEAN` | NOT NULL, DEFAULT=false | Si `true`, aplica a subcarpetas heredadas |
 | `fecha_creacion` | `TIMESTAMP` | DEFAULT=NOW() | Auditoría |
 | `fecha_actualizacion` | `TIMESTAMP` | DEFAULT=NOW() | Auditoría |
@@ -69,7 +55,7 @@
 
 ```json
 {
-  "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+  "usuario_id": 1,
   "nivel_acceso_codigo": "LECTURA",
   "recursivo": false,
   "comentario_opcional": "Acceso a documentos de proyecto X"
@@ -81,16 +67,16 @@
 ```json
 {
   "data": {
-    "id": "660e8400-e29b-41d4-a716-446655440111",
-    "carpeta_id": "770e8400-e29b-41d4-a716-446655440222",
-    "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 2,
+    "carpeta_id": 3,
+    "usuario_id": 1,
     "usuario": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "id": 1,
       "email": "usuario@org.com",
       "nombre": "Usuario Test"
     },
     "nivel_acceso": {
-      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "id": 4,
       "codigo": "LECTURA",
       "nombre": "Lectura / Consulta"
     },
@@ -113,8 +99,8 @@
     "codigo": "ACL_DUPLICATE",
     "mensaje": "Ya existe un permiso para este usuario sobre esta carpeta",
     "detalles": {
-      "carpeta_id": "770e8400-e29b-41d4-a716-446655440222",
-      "usuario_id": "550e8400-e29b-41d4-a716-446655440000"
+      "carpeta_id": 3,
+      "usuario_id": 1
     }
   }
 }
@@ -130,7 +116,7 @@ Authorization: Bearer {token}
 Content-Type: application/json
 
 {
-  "usuario_id": "550e8400-e29b-41d4-a716-446655440000",
+  "usuario_id": 1,
   "nivel_acceso_codigo": "LECTURA",
   "recursivo": false
 }
@@ -190,7 +176,7 @@ Authorization: Bearer {token}
   ],
   "meta": {
     "total": 2,
-    "carpeta_id": "770e8400-e29b-41d4-a716-446655440222"
+    "carpeta_id": 3
   }
 }
 ```

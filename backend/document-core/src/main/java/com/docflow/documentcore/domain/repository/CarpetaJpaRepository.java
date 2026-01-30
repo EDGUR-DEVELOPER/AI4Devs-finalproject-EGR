@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.docflow.documentcore.infrastructure.adapter.entity.CarpetaEntity;
+import com.docflow.documentcore.domain.model.entity.CarpetaEntity;
 
 import java.util.List;
 import java.util.Optional;

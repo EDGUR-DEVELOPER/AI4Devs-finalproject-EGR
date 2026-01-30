@@ -3,6 +3,7 @@ package com.docflow.documentcore.domain.exception;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
+import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 
 // import com.docflow.documentcore.domain.exceptions.TenantContextMissingException; // TODO: Implementar en US-AUTH-004
 import lombok.extern.slf4j.Slf4j;
@@ -127,6 +128,29 @@ public class GlobalExceptionHandler {
         
         problem.setTitle("Nombre de Carpeta Duplicado");
         problem.setType(URI.create("https://docflow.com/errors/carpeta-duplicate-name"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", ex.getErrorCode());
+        
+        return problem;
+    }
+
+    /**
+     * Maneja PermisoCarpetaDuplicadoException y retorna HTTP 409.
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 409
+     */
+    @ExceptionHandler(PermisoCarpetaDuplicadoException.class)
+    public ProblemDetail handlePermisoCarpetaDuplicado(PermisoCarpetaDuplicadoException ex) {
+        log.debug("Permiso de carpeta duplicado: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT, 
+            ex.getMessage()
+        );
+        
+        problem.setTitle("Permiso de Carpeta Duplicado");
+        problem.setType(URI.create("https://docflow.com/errors/acl-duplicate"));
         problem.setProperty("timestamp", Instant.now());
         problem.setProperty("errorCode", ex.getErrorCode());
         

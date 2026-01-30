@@ -994,6 +994,159 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
+  /api/carpetas/{carpetaId}/permisos:
+    post:
+      summary: Grant folder permission to user
+      description: Creates an explicit ACL for a user over a folder. Requires ADMINISTRACION.
+      tags:
+        - ACL - Folder Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: carpetaId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Folder ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermisoCarpetaUsuarioRequest'
+      responses:
+        '201':
+          description: Permission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermisoCarpetaUsuarioResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Folder or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List folder permissions
+      description: Lists all explicit user permissions for a folder.
+      tags:
+        - ACL - Folder Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: carpetaId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Folder ID
+      responses:
+        '200':
+          description: List of permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermisoCarpetaUsuarioResponse'
+        '404':
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/carpetas/{carpetaId}/permisos/{usuarioId}:
+    patch:
+      summary: Update folder permission
+      description: Updates the access level or recursion for a user on a folder.
+      tags:
+        - ACL - Folder Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: carpetaId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Folder ID
+        - name: usuarioId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermisoCarpetaUsuarioRequest'
+      responses:
+        '200':
+          description: Permission updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermisoCarpetaUsuarioResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     # Authentication Schemas
@@ -1576,6 +1729,95 @@ components:
         - nombre
         - acciones_permitidas
         - activo
+
+    CreatePermisoCarpetaUsuarioRequest:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+          description: User ID to grant access
+        nivel_acceso_codigo:
+          type: string
+          enum: [LECTURA, ESCRITURA, ADMINISTRACION]
+          description: Access level code
+        recursivo:
+          type: boolean
+          description: Applies permission to subfolders
+        comentario_opcional:
+          type: string
+          nullable: true
+          description: Optional audit comment
+      required:
+        - usuario_id
+        - nivel_acceso_codigo
+        - recursivo
+
+    UpdatePermisoCarpetaUsuarioRequest:
+      type: object
+      properties:
+        nivel_acceso_codigo:
+          type: string
+          enum: [LECTURA, ESCRITURA, ADMINISTRACION]
+          description: New access level code
+        recursivo:
+          type: boolean
+          nullable: true
+          description: Update recursive flag
+      required:
+        - nivel_acceso_codigo
+
+    UsuarioResumenDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: User email
+        nombre:
+          type: string
+          nullable: true
+          description: User full name
+      required:
+        - id
+
+    PermisoCarpetaUsuarioResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Permission ID
+        carpeta_id:
+          type: integer
+          description: Folder ID
+        usuario_id:
+          type: integer
+          description: User ID
+        usuario:
+          $ref: '#/components/schemas/UsuarioResumenDTO'
+        nivel_acceso:
+          $ref: '#/components/schemas/NivelAccesoDTO'
+        recursivo:
+          type: boolean
+          description: Recursive permission flag
+        fecha_creacion:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        fecha_actualizacion:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - carpeta_id
+        - usuario_id
+        - recursivo
+        - fecha_creacion
+        - fecha_actualizacion
     
     ErrorResponse:
       type: object
@@ -1611,6 +1853,8 @@ tags:
     description: User authentication and organization management endpoints
   - name: ACL - Access Levels
     description: Access level catalog for role-based access control (LECTURA, ESCRITURA, ADMINISTRACION)
+  - name: ACL - Folder Permissions
+    description: User-level permissions for folders (ACL per folder)
   - name: Documents
     description: Document management operations (CRUD, search, versioning)
   - name: Document Versions

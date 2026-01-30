@@ -160,7 +160,32 @@ Represents a granular permission granted to a role for a specific resource (docu
 
 ---
 
-### 6. Folder
+### 6. FolderUserPermission (PermisoCarpetaUsuario)
+Represents explicit user permissions applied to a folder, with optional recursive inheritance.
+
+**Fields:**
+- `id`: Long - Unique permission identifier (Primary Key)
+- `folderId`: Long - Foreign key to Folder (`carpeta_id`)
+- `userId`: Long - Foreign key to User (`usuario_id`)
+- `organizationId`: Long - Foreign key to Organization (`organizacion_id`)
+- `accessLevel`: Enum [LECTURA, ESCRITURA, ADMINISTRACION] (`nivel_acceso`)
+- `isRecursive`: Boolean (`recursivo`) - Whether the permission applies to subfolders
+- `assignedAt`: DateTime (`fecha_asignacion`) - When permission was granted
+
+**Validation Rules:**
+- A user can have only one explicit permission per folder
+- `accessLevel` must be one of the catalog values
+- `organizationId` must match both user and folder organization
+- When `isRecursive = true`, permission is inherited by all subfolders
+
+**Relationships:**
+- `folder`: Many-to-one with Folder
+- `user`: Many-to-one with User
+- `organization`: Many-to-one with Organization
+
+---
+
+### 7. Folder
 Represents a hierarchical folder structure for organizing documents.
 
 **Fields:**

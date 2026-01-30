@@ -47,7 +47,7 @@ public class PermisoCarpetaUsuario {
     private NivelAcceso nivelAcceso;
     
     @Column(nullable = false)
-    private Boolean recursivo = true;
+    private Boolean recursivo = false;
     
     @Column(name = "fecha_asignacion", nullable = false)
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();

@@ -1,4 +1,4 @@
-package com.docflow.documentcore.infrastructure.adapter.entity;
+package com.docflow.documentcore.domain.model.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
