@@ -332,6 +332,70 @@ export const PERMISSION_LABELS: Record<CodigoNivelAcceso, string> = {
 export type PermissionCodeKey = keyof typeof PERMISSION_CODES;
 ```
 
+### Revocación de Permisos y Control de Acceso
+
+**Control Basado en Roles** (`AclCarpetaList.tsx`):
+
+La lista de permisos de carpeta implementa control de acceso basado en roles para las acciones de edición y revocación:
+
+```typescript
+interface AclCarpetaListProps {
+  acls: IAclCarpeta[];
+  isLoading: boolean;
+  onEdit: (acl: IAclCarpeta) => void;
+  onDelete: (acl: IAclCarpeta) => void;
+  canManage?: boolean;  // Controla visibilidad de acciones
+}
+```
+
+**Características:**
+- **Prop `canManage`**: Controla si el usuario puede editar/revocar permisos (por defecto: `false`)
+- **Columna condicional**: La columna de acciones solo se muestra si `canManage === true`
+- **Confirmación mejorada**: Diálogo de confirmación con texto descriptivo que incluye el nombre del usuario
+
+**Ejemplo de uso en `AclCarpetaSection.tsx`:**
+```typescript
+const { isAdmin } = useAclCarpeta();
+
+<AclCarpetaList
+  acls={acls}
+  isLoading={isLoading}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  canManage={isAdmin}  // Solo administradores pueden gestionar permisos
+/>
+```
+
+**Manejo de Errores en Revocación:**
+
+El servicio `aclCarpetaApi.deleteAcl()` distingue entre diferentes códigos de error HTTP:
+
+- **403 Forbidden**: El usuario no tiene permiso `ADMINISTRACION` en la carpeta
+- **404 Not Found**: La carpeta, usuario o permiso específico no existe
+- **409 Conflict**: Conflicto en el estado del recurso (por ejemplo, intentar revocar un permiso heredado)
+
+```typescript
+// Mensajes de error localizados en español
+const message = extractErrorMessage(error);
+// "No tienes permiso para realizar esta acción." (403)
+// "Recurso no encontrado (carpeta, usuario o permiso)." (404)
+// "Este usuario ya tiene un permiso en la carpeta." (409)
+```
+
+**Flujo de Revocación:**
+1. Usuario con permisos `ADMINISTRACION` hace clic en botón "Eliminar"
+2. Se muestra confirmación: "¿Revocar acceso de {nombre_usuario}?"
+3. Al confirmar, se ejecuta `DELETE /api/carpetas/{carpetaId}/permisos/{usuarioId}`
+4. El backend valida autorización y existencia del permiso
+5. Se realiza hard delete en la base de datos con aislamiento por organización
+6. Se dispara evento de auditoría `PermisoCarpetaUsuarioRevokedEvent`
+7. El frontend actualiza la lista de permisos tras respuesta exitosa (204 No Content)
+
+**Seguridad:**
+- Validación en backend mediante `PermisoCarpetaUsuarioValidator.validarAdministrador()`
+- Aislamiento multi-tenant estricto por `organizacion_id`
+- Tokens JWT extraídos de headers `X-User-Id` y `X-Organization-Id`
+
 ## 📝 Licencia
 
 Proyecto privado - Todos los derechos reservados

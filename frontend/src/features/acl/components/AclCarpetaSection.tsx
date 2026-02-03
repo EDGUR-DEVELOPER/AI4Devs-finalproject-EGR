@@ -212,6 +212,7 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({
         loading={loading}
         error={combinedError}
         deletingUserIds={deletingUserIds}
+        canManage={isAdmin}
       />
 
       {/* Modal for create/edit */}

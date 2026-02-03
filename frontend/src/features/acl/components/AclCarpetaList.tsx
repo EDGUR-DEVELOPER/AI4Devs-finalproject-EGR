@@ -31,6 +31,9 @@ export interface AclCarpetaListProps {
   /** User IDs currently being deleted (shows spinner) */
   deletingUserIds?: number[];
 
+  /** Whether current user can manage (edit/delete) permissions */
+  canManage?: boolean;
+
   /** Custom className */
   className?: string;
 }
@@ -69,6 +72,7 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
   loading = false,
   error,
   deletingUserIds = [],
+  canManage = false,
   className = '',
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
@@ -204,12 +208,14 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
             >
               Asignado
             </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider"
-            >
-              Acciones
-            </th>
+            {canManage && (
+              <th
+                scope="col"
+                className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider"
+              >
+                Acciones
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -264,7 +270,8 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                 </td>
 
                 {/* Actions */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
+                {canManage && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-2">
                     {/* Edit button */}
                     <button
@@ -347,7 +354,7 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                       {confirmDelete === acl.usuario_id && (
                         <div className="absolute right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-2 z-10 whitespace-nowrap">
                           <p className="text-xs text-gray-600 px-2 py-1">
-                            ¿Confirmar eliminación?
+                            ¿Revocar acceso de {acl.usuario.nombre}?
                           </p>
                           <div className="flex gap-1 px-2 py-1">
                             <button
@@ -376,7 +383,8 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                       )}
                     </div>
                   </div>
-                </td>
+                  </td>
+                )}
               </tr>
             );
           })}
