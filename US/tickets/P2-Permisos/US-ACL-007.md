@@ -4,276 +4,318 @@
 
 ---
 
-## 1. Resumen de Alcance Detectado
+### Narrativa de Usuario
 
-### Capacidades Encontradas
-- Bloquear acceso de lectura a usuarios sin permiso `LECTURA`
-- Proteger endpoints de listado de carpetas
-- Proteger endpoints de descarga de documentos
-- Retornar 403 cuando no hay permiso
-
-### Restricciones Implícitas
-- La verificación debe usar el evaluador de permisos (US-ACL-006)
-- Aplica a todos los endpoints de consulta y descarga
-- No debe filtrar información sensible en respuestas de error
-- Debe considerar herencia y precedencia ya implementadas
-
-### Riesgos o Ambigüedades
-- No se especifica si el listado debe filtrar elementos individuales o denegar toda la operación
-- **Suposición MVP:** Si no tiene LECTURA en carpeta, se deniega toda la operación (403)
-- Para documentos dentro de carpeta con permiso, se asume que hereda LECTURA
+**Como** administrador de sistema / usuario con rol auditor  
+**Quiero** que el sistema bloquee automáticamente el acceso de lectura a usuarios sin permiso `LECTURA`  
+**Para que** la información sensible esté protegida contra accesos no autorizados y cumpla con políticas de seguridad y confidencialidad
 
 ---
 
-## 2. Lista de Tickets Necesarios
+### Descripción Funcional
 
----
-### Base de Datos
----
+Este ticket implementa el **enforcement (aplicación forzada) de permisos de lectura** en todos los endpoints de consulta y descarga del sistema. Un usuario sin permiso `LECTURA` sobre una carpeta o documento recibirá una respuesta HTTP 403 Forbidden, independientemente del rol global.
 
-* **Título:** Sin cambios de BD - Reutilizar estructura existente
-* **Objetivo:** Confirmar que no se requieren cambios de esquema.
-* **Tipo:** Nota
-* **Descripción corta:** Esta historia es sobre enforcement en capa de aplicación, no datos. Usa tablas ACL existentes.
-* **Entregables:**
-    - Confirmación de esquema suficiente.
+**Alcance de endpoints protegidos:**
+- `GET /api/carpetas/{id}` — Consulta de detalle de carpeta
+- `GET /api/carpetas/{id}/contenido` — Listado de contenido (subcarpetas y documentos)
+- `GET /api/documentos/{id}` — Consulta de metadatos de documento
+- `GET /api/documentos/{id}/descargar` — Descarga del archivo binario
+- `GET /api/documentos/{id}/versiones` — Historial de versiones
 
----
-### Backend
----
-
-* **Título:** Crear Guard genérico de permiso de lectura
-* **Objetivo:** Reutilizar verificación de LECTURA en múltiples endpoints.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar guard/decorator `@RequiereLectura(tipoRecurso)` que extraiga el ID del recurso de los parámetros de ruta, evalúe el permiso usando `EvaluadorPermisosService`, y retorne 403 si no tiene LECTURA.
-* **Entregables:**
-    - Guard `RequiereLecturaGuard`.
-    - Decorator `@RequiereLectura('carpeta' | 'documento')`.
-    - Extracción automática de ID de ruta.
-    - Respuesta 403 estandarizada.
+**Referencia:** Implementación usa el evaluador de permisos de [US-ACL-006](../US-ACL-006.md), que ya maneja herencia y precedencia.
 
 ---
 
-* **Título:** Aplicar guard de lectura a endpoint `GET /carpetas/{id}`
-* **Objetivo:** Proteger consulta de detalle de carpeta.
-* **Tipo:** Tarea
-* **Descripción corta:** Decorar endpoint de detalle de carpeta con `@RequiereLectura('carpeta')`. Verificar que sin LECTURA retorna 403.
-* **Entregables:**
-    - Endpoint protegido con guard.
-    - Test de acceso denegado.
+### Criterios de Aceptación
+
+| # | Scenario | Given | When | Then |
+|---|----------|-------|------|------|
+| 1 | Usuario sin LECTURA no accede a carpeta | Usuario "externo@test.com" sin permiso LECTURA en carpeta 123, autenticado | Solicita `GET /api/carpetas/123` | Recibe HTTP 403 con body: `{"error": "forbidden", "message": "Sin permiso de lectura para este recurso"}` |
+| 2 | Usuario sin LECTURA no lista contenido | Usuario "externo@test.com" sin permiso en carpeta 123 | Solicita `GET /api/carpetas/123/contenido` | Recibe HTTP 403 (no se filtra contenido, se niega toda operación) |
+| 3 | Usuario sin LECTURA no descarga documento | Usuario "externo@test.com" sin permiso LECTURA en documento 456 | Solicita `GET /api/documentos/456/descargar` | Recibe HTTP 403 sin revelar existencia del archivo |
+| 4 | Usuario sin LECTURA no ve versiones | Usuario "externo@test.com" sin LECTURA en documento 456 | Solicita `GET /api/documentos/456/versiones` | Recibe HTTP 403 |
+| 5 | Usuario CON LECTURA puede acceder | Usuario "lector@test.com" con permiso LECTURA en carpeta 123 | Solicita `GET /api/carpetas/123/contenido` | Recibe HTTP 200 con lista de elementos |
+| 6 | Usuario CON LECTURA descarga documento | Usuario "lector@test.com" con LECTURA en documento 456 | Solicita `GET /api/documentos/456/descargar` | Recibe HTTP 200 con el archivo y headers CORS correctos |
+| 7 | Admin con ADMINISTRACION puede acceder | Usuario "admin@test.com" con ADMINISTRACION en carpeta 123 | Solicita cualquier endpoint de lectura | Recibe HTTP 200 (ADMINISTRACION incluye LECTURA) |
+| 8 | Documento hereda LECTURA de carpeta | Usuario "lector@test.com" con LECTURA en carpeta padre, sin ACL explícito en documento | Solicita `GET /api/documentos/456` | Recibe HTTP 200 (herencia activa) |
+| 9 | Usuario desautenticado recibe 401 | Solicitud sin token Bearer válido | Solicita `GET /api/carpetas/123` | Recibe HTTP 401 (no 403) |
+| 10 | Usuario de otra organización recibe 404 | Usuario "externo@org-b.com" intenta acceder recurso de org-a | Solicita `GET /api/carpetas/123` (de org-a) | Recibe HTTP 404 (no se revela existencia) |
 
 ---
 
-* **Título:** Aplicar guard de lectura a endpoint `GET /carpetas/{id}/contenido`
-* **Objetivo:** Proteger listado de contenido de carpeta.
-* **Tipo:** Tarea
-* **Descripción corta:** Proteger endpoint que lista subcarpetas y documentos de una carpeta. Usuario sin LECTURA recibe 403.
-* **Entregables:**
-    - Endpoint protegido con guard.
-    - Test de acceso denegado.
+### Requerimientos No-Funcionales
+
+#### Seguridad
+- ✅ No se deben filtrar detalles de la carpeta/documento en respuesta 403
+- ✅ La verificación de permiso ocurre **antes** de cualquier lectura de BD
+- ✅ Se debe loguear WARN cada intento denegado: `[SECURITY] Access denied for user={userId} resource={resourceType}:{resourceId} permission={required}`
+
+#### Performance
+- ✅ La evaluación de permisos debe usar caché en memoria del evaluador (no hacer query a BD en cada request)
+- ✅ Máximo 50ms de latencia adicional por evaluación de permiso
+- ✅ No generar N+1 queries al listar contenido
+
+#### Mantenibilidad
+- ✅ Usar decorator `@RequiereLectura(tipoRecurso)` reutilizable en todos los endpoints
+- ✅ Centralizar respuesta 403 en una excepción `AccessDeniedException`
+- ✅ Documentar el comportamiento en Swagger/OpenAPI
 
 ---
 
-* **Título:** Aplicar guard de lectura a endpoint `GET /documentos/{id}`
-* **Objetivo:** Proteger consulta de metadatos de documento.
-* **Tipo:** Tarea
-* **Descripción corta:** Decorar endpoint de detalle de documento con `@RequiereLectura('documento')`. Usa evaluador con precedencia.
-* **Entregables:**
-    - Endpoint protegido con guard.
-    - Test con permiso de documento vs carpeta.
+### Estructura Técnica Propuesta
 
----
+#### Backend - Componentes a Crear/Modificar
 
-* **Título:** Aplicar guard de lectura a endpoint `GET /documentos/{id}/descargar`
-* **Objetivo:** Proteger descarga de archivo de documento.
-* **Tipo:** Historia
-* **Descripción corta:** Proteger endpoint de descarga de documento. Usuario sin LECTURA recibe 403. Endpoint crítico para protección de información.
-* **Entregables:**
-    - Endpoint protegido con guard.
-    - Test de descarga autorizada y denegada.
-    - Logging de intentos denegados.
-
----
-
-* **Título:** Aplicar guard de lectura a endpoint `GET /documentos/{id}/versiones`
-* **Objetivo:** Proteger listado de versiones de documento.
-* **Tipo:** Tarea
-* **Descripción corta:** Proteger endpoint que lista historial de versiones. Requiere LECTURA sobre el documento.
-* **Entregables:**
-    - Endpoint protegido con guard.
-    - Test de acceso denegado.
-
----
-
-* **Título:** Filtrado de elementos en listado por permisos (opcional MVP)
-* **Objetivo:** Mostrar solo elementos visibles en listado de carpeta.
-* **Tipo:** Tarea (Opcional)
-* **Descripción corta:** Modificar query de listado de carpeta para filtrar subcarpetas y documentos según permisos del usuario. Alternativa a denegar todo si no tiene permiso en carpeta padre.
-* **Entregables:**
-    - Lógica de filtrado en servicio.
-    - Query optimizado con JOIN a ACLs.
-    - Documentación de comportamiento.
-
----
-
-* **Título:** Pruebas unitarias de guard de lectura
-* **Objetivo:** Asegurar funcionamiento correcto del guard.
-* **Tipo:** QA
-* **Descripción corta:** Tests del guard aislado: con permiso permite, sin permiso deniega, con token inválido deniega. Mockear evaluador de permisos.
-* **Entregables:**
-    - Tests unitarios del guard.
-    - Mocks de evaluador y request.
-
----
-
-* **Título:** Pruebas de integración de enforcement de lectura
-* **Objetivo:** Verificar protección E2E de endpoints.
-* **Tipo:** QA
-* **Descripción corta:** Tests E2E que verifiquen cada endpoint protegido: usuario con LECTURA puede acceder, usuario sin LECTURA recibe 403, usuario de otro organizacion recibe 404.
-* **Entregables:**
-    - Suite de tests por endpoint protegido.
-    - Casos: con permiso, sin permiso, otro organizacion.
-    - Verificación de status codes correctos.
-
----
-
-* **Título:** Pruebas de seguridad de endpoints de lectura
-* **Objetivo:** Verificar que no hay bypass de permisos.
-* **Tipo:** QA
-* **Descripción corta:** Tests de seguridad: intentar acceder con token alterado, sin token, con usuario desactivado, con organizacion cambiado manualmente.
-* **Entregables:**
-    - Tests de seguridad específicos.
-    - Reporte de vulnerabilidades encontradas/corregidas.
-
----
-### Frontend
----
-
-* **Título:** Manejo global de error 403 en cliente HTTP
-* **Objetivo:** Manejar respuestas de acceso denegado consistentemente.
-* **Tipo:** Tarea
-* **Descripción corta:** En el interceptor de respuestas, detectar 403 y mostrar notificación amigable "No tiene permiso para acceder a este recurso". No redirigir a login (es diferente de 401).
-* **Entregables:**
-    - Lógica en interceptor para 403.
-    - Notificación/toast de acceso denegado.
-    - Diferenciación de 401 (sesión) vs 403 (permiso).
-
----
-
-* **Título:** Ocultar elementos no accesibles en listado de carpetas
-* **Objetivo:** Evitar mostrar opciones que resultarán en error.
-* **Tipo:** Tarea
-* **Descripción corta:** Antes de renderizar acciones sobre carpetas/documentos, verificar permisos del usuario. Ocultar o deshabilitar "Abrir" si no tiene LECTURA. (Se conecta con US-ACL-009).
-* **Entregables:**
-    - Lógica condicional en componentes de listado.
-    - Verificación de permisos antes de mostrar acciones.
-
----
-
-* **Título:** Página de error "Sin acceso" para navegación directa
-* **Objetivo:** Manejar caso de URL directa a recurso sin permiso.
-* **Tipo:** Tarea
-* **Descripción corta:** Si usuario navega directamente a `/carpetas/123` o `/documentos/456` y recibe 403, mostrar página informativa "No tiene acceso a este recurso" con opción de volver.
-* **Entregables:**
-    - Componente `SinAcceso` o página de error.
-    - Manejo en router/guards de navegación.
-    - Botón "Volver" o "Ir al inicio".
-
----
-
-## 3. Flujo Recomendado de Ejecución
-
-```
-1. [BE] Crear Guard genérico de permiso de lectura
-   ↓
-2. [BE] Aplicar a endpoints de carpetas (GET /carpetas/{id}, /contenido)
-   ↓
-3. [BE] Aplicar a endpoints de documentos (GET, /descargar, /versiones)
-   ↓
-4. [QA] Pruebas unitarias del guard
-   ↓
-5. [QA] Pruebas de integración por endpoint
-   ↓
-6. [QA] Pruebas de seguridad
-   ↓
-7. [FE] Manejo global de error 403
-   ↓
-8. [FE] Ocultar elementos no accesibles
-   ↓
-9. [FE] Página de error "Sin acceso"
+**1. Excepción Personalizada**
+```java
+// en domain/exceptions/
+public class AccessDeniedException extends RuntimeException {
+  private String resourceType;
+  private String resourceId;
+  private String requiredPermission;
+  // getters, constructor
+}
 ```
 
-### Dependencias entre Tickets
-- Depende de US-ACL-006 (Evaluador de permisos)
-- Depende de endpoints de P3 (Carpetas) y P4 (Documentos)
-- Frontend puede iniciar en paralelo una vez el guard esté funcional
+**2. Guard/Decorator**
+```java
+// en infrastructure/security/
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RequiereLectura {
+  String value(); // "carpeta" o "documento"
+  String idParameterName() default "id"; // nombre del parámetro en ruta
+}
+
+@Component
+public class RequiereLecturaAspect {
+  // Lógica de AOP que:
+  // 1. Extrae ID del parámetro de ruta
+  // 2. Obtiene user del SecurityContext
+  // 3. Llama a evaluadorPermisosService.tienePermiso(...)
+  // 4. Lanza AccessDeniedException si no tiene permiso
+}
+```
+
+**3. ExceptionHandler Global**
+```java
+// en infrastructure/rest/
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex) {
+    return ResponseEntity.status(403).body(new ErrorResponse("forbidden", ...));
+  }
+}
+```
+
+**4. Endpoints a Proteger**
+- `CarpetaController.obtenerDetalle(@GetMapping("/{id}"), @RequiereLectura("carpeta"))`
+- `CarpetaController.listarContenido(@GetMapping("/{id}/contenido"), @RequiereLectura("carpeta"))`
+- `DocumentoController.obtenerMetadatos(@GetMapping("/{id}"), @RequiereLectura("documento"))`
+- `DocumentoController.descargar(@GetMapping("/{id}/descargar"), @RequiereLectura("documento"))`
+- `DocumentoController.listarVersiones(@GetMapping("/{id}/versiones"), @RequiereLectura("documento"))`
 
 ---
 
-## 4. Recomendación TDD/BDD
+#### Frontend - Componentes a Crear/Modificar
 
-### Tickets con Pruebas Primero (TDD)
-- Guard genérico de permiso de lectura (CRÍTICO para seguridad)
-- Pruebas de seguridad (escribir escenarios de ataque primero)
+**1. Interceptor HTTP**
+```typescript
+// en core/shared/http/
+export function setupErrorInterceptor(http: HttpClient) {
+  // Detectar 403 y mostrar toast: "No tiene permiso para acceder a este recurso"
+  // NO redirigir a login (diferente de 401)
+  // Diferenciación: 401 → sesión expirada, 403 → falta de permisos
+}
+```
 
-### Tickets para Escenarios BDD
-```gherkin
-Feature: Enforcement de permisos de lectura
-  
-  Background:
-    Given usuarios del organizacion "A":
-      | email            | permiso_carpeta | permiso_documento |
-      | admin@test.com   | ADMINISTRACION  | -                 |
-      | lector@test.com  | LECTURA         | -                 |
-      | externo@test.com | -               | -                 |
+**2. Componente ErrorPage**
+```tsx
+// en common/ui/
+<ErrorPage 
+  title="Acceso Denegado"
+  message="No tiene permiso para acceder a este recurso"
+  action="Volver al inicio"
+/>
+```
 
-  Scenario: Usuario con LECTURA puede listar carpeta
-    Given usuario "lector@test.com" autenticado
-    When solicita GET /carpetas/1/contenido
-    Then recibe status 200
-    And recibe lista de elementos
+**3. Condicionales en Componentes**
+```tsx
+// en features/*/components/
+{user.hasPermission('LECTURA', carpetaId) && (
+  <button onClick={() => openFolder(carpetaId)}>Abrir</button>
+)}
+```
 
-  Scenario: Usuario sin LECTURA no puede listar carpeta
-    Given usuario "externo@test.com" autenticado
-    When solicita GET /carpetas/1/contenido
-    Then recibe status 403
-    And el mensaje indica "Sin permiso de lectura"
-
-  Scenario: Usuario con LECTURA puede descargar documento
-    Given usuario "lector@test.com" autenticado
-    When solicita GET /documentos/10/descargar
-    Then recibe status 200
-    And recibe el archivo
-
-  Scenario: Usuario sin LECTURA no puede descargar documento
-    Given usuario "externo@test.com" autenticado
-    When solicita GET /documentos/10/descargar
-    Then recibe status 403
-
-  Scenario: Usuario de otro organizacion recibe 404
-    Given usuario del organizacion "B" autenticado
-    When solicita GET /carpetas/1 (de organizacion A)
-    Then recibe status 404
-    And no se revela existencia del recurso
+**4. Route Guards**
+```typescript
+// en core/shared/guards/
+canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
+  // Si intenta navegar a /carpetas/123 sin LECTURA, 
+  // redirigir a componente SinAcceso o página de error
+}
 ```
 
 ---
 
-## 5. Resumen de Archivos/Tickets
+### Dependencias
 
-| # | Capa | Ticket |
-|---|------|--------|
-| 1 | BD | (Sin cambios) |
-| 2 | BE | Crear Guard genérico de permiso de lectura |
-| 3 | BE | Aplicar guard a GET /carpetas/{id} |
-| 4 | BE | Aplicar guard a GET /carpetas/{id}/contenido |
-| 5 | BE | Aplicar guard a GET /documentos/{id} |
-| 6 | BE | Aplicar guard a GET /documentos/{id}/descargar |
-| 7 | BE | Aplicar guard a GET /documentos/{id}/versiones |
-| 8 | BE | Filtrado de elementos en listado (opcional) |
-| 9 | QA | Pruebas unitarias de guard de lectura |
-| 10 | QA | Pruebas de integración por endpoint |
-| 11 | QA | Pruebas de seguridad |
-| 12 | FE | Manejo global de error 403 |
-| 13 | FE | Ocultar elementos no accesibles |
-| 14 | FE | Página de error "Sin acceso" |
+- ✅ [US-ACL-006](../US-ACL-006.md) — Evaluador de Permisos (debe estar implementado)
+- ✅ [US-ADMIN-001](../P1-Administracion/US-ADMIN-001.md) — Endpoints base de carpetas
+- ✅ [US-DOC-001](../P4-Documentos/US-DOC-001.md) — Endpoints base de documentos
+- ✅ Token JWT con user ID y org ID (sistema de autenticación)
+
+---
+
+### Archivos Base a Revisar / Modificar
+
+**Backend:**
+- `backend/document-core/src/main/java/com/docflow/application/service/` — Servicios de carpeta/documento
+- `backend/document-core/src/main/java/com/docflow/infrastructure/rest/controller/` — Controladores
+- `backend/document-core/src/main/java/com/docflow/domain/exception/` — Excepciones
+- `backend/document-core/src/main/java/com/docflow/infrastructure/security/` — Guards y aspectos
+
+**Frontend:**
+- `frontend/src/core/shared/http/` — Interceptores
+- `frontend/src/common/ui/` — Componentes de error
+- `frontend/src/features/*/hooks/` — Hooks de permiso si existen
+
+---
+
+
+---
+
+## [enhanced] Checklist de Implementación y Validación
+
+### ✅ Backend - Implementación
+
+- [ ] **Crear excepciones personalizadas**
+  - [ ] `AccessDeniedException` en `domain/exceptions/`
+  - [ ] `ResourceNotFoundException` (para ocultar existencia cuando no hay acceso)
+
+- [ ] **Implementar Guard/Decorator**
+  - [ ] Anotación `@RequiereLectura` con parámetro `value`
+  - [ ] Aspecto `RequiereLecturaAspect` usando AOP de Spring
+  - [ ] Extracción automática de ID de ruta usando expresiones regulares
+  - [ ] Integración con `SecurityContext` para obtener usuario actual
+
+- [ ] **Integración con EvaluadorPermisosService**
+  - [ ] Llamar a método `tienePermiso(usuarioId, recursoId, tipoRecurso, permiso)`
+  - [ ] Respetar herencia y precedencia ya implementada
+  - [ ] Usar caché si está disponible
+
+- [ ] **ExceptionHandler Global**
+  - [ ] Manejar `AccessDeniedException` → HTTP 403
+  - [ ] Respuesta JSON estandarizada: `{"error": "forbidden", "message": "..."}`
+  - [ ] NO incluir detalles del recurso en respuesta
+
+- [ ] **Proteger Endpoints**
+  - [ ] `GET /api/carpetas/{id}` — `@RequiereLectura("carpeta")`
+  - [ ] `GET /api/carpetas/{id}/contenido` — `@RequiereLectura("carpeta")`
+  - [ ] `GET /api/documentos/{id}` — `@RequiereLectura("documento")`
+  - [ ] `GET /api/documentos/{id}/descargar` — `@RequiereLectura("documento")`
+  - [ ] `GET /api/documentos/{id}/versiones` — `@RequiereLectura("documento")`
+
+- [ ] **Logging de Seguridad**
+  - [ ] Logging WARN para accesos denegados con usuario, recurso y permiso requerido
+  - [ ] No loguear datos sensibles (archivos, contenido)
+
+- [ ] **Documentación OpenAPI/Swagger**
+  - [ ] Documentar respuesta 403 en cada endpoint
+  - [ ] Especificar que se requiere permiso LECTURA
+
+### ✅ Backend - Testing
+
+- [ ] **Tests Unitarios del Guard**
+  - [ ] [ ] Test: con permiso LECTURA → permite acceso
+  - [ ] [ ] Test: sin permiso LECTURA → lanza `AccessDeniedException`
+  - [ ] [ ] Test: usuario desautenticado → lanza `AuthenticationException`
+  - [ ] [ ] Test: herencia de permisos funciona correctamente
+  - [ ] [ ] Test: extracción correcta de ID de ruta
+
+- [ ] **Tests Unitarios de Controladores**
+  - [ ] [ ] Test cada endpoint protegido con usuario autorizado
+  - [ ] [ ] Test cada endpoint protegido con usuario sin permisos
+  - [ ] [ ] Verificar status codes correctos (200, 403)
+
+- [ ] **Tests de Integración (E2E)**
+  - [ ] [ ] Usuario con LECTURA puede listar carpeta
+  - [ ] [ ] Usuario sin LECTURA recibe 403
+  - [ ] [ ] Usuario con ADMINISTRACION puede acceder
+  - [ ] [ ] Documento hereda LECTURA de carpeta
+  - [ ] [ ] Usuario de otra organización recibe 404
+  - [ ] [ ] Usuario desautenticado recibe 401 (no 403)
+
+- [ ] **Tests de Seguridad**
+  - [ ] [ ] Token alterado → 401/403 según corresponda
+  - [ ] [ ] Sin token → 401
+  - [ ] [ ] Usuario desactivado → 403
+  - [ ] [ ] Intentos repetidos (rate limiting si aplica)
+
+### ✅ Frontend - Implementación
+
+- [ ] **Interceptor de Errores HTTP**
+  - [ ] Detectar status 403
+  - [ ] Mostrar toast/notificación: "No tiene permiso para acceder a este recurso"
+  - [ ] NO redirigir a login (diferente de 401)
+  - [ ] Diferenciación visual: 401 (sesión) vs 403 (permisos)
+
+- [ ] **Componente de Error "Sin Acceso"**
+  - [ ] Crear componente reutilizable `AccessDeniedPage` o modal
+  - [ ] Título: "Acceso Denegado"
+  - [ ] Mensaje: "No tiene permiso para acceder a este recurso"
+  - [ ] Botón "Volver al inicio" o "Volver a la lista"
+
+- [ ] **Condicionales en Componentes**
+  - [ ] En componentes de carpeta: ocultar botón "Abrir" si no tiene LECTURA
+  - [ ] En componentes de documento: ocultar botón "Descargar" si no tiene LECTURA
+  - [ ] Mostrar disabled state si está verificando permisos
+
+- [ ] **Router Guards**
+  - [ ] Crear `canActivate` guard para rutas de lectura
+  - [ ] Si usuario sin permisos intenta navegar a `/carpetas/:id` → mostrar `AccessDeniedPage`
+  - [ ] Considerar pre-fetching de permisos para mejor UX
+
+- [ ] **Manejo de Estados**
+  - [ ] Estado de "cargando permisos" mientras valida
+  - [ ] State management (Zustand/Redux) si aplica
+
+### ✅ Frontend - Testing
+
+- [ ] **Tests de Componentes**
+  - [ ] [ ] Interceptor detecta 403 y muestra notificación
+  - [ ] [ ] AccessDeniedPage se renderiza correctamente
+  - [ ] [ ] Botones deshabilitados cuando no hay permisos
+
+- [ ] **Tests de Router Guards**
+  - [ ] [ ] Guard bloquea navegación sin LECTURA
+  - [ ] [ ] Guard permite navegación con LECTURA
+  - [ ] [ ] Redirecciona a AccessDeniedPage cuando corresponde
+
+### ✅ Documentación
+
+- [ ] **README/Wiki**
+  - [ ] Documentar comportamiento de enforcement de permisos
+  - [ ] Explicar diferencia entre 401 (autenticación) y 403 (autorización)
+  - [ ] Ejemplos de flujos de error
+
+- [ ] **Especificación Técnica**
+  - [ ] Documentar estructura del Guard/Decorator
+  - [ ] Documentar flujo de evaluación de permisos
+
+- [ ] **API Documentation**
+  - [ ] Swagger/OpenAPI refleja respuestas 403
+  - [ ] Documentar campos de error
+
+### ✅ Criterios de Finalización
+
+- [ ] Todos los tests pasan (unitarios, integración, seguridad)
+- [ ] Cobertura de código ≥ 85% en componentes críticos
+- [ ] No hay vulnerabilidades de seguridad según análisis estático
+- [ ] Se validan todos los scenarios de la tabla de Criterios de Aceptación
+- [ ] Frontend se probó en navegadores principales (Chrome, Firefox, Safari)
+- [ ] Documentación está actualizada y accesible
+- [ ] PR aprobado por code review (backend y frontend)
+- [ ] Logging de seguridad funciona correctamente en ambiente de staging
