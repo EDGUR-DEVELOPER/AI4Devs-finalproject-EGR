@@ -4,6 +4,7 @@ import com.docflow.documentcore.application.validator.CarpetaValidator;
 import com.docflow.documentcore.domain.event.CarpetaCreatedEvent;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,6 +130,21 @@ public class CarpetaService {
     @Transactional(readOnly = true)
     public List<Carpeta> obtenerHijos(Long carpetaPadreId, Long organizacionId) {
         return carpetaRepository.obtenerHijos(carpetaPadreId, organizacionId);
+    }
+
+    /**
+     * Obtiene la ruta de ancestros de una carpeta (del más cercano a la raíz).
+     *
+     * @param carpetaId identificador de la carpeta
+     * @param organizacionId identificador de la organización
+     * @return lista de ancestros con nivel de distancia
+     */
+    @Transactional(readOnly = true)
+    public List<CarpetaAncestro> obtenerRutaAncestros(
+            Long carpetaId,
+            Long organizacionId
+    ) {
+        return carpetaRepository.obtenerRutaAncestros(carpetaId, organizacionId);
     }
     
     /**

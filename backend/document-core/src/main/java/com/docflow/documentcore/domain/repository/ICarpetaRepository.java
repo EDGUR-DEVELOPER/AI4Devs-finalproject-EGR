@@ -3,6 +3,8 @@ package com.docflow.documentcore.domain.repository;
 import java.util.List;
 import java.util.Optional;
 
+import com.docflow.documentcore.domain.model.CarpetaAncestro;
+
 import com.docflow.documentcore.domain.model.Carpeta;
 
 /**
@@ -100,4 +102,16 @@ public interface ICarpetaRepository {
      * @return carpeta actualizada
      */
     Carpeta actualizar(Carpeta carpeta);
+
+    /**
+     * Obtiene la ruta de ancestros de una carpeta ordenada desde el más cercano.
+     *
+     * @param carpetaId identificador de la carpeta objetivo
+     * @param organizacionId identificador de la organización
+     * @return lista de ancestros con nivel de distancia
+     */
+    List<CarpetaAncestro> obtenerRutaAncestros(
+            Long carpetaId,
+            Long organizacionId
+    );
 }

@@ -31,8 +31,34 @@ public class PermisoCarpetaUsuarioRepositoryAdapter implements IPermisoCarpetaUs
     }
 
     @Override
+    public Optional<PermisoCarpetaUsuario> findByCarpetaIdAndUsuarioIdAndOrganizacionId(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId
+    ) {
+        return jpaRepository.findByCarpetaIdAndUsuarioIdAndOrganizacionId(
+                carpetaId,
+                usuarioId,
+                organizacionId
+        );
+    }
+
+    @Override
     public List<PermisoCarpetaUsuario> findByCarpetaId(Long carpetaId) {
         return jpaRepository.findByCarpetaId(carpetaId);
+    }
+
+    @Override
+    public List<PermisoCarpetaUsuario> findByUsuarioIdAndCarpetaIds(
+            Long usuarioId,
+            List<Long> carpetaIds,
+            Long organizacionId
+    ) {
+        return jpaRepository.findByUsuarioIdAndCarpetaIdInAndOrganizacionId(
+                usuarioId,
+                carpetaIds,
+                organizacionId
+        );
     }
 
     @Override

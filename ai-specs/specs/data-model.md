@@ -183,6 +183,15 @@ Represents explicit user permissions applied to a folder, with optional recursiv
 - `user`: Many-to-one with User
 - `organization`: Many-to-one with Organization
 
+**Performance Indices (US-ACL-004):**
+- **Recursive inheritance index**: `idx_permiso_carpeta_usuario_herencia`
+    - Columns: `(usuario_id, recursivo, organizacion_id)`
+    - Filter: `recursivo = true`
+    - Purpose: Optimize recursive permission lookups
+- **Folder/user lookup index**: `idx_permiso_carpeta_usuario_carpeta_usuario_org`
+    - Columns: `(carpeta_id, usuario_id, organizacion_id)`
+    - Purpose: Fast direct permission checks
+
 ---
 
 ### 7. Folder
@@ -198,6 +207,12 @@ Represents a hierarchical folder structure for organizing documents.
 - `createdAt`: DateTime - Folder creation timestamp
 - `updatedAt`: DateTime - Last folder update timestamp
 - `deletedAt`: DateTime (nullable) - Soft delete timestamp
+
+**Performance Indices (US-ACL-004):**
+- **Parent navigation index**: `idx_carpetas_padre_org`
+    - Columns: `(carpeta_padre_id, organizacion_id)`
+    - Filter: `fecha_eliminacion IS NULL`
+    - Purpose: Efficient ancestor path resolution
 
 **Validation Rules:**
 - Name is required, 1-255 characters

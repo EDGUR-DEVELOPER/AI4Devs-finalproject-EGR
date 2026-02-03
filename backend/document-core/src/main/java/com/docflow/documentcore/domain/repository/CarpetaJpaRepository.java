@@ -84,4 +84,39 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
             @Param("carpetaPadreId") Long carpetaPadreId,
             @Param("nombre") String nombre
     );
+
+    /**
+     * Obtiene la ruta de ancestros de una carpeta usando CTE recursivo.
+     * Retorna los ancestros ordenados desde el más cercano al más lejano.
+     *
+     * @param carpetaId id de la carpeta objetivo
+     * @param organizacionId id de la organización
+     * @return lista de ancestros con id, nombre y nivel
+     */
+    @Query(value = """
+        WITH RECURSIVE ancestros AS (
+            SELECT id, carpeta_padre_id, nombre, 0 AS nivel
+            FROM carpetas
+            WHERE id = :carpetaId
+              AND organizacion_id = :organizacionId
+              AND fecha_eliminacion IS NULL
+
+            UNION ALL
+
+            SELECT c.id, c.carpeta_padre_id, c.nombre, a.nivel + 1
+            FROM carpetas c
+            INNER JOIN ancestros a ON c.id = a.carpeta_padre_id
+            WHERE c.organizacion_id = :organizacionId
+              AND c.fecha_eliminacion IS NULL
+              AND a.nivel < 50
+        )
+        SELECT id, nombre, nivel
+        FROM ancestros
+        WHERE nivel > 0
+        ORDER BY nivel ASC
+        """, nativeQuery = true)
+    List<CarpetaAncestroProjection> findRutaAncestros(
+            @Param("carpetaId") Long carpetaId,
+            @Param("organizacionId") Long organizacionId
+    );
 }

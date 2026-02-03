@@ -14,7 +14,19 @@ public interface IPermisoCarpetaUsuarioRepository {
 
     Optional<PermisoCarpetaUsuario> findByCarpetaIdAndUsuarioId(Long carpetaId, Long usuarioId);
 
+        Optional<PermisoCarpetaUsuario> findByCarpetaIdAndUsuarioIdAndOrganizacionId(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId
+        );
+
     List<PermisoCarpetaUsuario> findByCarpetaId(Long carpetaId);
+
+        List<PermisoCarpetaUsuario> findByUsuarioIdAndCarpetaIds(
+            Long usuarioId,
+            List<Long> carpetaIds,
+            Long organizacionId
+        );
 
     boolean existsByCarpetaIdAndUsuarioId(Long carpetaId, Long usuarioId);
 

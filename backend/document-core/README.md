@@ -83,6 +83,25 @@ The Document Core service exposes endpoints to manage explicit folder permission
 
 Revocation performs a hard delete of the permission entry and is intended for administrators.
 
+### Effective Folder Permissions (US-ACL-004)
+
+The service also exposes an endpoint to resolve the effective permission for the authenticated user,
+including inherited permissions from ancestor folders when `recursivo=true`.
+
+- **Get effective permission**: `GET /api/carpetas/{carpetaId}/mi-permiso`
+
+Response example:
+
+```json
+{
+    "nivel_acceso": "LECTURA",
+    "es_heredado": true,
+    "carpeta_origen_id": 2,
+    "carpeta_origen_nombre": "Proyectos",
+    "ruta_herencia": ["Proyectos", "2024", "Q1"]
+}
+```
+
 ## Configuration
 
 Configuration is in `src/main/resources/application.yml`:

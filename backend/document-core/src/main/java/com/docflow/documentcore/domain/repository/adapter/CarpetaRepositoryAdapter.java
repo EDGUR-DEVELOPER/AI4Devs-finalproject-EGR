@@ -2,6 +2,7 @@ package com.docflow.documentcore.domain.repository.adapter;
 
 import com.docflow.documentcore.application.mapper.CarpetaMapper;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.model.entity.CarpetaEntity;
 import com.docflow.documentcore.domain.repository.CarpetaJpaRepository;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Adaptador del repositorio de Carpetas (implementación de arquitectura hexagonal).
@@ -91,5 +93,16 @@ public class CarpetaRepositoryAdapter implements ICarpetaRepository {
         CarpetaEntity entity = mapper.toEntity(carpeta);
         CarpetaEntity updatedEntity = jpaRepository.save(entity);
         return mapper.toDomain(updatedEntity);
+    }
+
+    @Override
+    public List<CarpetaAncestro> obtenerRutaAncestros(Long carpetaId, Long organizacionId) {
+        return jpaRepository.findRutaAncestros(carpetaId, organizacionId).stream()
+                .map(ancestro -> new CarpetaAncestro(
+                        ancestro.getId(),
+                        ancestro.getNombre(),
+                        ancestro.getNivel() != null ? ancestro.getNivel() : 0
+                ))
+                .collect(Collectors.toList());
     }
 }

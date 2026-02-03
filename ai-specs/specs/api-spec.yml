@@ -1088,6 +1088,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/carpetas/{carpetaId}/mi-permiso:
+    get:
+      summary: Get effective folder permission
+      description: Returns the effective permission for the authenticated user (direct or inherited).
+      tags:
+        - ACL - Folder Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: carpetaId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Folder ID
+      responses:
+        '200':
+          description: Effective permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermisoEfectivoResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/carpetas/{carpetaId}/permisos/{usuarioId}:
     patch:
       summary: Update folder permission
@@ -1871,6 +1912,34 @@ components:
         - recursivo
         - fecha_creacion
         - fecha_actualizacion
+
+    PermisoEfectivoResponse:
+      type: object
+      properties:
+        nivel_acceso:
+          type: string
+          enum: [LECTURA, ESCRITURA, ADMINISTRACION]
+          description: Effective access level
+        es_heredado:
+          type: boolean
+          description: Indicates if the permission is inherited
+        carpeta_origen_id:
+          type: integer
+          description: Folder ID where the permission originates
+        carpeta_origen_nombre:
+          type: string
+          description: Folder name where the permission originates
+        ruta_herencia:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Inheritance path from origin to target folder
+      required:
+        - nivel_acceso
+        - es_heredado
+        - carpeta_origen_id
+        - carpeta_origen_nombre
     
     ErrorResponse:
       type: object
