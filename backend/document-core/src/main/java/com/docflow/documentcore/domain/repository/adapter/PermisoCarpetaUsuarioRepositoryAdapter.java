@@ -39,4 +39,9 @@ public class PermisoCarpetaUsuarioRepositoryAdapter implements IPermisoCarpetaUs
     public boolean existsByCarpetaIdAndUsuarioId(Long carpetaId, Long usuarioId) {
         return jpaRepository.existsByCarpetaIdAndUsuarioId(carpetaId, usuarioId);
     }
+
+    @Override
+    public int revokePermission(Long carpetaId, Long usuarioId, Long organizacionId) {
+        return jpaRepository.deleteByUsuarioIdAndCarpetaIdAndOrganizacionId(usuarioId, carpetaId, organizacionId);
+    }
 }

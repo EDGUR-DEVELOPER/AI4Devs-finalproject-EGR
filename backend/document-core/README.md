@@ -73,6 +73,16 @@ Once running, the service is available at:
 - **Swagger UI:** http://localhost:8082/swagger-ui.html
 - **OpenAPI Docs:** http://localhost:8082/api-docs
 
+### Folder ACL Permissions
+
+The Document Core service exposes endpoints to manage explicit folder permissions (ACL) for users.
+
+- **Create permission**: `POST /api/carpetas/{carpetaId}/permisos`
+- **Update permission**: `PATCH /api/carpetas/{carpetaId}/permisos/{usuarioId}`
+- **Revoke permission**: `DELETE /api/carpetas/{carpetaId}/permisos/{usuarioId}`
+
+Revocation performs a hard delete of the permission entry and is intended for administrators.
+
 ## Configuration
 
 Configuration is in `src/main/resources/application.yml`:

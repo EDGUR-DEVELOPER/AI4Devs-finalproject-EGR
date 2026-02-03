@@ -17,4 +17,15 @@ public interface IPermisoCarpetaUsuarioRepository {
     List<PermisoCarpetaUsuario> findByCarpetaId(Long carpetaId);
 
     boolean existsByCarpetaIdAndUsuarioId(Long carpetaId, Long usuarioId);
+
+    /**
+     * Revokes permission of a user over a folder by deleting the ACL entry.
+     * This method ensures organization isolation by including organizacionId in the query.
+     *
+     * @param carpetaId the ID of the folder
+     * @param usuarioId the ID of the user whose permission is being revoked
+     * @param organizacionId the ID of the organization (for tenant isolation)
+     * @return the number of records deleted (0 if not found, 1 if successful)
+     */
+    int revokePermission(Long carpetaId, Long usuarioId, Long organizacionId);
 }

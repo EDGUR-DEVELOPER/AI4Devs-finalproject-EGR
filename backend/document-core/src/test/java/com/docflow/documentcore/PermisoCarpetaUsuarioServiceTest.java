@@ -6,7 +6,9 @@ import com.docflow.documentcore.application.service.NivelAccesoService;
 import com.docflow.documentcore.application.service.PermisoCarpetaUsuarioService;
 import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioCreatedEvent;
+import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioRevokedEvent;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioUpdatedEvent;
+import com.docflow.documentcore.domain.exception.AclNotFoundException;
 import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
@@ -26,6 +28,7 @@ import java.util.Optional;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -133,4 +136,42 @@ class PermisoCarpetaUsuarioServiceTest {
         verify(permisoRepository).save(any(PermisoCarpetaUsuario.class));
         verify(eventPublisher).publishEvent(any(PermisoCarpetaUsuarioUpdatedEvent.class));
     }
+
+        @Test
+        @DisplayName("Debería revocar permiso cuando existe")
+        void should_RevokePermission_When_Exists() {
+        PermisoCarpetaUsuario existing = new PermisoCarpetaUsuario();
+        existing.setId(Math.abs(new Random().nextLong()));
+        existing.setCarpetaId(carpetaId);
+        existing.setUsuarioId(usuarioId);
+        existing.setOrganizacionId(organizacionId);
+        existing.setNivelAcceso(NivelAcceso.LECTURA);
+        existing.setRecursivo(false);
+        existing.setFechaAsignacion(OffsetDateTime.now());
+
+        when(permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId))
+            .thenReturn(Optional.of(existing));
+        when(permisoRepository.revokePermission(carpetaId, usuarioId, organizacionId))
+            .thenReturn(1);
+
+        service.revocarPermiso(carpetaId, usuarioId, organizacionId, adminId);
+
+        verify(validator).validarAdministrador(adminId, carpetaId, organizacionId);
+        verify(validator).validarCarpetaExiste(carpetaId, organizacionId);
+        verify(permisoRepository).revokePermission(carpetaId, usuarioId, organizacionId);
+        verify(eventPublisher).publishEvent(any(PermisoCarpetaUsuarioRevokedEvent.class));
+        }
+
+        @Test
+        @DisplayName("Debería lanzar excepción cuando permiso no existe")
+        void should_ThrowNotFound_When_PermissionMissing() {
+        when(permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.revocarPermiso(carpetaId, usuarioId, organizacionId, adminId))
+            .isInstanceOf(AclNotFoundException.class);
+
+        verify(permisoRepository, never()).revokePermission(any(), any(), any());
+        verify(eventPublisher, never()).publishEvent(any(PermisoCarpetaUsuarioRevokedEvent.class));
+        }
 }

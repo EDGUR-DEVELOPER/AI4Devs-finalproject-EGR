@@ -3,9 +3,12 @@ package com.docflow.documentcore;
 import com.docflow.documentcore.application.validator.NivelAccesoValidator;
 import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
+import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
+import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
@@ -132,5 +135,57 @@ class PermisoCarpetaUsuarioValidatorTest {
 
         assertThatThrownBy(() -> validator.validarNoDuplicado(carpetaId, usuarioId))
                 .isInstanceOf(PermisoCarpetaDuplicadoException.class);
+    }
+
+    @Test
+    @DisplayName("Debería permitir operación si usuario tiene ADMINISTRACION")
+    void should_Allow_When_UserHasAdminPermission() {
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setId(Math.abs(new Random().nextLong()));
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(NivelAcceso.ADMINISTRACION);
+
+        when(permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId))
+                .thenReturn(Optional.of(permiso));
+
+        validator.validarAdministrador(usuarioId, carpetaId, organizacionId);
+
+        verify(permisoRepository).findByCarpetaIdAndUsuarioId(carpetaId, usuarioId);
+    }
+
+    @Test
+    @DisplayName("Debería lanzar 403 si usuario no tiene ADMINISTRACION")
+    void should_ThrowForbidden_When_UserLacksAdminPermission() {
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setId(Math.abs(new Random().nextLong()));
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(NivelAcceso.LECTURA);
+
+        when(permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId))
+                .thenReturn(Optional.of(permiso));
+
+        assertThatThrownBy(() -> validator.validarAdministrador(usuarioId, carpetaId, organizacionId))
+                .isInstanceOf(SinPermisoCarpetaException.class);
+    }
+
+    @Test
+    @DisplayName("Debería lanzar 404 si permiso es de otra organización")
+    void should_ThrowNotFound_When_TenantMismatch() {
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setId(Math.abs(new Random().nextLong()));
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId + 1);
+        permiso.setNivelAcceso(NivelAcceso.ADMINISTRACION);
+
+        when(permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId))
+                .thenReturn(Optional.of(permiso));
+
+        assertThatThrownBy(() -> validator.validarAdministrador(usuarioId, carpetaId, organizacionId))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

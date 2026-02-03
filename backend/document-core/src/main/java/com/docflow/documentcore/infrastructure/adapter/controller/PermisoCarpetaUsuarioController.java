@@ -133,6 +133,18 @@ public class PermisoCarpetaUsuarioController {
         return ResponseEntity.ok(response);
     }
 
+        @DeleteMapping("/{usuarioId}")
+        @Operation(summary = "Revocar permiso de carpeta para usuario")
+        public ResponseEntity<Void> revocarPermiso(
+                        @PathVariable Long carpetaId,
+                        @PathVariable Long usuarioId,
+                        @RequestHeader(value = "X-Organization-Id", required = false, defaultValue = "1") Long organizacionId,
+                        @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1") Long usuarioAdminId
+        ) {
+                service.revocarPermiso(carpetaId, usuarioId, organizacionId, usuarioAdminId);
+                return ResponseEntity.noContent().build();
+        }
+
     private NivelAccesoDTO resolverNivelAccesoDTO(
             PermisoCarpetaUsuario permiso,
             Map<CodigoNivelAcceso, com.docflow.documentcore.domain.model.acl.NivelAcceso> niveles

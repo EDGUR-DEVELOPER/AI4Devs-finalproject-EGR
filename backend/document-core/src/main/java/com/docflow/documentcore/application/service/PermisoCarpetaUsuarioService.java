@@ -4,7 +4,9 @@ import com.docflow.documentcore.application.dto.UsuarioResumenDTO;
 import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioCreatedEvent;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioUpdatedEvent;
+import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioRevokedEvent;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
+import com.docflow.documentcore.domain.exception.AclNotFoundException;
 import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
@@ -152,6 +154,53 @@ public class PermisoCarpetaUsuarioService {
                 .collect(Collectors.toMap(com.docflow.documentcore.domain.model.acl.NivelAcceso::getCodigo, n -> n));
     }
 
+    /**
+     * Revokes (deletes) a permission entry for a user over a folder.
+     * This method ensures authorization (ADMIN or ADMINISTRACION role) and tenant isolation.
+     *
+     * @param carpetaId the ID of the folder
+     * @param usuarioId the ID of the user whose permission is being revoked
+     * @param organizacionId the ID of the organization (tenant isolation)
+     * @param usuarioAdminId the ID of the user performing the action (for audit trail)
+     * @throws AclNotFoundException if the permission entry is not found
+     */
+    public void revocarPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId,
+            Long usuarioAdminId
+    ) {
+        log.info("Revocando permiso de carpeta para usuario {} en carpeta {}", usuarioId, carpetaId);
+
+        // Validate that parameters are not null
+        if (carpetaId == null || usuarioId == null || organizacionId == null) {
+            throw new IllegalArgumentException("All parameters (carpetaId, usuarioId, organizacionId) are required");
+        }
+
+        // Validate authorization (admin or folder administration permission)
+        validator.validarAdministrador(usuarioAdminId, carpetaId, organizacionId);
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+
+        // Find the permission to verify it exists before deletion
+        PermisoCarpetaUsuario permiso = permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElseThrow(() -> new AclNotFoundException(carpetaId, usuarioId));
+
+        // Verify tenant isolation - the permission should belong to the same organization
+        if (!permiso.getOrganizacionId().equals(organizacionId)) {
+            throw new AclNotFoundException(carpetaId, usuarioId);
+        }
+
+        // Delete the permission
+        int deletedCount = permisoRepository.revokePermission(carpetaId, usuarioId, organizacionId);
+
+        if (deletedCount == 0) {
+            throw new AclNotFoundException(carpetaId, usuarioId);
+        }
+
+        // Publish revocation event for audit trail
+        publicarEventoRevocado(permiso, usuarioAdminId);
+    }
+
     private void publicarEventoCreado(PermisoCarpetaUsuario permiso, CodigoNivelAcceso codigo, Long usuarioAdminId) {
         try {
             PermisoCarpetaUsuarioCreatedEvent event = new PermisoCarpetaUsuarioCreatedEvent(
@@ -191,6 +240,23 @@ public class PermisoCarpetaUsuarioService {
             eventPublisher.publishEvent(event);
         } catch (Exception e) {
             log.error("Error al emitir evento de permiso actualizado", e);
+        }
+    }
+
+    private void publicarEventoRevocado(PermisoCarpetaUsuario permiso, Long usuarioAdminId) {
+        try {
+            PermisoCarpetaUsuarioRevokedEvent event = new PermisoCarpetaUsuarioRevokedEvent(
+                    permiso.getId(),
+                    permiso.getCarpetaId(),
+                    permiso.getUsuarioId(),
+                    permiso.getOrganizacionId(),
+                    permiso.getNivelAcceso().name(),
+                    usuarioAdminId,
+                    Instant.now()
+            );
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("Error al emitir evento de permiso revocado", e);
         }
     }
 }

@@ -1,8 +1,11 @@
 package com.docflow.documentcore.application.validator;
 
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
+import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
+import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
+import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
@@ -65,7 +68,15 @@ public class PermisoCarpetaUsuarioValidator {
     }
 
     public void validarAdministrador(Long usuarioId, Long carpetaId, Long organizacionId) {
-        // TODO: Integrar validación real de permisos ADMINISTRACION (US-ACL-006)
-        // Por ahora, se permite la operación (stub temporal)
+        PermisoCarpetaUsuario permiso = permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElseThrow(() -> new SinPermisoCarpetaException(carpetaId));
+
+        if (!permiso.getOrganizacionId().equals(organizacionId)) {
+            throw new ResourceNotFoundException("Carpeta", carpetaId);
+        }
+
+        if (!NivelAcceso.ADMINISTRACION.equals(permiso.getNivelAcceso())) {
+            throw new SinPermisoCarpetaException(carpetaId);
+        }
     }
 }

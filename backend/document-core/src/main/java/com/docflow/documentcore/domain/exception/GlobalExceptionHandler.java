@@ -1,6 +1,7 @@
 package com.docflow.documentcore.domain.exception;
 
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
+import com.docflow.documentcore.domain.exception.AclNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
@@ -53,6 +54,29 @@ public class GlobalExceptionHandler {
         problem.setType(URI.create("https://docflow.com/errors/resource-not-found"));
         problem.setProperty("timestamp", Instant.now());
         
+        return problem;
+    }
+
+    /**
+     * Maneja AclNotFoundException y retorna HTTP 404.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 404
+     */
+    @ExceptionHandler(AclNotFoundException.class)
+    public ProblemDetail handleAclNotFound(AclNotFoundException ex) {
+        log.debug("ACL no encontrado: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            ex.getMessage()
+        );
+
+        problem.setTitle("Permiso de Carpeta No Encontrado");
+        problem.setType(URI.create("https://docflow.com/errors/acl-not-found"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "ACL_NOT_FOUND");
+
         return problem;
     }
 

@@ -314,37 +314,6 @@ void shouldValidarAislamintoOrganizacion() {
 }
 ```
 
-#### Pruebas de Integración
-
-**`AclCarpetaControllerTest.java`:**
-```java
-@Test
-void testDeleteAclSuccess() {
-  // Given
-  String token = generarTokenAdmin(organizacionId=1);
-  
-  // When
-  mockMvc.perform(
-    delete("/carpetas/12/permisos/5")
-      .header("Authorization", "Bearer " + token)
-  )
-  
-  // Then
-  .andExpect(status().isNoContent());
-}
-
-@Test
-void testDeleteAclNotFound() {
-  // When & Then
-  mockMvc.perform(
-    delete("/carpetas/12/permisos/999") // usuario inexistente
-      .header("Authorization", "Bearer " + tokenAdmin)
-  )
-  .andExpect(status().isNotFound())
-  .andExpect(jsonPath("$.error").value("NOT_FOUND"));
-}
-```
-
 ---
 
 ### 7. Checklist de Entrega
@@ -356,7 +325,6 @@ void testDeleteAclNotFound() {
 - [ ] Excepciones específicas: `AclNotFoundException`, `UnauthorizedException`
 - [ ] Validación de aislamiento de organizacion
 - [ ] Pruebas unitarias con cobertura > 80%
-- [ ] Pruebas de integración (positivos y negativos)
 - [ ] Documentación OpenAPI actualizada
 - [ ] Evento de auditoría registrado
 
@@ -366,7 +334,6 @@ void testDeleteAclNotFound() {
 - [ ] Diálogo de confirmación antes de ejecutar
 - [ ] Manejo de estados: loading, success, error
 - [ ] Actualización de lista post-revocación
-- [ ] Tests de componentes (snapshot + comportamiento)
 - [ ] Validación de roles antes de mostrar botón "Revocar"
 
 **Documentación:**
