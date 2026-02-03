@@ -13,6 +13,8 @@ export type {
   AccionPermitida,
   IUsuario,
   IAclCarpeta,
+  IPermisoEfectivo,
+  AclCarpetaListItem,
   CreateAclCarpetaDTO,
   UpdateAclCarpetaDTO,
   AclCarpetaApiResponse,
@@ -29,6 +31,9 @@ export type { UseNivelesAccesoReturn } from './hooks/useNivelesAcceso';
 
 export { useAclCarpeta } from './hooks/useAclCarpeta';
 export type { UseAclCarpetaReturn } from './hooks/useAclCarpeta';
+
+export { useMiPermisoCarpeta } from './hooks/useMiPermisoCarpeta';
+export type { UseMiPermisoCarpetaReturn } from './hooks/useMiPermisoCarpeta';
 
 // ============================================================================
 // ATOMIC COMPONENTS

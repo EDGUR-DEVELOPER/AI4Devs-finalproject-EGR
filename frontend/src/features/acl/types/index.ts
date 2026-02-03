@@ -121,6 +121,44 @@ export interface IAclCarpeta {
 }
 
 /**
+ * Effective permission response for current user on a folder
+ * Returned by GET /api/carpetas/{carpetaId}/mi-permiso
+ */
+export interface IPermisoEfectivo {
+  /** Effective access level for the current user */
+  nivel_acceso: CodigoNivelAcceso;
+
+  /** Whether the permission is inherited from an ancestor */
+  es_heredado: boolean;
+
+  /** Origin folder ID when inherited (null if direct or unknown) */
+  carpeta_origen_id?: number | null;
+
+  /** Origin folder name when inherited (null if direct or unknown) */
+  carpeta_origen_nombre?: string | null;
+
+  /** Inheritance path from origin to current folder */
+  ruta_herencia?: string[] | null;
+}
+
+/**
+ * List item type for ACL table, supports direct and inherited entries
+ */
+export type AclCarpetaListItem = IAclCarpeta & {
+  /** Whether this entry is inherited */
+  es_heredado?: boolean;
+
+  /** Origin folder ID for inherited entries */
+  carpeta_origen_id?: number | null;
+
+  /** Origin folder name for inherited entries */
+  carpeta_origen_nombre?: string | null;
+
+  /** Inheritance path from origin to current folder */
+  ruta_herencia?: string[] | null;
+};
+
+/**
  * Request payload for creating a new folder ACL
  */
 export interface CreateAclCarpetaDTO {

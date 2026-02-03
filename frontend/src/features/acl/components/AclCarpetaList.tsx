@@ -7,20 +7,23 @@
 import React, { useState } from 'react';
 import PermissionBadge from './PermissionBadge';
 import RecursiveIndicator from './RecursiveIndicator';
-import type { IAclCarpeta } from '../types';
+import type { AclCarpetaListItem } from '../types';
 
 /**
  * Props for AclCarpetaList component
  */
 export interface AclCarpetaListProps {
   /** Array of ACL records to display */
-  acls: IAclCarpeta[];
+  acls: AclCarpetaListItem[];
 
   /** Callback when edit button is clicked */
-  onEdit: (acl: IAclCarpeta) => void;
+  onEdit: (acl: AclCarpetaListItem) => void;
 
   /** Callback when delete button is clicked */
   onDelete: (usuarioId: number) => Promise<void>;
+
+  /** Navigate to origin folder for inherited permissions */
+  onGoToOrigin?: (carpetaOrigenId: number) => void;
 
   /** Loading state for initial data fetch */
   loading?: boolean;
@@ -69,6 +72,7 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
   acls,
   onEdit,
   onDelete,
+  onGoToOrigin,
   loading = false,
   error,
   deletingUserIds = [],
@@ -221,6 +225,10 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
         <tbody className="bg-white divide-y divide-gray-200">
           {acls.map((acl) => {
             const isDeleting = deletingUserIds.includes(acl.usuario_id);
+            const isHeredado = Boolean(acl.es_heredado);
+            const originLabel =
+              acl.carpeta_origen_nombre ||
+              (acl.carpeta_origen_id ? `Carpeta #${acl.carpeta_origen_id}` : null);
             return (
               <tr
                 key={acl.id}
@@ -243,6 +251,31 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                       <p className="text-xs text-gray-500">
                         {acl.usuario.email}
                       </p>
+                      {isHeredado && (
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span
+                            className="inline-flex items-center rounded-full bg-purple-100 text-purple-800 border border-purple-200 px-2 py-0.5 text-xs font-medium"
+                            title={
+                              acl.ruta_herencia?.length
+                                ? `Ruta: ${acl.ruta_herencia.join(' / ')}`
+                                : undefined
+                            }
+                          >
+                            {originLabel
+                              ? `Heredado de ${originLabel}`
+                              : 'Heredado'}
+                          </span>
+                          {onGoToOrigin && acl.carpeta_origen_id && (
+                            <button
+                              type="button"
+                              onClick={() => onGoToOrigin(acl.carpeta_origen_id as number)}
+                              className="text-xs font-medium text-blue-700 hover:text-blue-800 hover:underline"
+                            >
+                              Ir a carpeta origen
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -270,7 +303,7 @@ export const AclCarpetaList: React.FC<AclCarpetaListProps> = ({
                 </td>
 
                 {/* Actions */}
-                {canManage && (
+                {canManage && !isHeredado && (
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-2">
                     {/* Edit button */}

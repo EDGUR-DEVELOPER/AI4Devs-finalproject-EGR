@@ -10,6 +10,7 @@ import type {
   IAclCarpeta,
   CreateAclCarpetaDTO,
   UpdateAclCarpetaDTO,
+  IPermisoEfectivo,
   AclCarpetaApiResponse,
   ListAclCarpetaApiResponse,
   AclErrorResponse,
@@ -25,6 +26,7 @@ const ACL_CARPETA_ENDPOINTS = {
     `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
   DELETE: (carpetaId: number, usuarioId: number) =>
     `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
+  MI_PERMISO: (carpetaId: number) => `/api/carpetas/${carpetaId}/mi-permiso`,
 } as const;
 
 /**
@@ -71,6 +73,25 @@ const extractErrorMessage = (error: unknown): string => {
  * Provides methods for managing explicit user permissions on folders
  */
 export const aclCarpetaApi = {
+  /**
+   * Fetch effective permission for the current user on a folder
+   * Returns direct or inherited permission details
+   *
+   * @param carpetaId - The folder ID
+   * @returns IPermisoEfectivo
+   * @throws Error with user-friendly message if request fails
+   */
+  getMiPermiso: async (carpetaId: number): Promise<IPermisoEfectivo> => {
+    try {
+      const response = await apiClient.get<IPermisoEfectivo>(
+        ACL_CARPETA_ENDPOINTS.MI_PERMISO(carpetaId)
+      );
+      return response.data;
+    } catch (error: unknown) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
+  },
   /**
    * Fetch all explicit ACLs for a specific folder
    * Returns the list of user permissions granted on this folder

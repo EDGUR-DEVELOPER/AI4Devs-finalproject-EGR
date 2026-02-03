@@ -299,8 +299,15 @@ export const AclCarpetaModal: React.FC<AclCarpetaModalProps> = ({
                 disabled={isSubmitting}
                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 Aplicar recursivamente a subcarpetas
+                <span
+                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-100 text-gray-600 text-xs"
+                  title="Si está activo, el permiso se hereda a todas las subcarpetas descendientes."
+                  aria-label="Ayuda sobre permisos recursivos"
+                >
+                  ?
+                </span>
               </span>
             </label>
 

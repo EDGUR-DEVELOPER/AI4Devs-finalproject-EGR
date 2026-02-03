@@ -8,7 +8,9 @@ import React, { useState, useMemo } from 'react';
 import AclCarpetaModal from './AclCarpetaModal';
 import AclCarpetaList from './AclCarpetaList';
 import { useAclCarpeta } from '../hooks/useAclCarpeta';
-import type { IUsuario, IAclCarpeta } from '../types';
+import { useMiPermisoCarpeta } from '../hooks/useMiPermisoCarpeta';
+import PermissionBadge from './PermissionBadge';
+import type { IUsuario, IAclCarpeta, CodigoNivelAcceso } from '../types';
 
 /**
  * Props for AclCarpetaSection component
@@ -86,6 +88,40 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({
     updateAcl,
     deleteAcl
   } = useAclCarpeta(carpetaId);
+
+  const {
+    permiso,
+    loading: permisoLoading,
+    error: permisoError,
+  } = useMiPermisoCarpeta(carpetaId);
+
+  const permisoLabel = useMemo(() => {
+    if (!permiso) {
+      return null;
+    }
+
+    if (permiso.es_heredado) {
+      if (permiso.carpeta_origen_nombre) {
+        return `Heredado de ${permiso.carpeta_origen_nombre}`;
+      }
+      if (permiso.carpeta_origen_id) {
+        return `Heredado de carpeta #${permiso.carpeta_origen_id}`;
+      }
+      return 'Heredado';
+    }
+
+    return 'Directo';
+  }, [permiso]);
+
+  const isCodigoNivelAcceso = (value?: string): value is CodigoNivelAcceso =>
+    value === 'LECTURA' || value === 'ESCRITURA' || value === 'ADMINISTRACION';
+
+  const permisoNivel = isCodigoNivelAcceso(permiso?.nivel_acceso)
+    ? permiso.nivel_acceso
+    : undefined;
+  const permisoRuta = permiso?.ruta_herencia?.length
+    ? permiso.ruta_herencia.join(' / ')
+    : null;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAcl, setEditingAcl] = useState<IAclCarpeta | null>(null);
@@ -178,6 +214,32 @@ export const AclCarpetaSection: React.FC<AclCarpetaSectionProps> = ({
           <p className="mt-1 text-sm text-gray-500">
             Gestiona quién puede acceder a esta carpeta
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {permisoLoading && (
+              <span className="text-xs text-gray-400">Cargando permiso...</span>
+            )}
+            {!permisoLoading && permiso && permisoNivel && (
+              <>
+                <PermissionBadge nivel={permisoNivel} />
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${
+                    permiso.es_heredado
+                      ? 'bg-purple-100 text-purple-800 border-purple-200'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                  }`}
+                  title={permisoRuta ?? undefined}
+                >
+                  {permisoLabel}
+                </span>
+              </>
+            )}
+            {!permisoLoading && !permiso && permisoError && (
+              <span className="text-xs text-red-600">Permiso no disponible</span>
+            )}
+            {!permisoLoading && !permiso && !permisoError && (
+              <span className="text-xs text-gray-400">Sin permiso</span>
+            )}
+          </div>
         </div>
 
         {/* Grant permission button (admin only) */}
