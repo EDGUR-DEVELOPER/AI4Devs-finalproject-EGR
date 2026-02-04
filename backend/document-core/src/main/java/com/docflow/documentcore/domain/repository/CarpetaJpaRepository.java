@@ -119,4 +119,66 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
             @Param("carpetaId") Long carpetaId,
             @Param("organizacionId") Long organizacionId
     );
+
+    /**
+     * Obtiene subcarpetas de una carpeta filtrando por permisos del usuario.
+     * 
+     * <p>Utiliza CTE recursivo para evaluar herencia de permisos desde carpetas ancestras.</p>
+     * 
+     * @param carpetaPadreId identificador de la carpeta padre
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return lista de subcarpetas accesibles (con permiso de lectura)
+     */
+    @Query(value = """
+        WITH RECURSIVE carpetas_accesibles AS (
+            -- Subcarpetas directas con permiso directo en carpeta
+            SELECT c.id, c.nombre, c.descripcion, c.fecha_creacion, 
+                   c.fecha_actualizacion, c.carpeta_padre_id, c.organizacion_id
+            FROM carpetas c
+            WHERE c.carpeta_padre_id = :carpetaPadreId
+              AND c.organizacion_id = :organizacionId
+              AND c.fecha_eliminacion IS NULL
+              AND EXISTS (
+                  SELECT 1 FROM permisos_carpeta_usuario pcu
+                  WHERE pcu.carpeta_id = c.id
+                    AND pcu.usuario_id = :usuarioId
+                    AND pcu.nivel_acceso >= 1
+              )
+        )
+        SELECT * FROM carpetas_accesibles
+        ORDER BY nombre ASC
+        """, nativeQuery = true)
+    List<CarpetaEntity> findSubcarpetasConPermiso(
+            @Param("carpetaPadreId") Long carpetaPadreId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Cuenta subcarpetas de una carpeta filtrando por permisos del usuario.
+     * 
+     * @param carpetaPadreId identificador de la carpeta padre
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número de subcarpetas accesibles
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT c.id)
+        FROM carpetas c
+        WHERE c.carpeta_padre_id = :carpetaPadreId
+          AND c.organizacion_id = :organizacionId
+          AND c.fecha_eliminacion IS NULL
+          AND EXISTS (
+              SELECT 1 FROM permisos_carpeta_usuario pcu
+              WHERE pcu.carpeta_id = c.id
+                AND pcu.usuario_id = :usuarioId
+                AND pcu.nivel_acceso >= 1
+          )
+        """, nativeQuery = true)
+    int countSubcarpetasConPermiso(
+            @Param("carpetaPadreId") Long carpetaPadreId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("organizacionId") Long organizacionId
+    );
 }

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -198,6 +199,110 @@ public class GlobalExceptionHandler {
         problem.setType(URI.create("https://docflow.com/errors/carpeta-permission-denied"));
         problem.setProperty("timestamp", Instant.now());
         problem.setProperty("errorCode", ex.getErrorCode());
+        
+        return problem;
+    }
+
+    /**
+     * Maneja CarpetaRaizNoEncontradaException y retorna HTTP 404.
+     * 
+     * Indica que no existe carpeta raíz para una organización.
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 404
+     */
+    @ExceptionHandler(CarpetaRaizNoEncontradaException.class)
+    public ProblemDetail handleCarpetaRaizNoEncontrada(CarpetaRaizNoEncontradaException ex) {
+        log.debug("Carpeta raíz no encontrada: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            ex.getMessage()
+        );
+        
+        problem.setTitle("Carpeta Raíz No Encontrada");
+        problem.setType(URI.create("https://docflow.com/errors/carpeta-raiz-not-found"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "CARPETA_RAIZ_NO_ENCONTRADA");
+        
+        return problem;
+    }
+
+    /**
+     * Maneja AccessDeniedException y retorna HTTP 403.
+     * 
+     * Indica acceso denegado a un recurso.
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 403
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Acceso denegado: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        
+        problem.setTitle("Acceso Denegado");
+        problem.setType(URI.create("https://docflow.com/errors/access-denied"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", ex.getErrorCode());
+        
+        return problem;
+    }
+
+    /**
+     * Maneja ResponseStatusException y retorna el status HTTP correspondiente.
+     * 
+     * Esta excepción es comúnmente lanzada por guards y validadores
+     * para indicar errores de autenticación (401) o autorización (403).
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con el status y mensaje de la excepción
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        
+        log.warn("ResponseStatusException capturada: {} - {}", status, ex.getReason());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            status,
+            ex.getReason() != null ? ex.getReason() : "Error en la solicitud"
+        );
+        
+        // Definir título y tipo basado en el status code
+        switch (status) {
+            case UNAUTHORIZED -> {
+                problem.setTitle("No Autenticado");
+                problem.setType(URI.create("https://docflow.com/errors/unauthorized"));
+                problem.setProperty("errorCode", "UNAUTHORIZED");
+            }
+            case FORBIDDEN -> {
+                problem.setTitle("Acceso Prohibido");
+                problem.setType(URI.create("https://docflow.com/errors/forbidden"));
+                problem.setProperty("errorCode", "FORBIDDEN");
+            }
+            case NOT_FOUND -> {
+                problem.setTitle("Recurso No Encontrado");
+                problem.setType(URI.create("https://docflow.com/errors/not-found"));
+                problem.setProperty("errorCode", "NOT_FOUND");
+            }
+            case BAD_REQUEST -> {
+                problem.setTitle("Solicitud Inválida");
+                problem.setType(URI.create("https://docflow.com/errors/bad-request"));
+                problem.setProperty("errorCode", "BAD_REQUEST");
+            }
+            default -> {
+                problem.setTitle("Error en la Solicitud");
+                problem.setType(URI.create("https://docflow.com/errors/request-error"));
+                problem.setProperty("errorCode", status.name());
+            }
+        }
+        
+        problem.setProperty("timestamp", Instant.now());
         
         return problem;
     }

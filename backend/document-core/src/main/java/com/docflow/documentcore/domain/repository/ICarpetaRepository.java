@@ -114,4 +114,38 @@ public interface ICarpetaRepository {
             Long carpetaId,
             Long organizacionId
     );
+
+    /**
+     * Obtiene subcarpetas de una carpeta con permisos filtrados para un usuario.
+     * 
+     * <p>Este método es crítico para la funcionalidad de listado de contenido.
+     * Retorna solo subcarpetas sobre las que el usuario tiene acceso de lectura,
+     * considerando permisos heredados y precedencia de ACLs.</p>
+     * 
+     * @param carpetaPadreId identificador de la carpeta padre
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return lista de subcarpetas accesibles para el usuario (solo activas)
+     */
+    List<Carpeta> obtenerSubcarpetasConPermiso(
+            Long carpetaPadreId,
+            Long usuarioId,
+            Long organizacionId
+    );
+
+    /**
+     * Cuenta el total de subcarpetas de una carpeta que son accesibles para un usuario.
+     * 
+     * <p>Utilizado para calcular el totalSubcarpetas en el listado de contenido.</p>
+     * 
+     * @param carpetaPadreId identificador de la carpeta padre
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número total de subcarpetas accesibles
+     */
+    int contarSubcarpetasConPermiso(
+            Long carpetaPadreId,
+            Long usuarioId,
+            Long organizacionId
+    );
 }

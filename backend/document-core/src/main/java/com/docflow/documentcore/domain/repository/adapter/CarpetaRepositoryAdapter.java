@@ -105,4 +105,27 @@ public class CarpetaRepositoryAdapter implements ICarpetaRepository {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Carpeta> obtenerSubcarpetasConPermiso(
+            Long carpetaPadreId,
+            Long usuarioId,
+            Long organizacionId) {
+        List<CarpetaEntity> entities = jpaRepository.findSubcarpetasConPermiso(
+                carpetaPadreId,
+                usuarioId,
+                organizacionId);
+        return mapper.toDomainList(entities);
+    }
+
+    @Override
+    public int contarSubcarpetasConPermiso(
+            Long carpetaPadreId,
+            Long usuarioId,
+            Long organizacionId) {
+        return jpaRepository.countSubcarpetasConPermiso(
+                carpetaPadreId,
+                usuarioId,
+                organizacionId);
+    }
 }

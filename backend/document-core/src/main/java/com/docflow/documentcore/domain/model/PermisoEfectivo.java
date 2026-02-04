@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import lombok.Builder;
+
 /**
  * Modelo de dominio que representa el permiso efectivo de un usuario sobre un recurso (documento o carpeta).
  * 
@@ -18,6 +20,7 @@ import java.util.Objects;
  * @see TipoRecurso
  * @see NivelAcceso
  */
+@Builder
 public final class PermisoEfectivo {
 
     private final NivelAcceso nivelAcceso;

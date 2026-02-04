@@ -78,6 +78,20 @@ Once running, the service is available at:
 The Document Core service exposes endpoints to manage explicit folder permissions (ACL) for users.
 
 - **Create permission**: `POST /api/carpetas/{carpetaId}/permisos`
+
+### List Folder Content with Permission-Based Visibility
+
+Endpoints to list folder contents (subfolders and documents) with user-specific access filtering (US-FOLDER-002).
+
+- **List folder content**: `GET /api/carpetas/{carpetaId}/contenido`
+  - Parameters: `pagina` (default: 1), `tamanio` (1-100, default: 20), `campoOrden` (default: "nombre"), `direccion` (ASC/DESC, default: ASC)
+  - Headers: `X-User-Id` (required), `X-Organization-Id` (required)
+  - Response: Paginated list of accessible subfolders and documents with user capabilities
+
+- **List root folder content**: `GET /api/carpetas/raiz/contenido`
+  - Parameters: `pagina` (default: 1), `tamanio` (1-100, default: 20), `campoOrden` (default: "nombre"), `direccion` (ASC/DESC, default: ASC)
+  - Headers: `X-User-Id` (required), `X-Organization-Id` (required)
+  - Response: Paginated list of root folder contents filtered by user permissions
 - **Update permission**: `PATCH /api/carpetas/{carpetaId}/permisos/{usuarioId}`
 - **Revoke permission**: `DELETE /api/carpetas/{carpetaId}/permisos/{usuarioId}`
 
