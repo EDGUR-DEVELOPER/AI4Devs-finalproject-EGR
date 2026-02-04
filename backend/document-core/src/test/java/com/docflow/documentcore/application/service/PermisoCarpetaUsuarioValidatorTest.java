@@ -1,4 +1,4 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.validator.NivelAccesoValidator;
 import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;

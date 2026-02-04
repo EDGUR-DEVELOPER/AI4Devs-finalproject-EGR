@@ -1,6 +1,5 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
-import com.docflow.documentcore.application.service.PermisoHerenciaService;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.model.NivelAcceso;

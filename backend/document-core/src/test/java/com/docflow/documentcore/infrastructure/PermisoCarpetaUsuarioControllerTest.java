@@ -1,4 +1,4 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.infrastructure;
 
 import com.docflow.documentcore.application.mapper.NivelAccesoDtoMapper;
 import com.docflow.documentcore.application.mapper.PermisoCarpetaUsuarioMapper;

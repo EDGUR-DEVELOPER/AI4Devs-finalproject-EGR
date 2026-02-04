@@ -1,6 +1,5 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
-import com.docflow.documentcore.application.service.NivelAccesoService;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.acl.NivelAcceso;
 import com.docflow.documentcore.domain.repository.INivelAccesoRepository;

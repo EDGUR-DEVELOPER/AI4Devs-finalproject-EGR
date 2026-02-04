@@ -179,6 +179,31 @@ public class GlobalExceptionHandler {
         
         return problem;
     }
+
+    /**
+     * Maneja MismaUbicacionException y retorna HTTP 400.
+     * 
+     * Indica que se intentó mover un documento a la carpeta donde ya está.
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(MismaUbicacionException.class)
+    public ProblemDetail handleMismaUbicacion(MismaUbicacionException ex) {
+        log.debug("Move to same location attempted: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        
+        problem.setTitle("Operación Inválida");
+        problem.setType(URI.create("https://docflow.com/errors/misma-ubicacion"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "MISMA_UBICACION");
+        
+        return problem;
+    }
     
     /**
      * Maneja SinPermisoCarpetaException y retorna HTTP 403.

@@ -1,8 +1,6 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.dto.CreatePermisoDocumentoUsuarioDTO;
-import com.docflow.documentcore.application.service.NivelAccesoService;
-import com.docflow.documentcore.application.service.PermisoDocumentoUsuarioService;
 import com.docflow.documentcore.application.validator.PermisoDocumentoUsuarioValidator;
 import com.docflow.documentcore.domain.event.PermisoDocumentoUsuarioCreatedEvent;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;

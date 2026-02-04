@@ -1,4 +1,4 @@
-package com.docflow.documentcore.infrastructure.adapter.inbound.rest;
+package com.docflow.documentcore.infrastructure;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 

@@ -1,9 +1,7 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.dto.CreatePermisoCarpetaUsuarioDTO;
 import com.docflow.documentcore.application.dto.UpdatePermisoCarpetaUsuarioDTO;
-import com.docflow.documentcore.application.service.NivelAccesoService;
-import com.docflow.documentcore.application.service.PermisoCarpetaUsuarioService;
 import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioCreatedEvent;
 import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioRevokedEvent;

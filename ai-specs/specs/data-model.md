@@ -683,3 +683,52 @@ erDiagram
 - Stateless authentication (no server-side sessions)
 - Document files encrypted at rest in MinIO
 - Email fields have unique constraints to prevent duplicate accounts 
+
+---
+
+## Audit Events
+
+### Event Types
+
+#### DOCUMENTO_MOVIDO
+Event emitted when a document is moved from one folder to another.
+
+**Event Code**: `DOCUMENTO_MOVIDO`
+
+**Payload Structure**:
+```json
+{
+  "codigoEvento": "DOCUMENTO_MOVIDO",
+  "documentoId": 100,
+  "carpetaOrigenId": 10,
+  "carpetaDestinoId": 25,
+  "usuarioId": 1,
+  "organizacionId": 1,
+  "timestamp": "2026-02-04T17:30:00.000Z"
+}
+```
+
+**Fields:**
+- `codigoEvento`: String - Fixed value "DOCUMENTO_MOVIDO"
+- `documentoId`: Long - ID of the moved document
+- `carpetaOrigenId`: Long - ID of the origin folder
+- `carpetaDestinoId`: Long - ID of the destination folder
+- `usuarioId`: Long - ID of the user who performed the operation
+- `organizacionId`: Long - ID of the organization (multi-tenant context)
+- `timestamp`: OffsetDateTime - When the event occurred (auto-generated, UTC)
+
+**Trigger**: Emitted after successfully moving a document (US-FOLDER-003)
+
+**Integration Points**:
+- Can be sent to audit log service (P5 - AuditLog Service) when implemented
+- Currently logged for future integration
+
+**Validation Rules:**
+- All fields are required
+- timestamp is auto-generated and immutable
+- codigoEvento is fixed and cannot be changed
+
+**Related Operations:**
+- Document move API: `PATCH /api/documentos/{id}/mover`
+- Requires WRITE permission on both origin and destination folders
+ 

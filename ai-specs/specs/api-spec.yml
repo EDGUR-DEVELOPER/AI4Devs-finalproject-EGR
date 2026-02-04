@@ -1363,6 +1363,152 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # Document Operations
+  /api/documentos/{id}/mover:
+    patch:
+      summary: Move document to another folder
+      description: |
+        Moves a document from its current folder to a destination folder.
+        
+        **Business Rules:**
+        - User must have WRITE (ESCRITURA) or ADMIN (ADMINISTRACION) permission on origin folder
+        - User must have WRITE (ESCRITURA) or ADMIN (ADMINISTRACION) permission on destination folder
+        - Cannot move document to the same folder it's already in
+        
+        **Behavior:**
+        - Transactional operation (all or nothing)
+        - Emits DOCUMENTO_MOVIDO audit event
+        - Updates document's carpetaId field
+        - Preserves document metadata (creation date, owner, etc.)
+      tags:
+        - Documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Document ID to move
+          example: 100
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Authenticated user ID (injected by gateway)
+          example: 1
+        - name: X-Organization-Id
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: User's organization ID (injected by gateway)
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoverDocumentoRequest'
+            example:
+              carpeta_destino_id: 25
+      responses:
+        '200':
+          description: Document moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentoMovidoResponse'
+              example:
+                documento_id: 100
+                carpeta_origen_id: 10
+                carpeta_destino_id: 25
+                mensaje: "Documento movido exitosamente"
+        '400':
+          description: Invalid request or attempting to move to same folder
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                mismaUbicacion:
+                  summary: Same location error
+                  value:
+                    type: "https://docflow.com/errors/misma-ubicacion"
+                    title: "Operación Inválida"
+                    status: 400
+                    detail: "El documento 100 ya se encuentra en la carpeta 25"
+                    timestamp: "2026-02-04T17:30:00Z"
+                    errorCode: "MISMA_UBICACION"
+                validacionError:
+                  summary: Validation error
+                  value:
+                    type: "https://docflow.com/errors/validation"
+                    title: "Error de Validación"
+                    status: 400
+                    detail: "carpeta_destino_id: no puede ser null"
+        '403':
+          description: Insufficient permissions on origin or destination folder
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                sinPermisoOrigen:
+                  summary: No permission on origin
+                  value:
+                    type: "https://docflow.com/errors/access-denied"
+                    title: "Acceso Denegado"
+                    status: 403
+                    detail: "No tiene permiso de escritura en la carpeta origen"
+                    errorCode: "SIN_PERMISO_ORIGEN"
+                sinPermisoDestino:
+                  summary: No permission on destination
+                  value:
+                    type: "https://docflow.com/errors/access-denied"
+                    title: "Acceso Denegado"
+                    status: 403
+                    detail: "No tiene permiso de escritura en la carpeta destino"
+                    errorCode: "SIN_PERMISO_DESTINO"
+        '404':
+          description: Document or destination folder not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                documentoNoEncontrado:
+                  summary: Document not found
+                  value:
+                    type: "https://docflow.com/errors/not-found"
+                    title: "Recurso No Encontrado"
+                    status: 404
+                    detail: "Documento con ID 100 no encontrado"
+                carpetaNoEncontrada:
+                  summary: Folder not found
+                  value:
+                    type: "https://docflow.com/errors/carpeta-not-found"
+                    title: "Carpeta No Encontrada"
+                    status: 404
+                    detail: "Carpeta con ID 25 no encontrada"
+        '401':
+          description: Unauthorized - missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     # Authentication Schemas
@@ -2031,6 +2177,85 @@ components:
         - id
         - carpeta_id
         - usuario_id
+
+    # Document Operations Schemas
+    MoverDocumentoRequest:
+      type: object
+      description: Request body for moving a document to another folder
+      properties:
+        carpeta_destino_id:
+          type: integer
+          format: int64
+          description: ID of the destination folder
+          example: 25
+          minimum: 1
+      required:
+        - carpeta_destino_id
+
+    DocumentoMovidoResponse:
+      type: object
+      description: Response after successfully moving a document
+      properties:
+        documento_id:
+          type: integer
+          format: int64
+          description: ID of the moved document
+          example: 100
+        carpeta_origen_id:
+          type: integer
+          format: int64
+          description: ID of the origin folder
+          example: 10
+        carpeta_destino_id:
+          type: integer
+          format: int64
+          description: ID of the destination folder
+          example: 25
+        mensaje:
+          type: string
+          description: Success message
+          example: "Documento movido exitosamente"
+      required:
+        - documento_id
+        - carpeta_origen_id
+        - carpeta_destino_id
+        - mensaje
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI reference identifying the problem type
+          example: "https://docflow.com/errors/misma-ubicacion"
+        title:
+          type: string
+          description: Short human-readable summary
+          example: "Operación Inválida"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: "El documento 100 ya se encuentra en la carpeta 25"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the error occurred
+          example: "2026-02-04T17:30:00Z"
+        errorCode:
+          type: string
+          description: Application-specific error code
+          example: "MISMA_UBICACION"
+      required:
+        - type
+        - title
+        - status
+        - detail
         - recursivo
         - fecha_creacion
         - fecha_actualizacion

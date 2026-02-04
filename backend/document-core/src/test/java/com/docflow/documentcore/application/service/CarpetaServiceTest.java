@@ -1,6 +1,5 @@
-package com.docflow.documentcore;
+package com.docflow.documentcore.application.service;
 
-import com.docflow.documentcore.application.service.CarpetaService;
 import com.docflow.documentcore.application.validator.CarpetaValidator;
 import com.docflow.documentcore.domain.event.CarpetaCreatedEvent;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
