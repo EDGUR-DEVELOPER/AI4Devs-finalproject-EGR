@@ -223,3 +223,81 @@ export interface AclErrorResponse {
     details?: Record<string, unknown>;
   };
 }
+
+// ============================================================================
+// DOCUMENT ACL TYPES
+// ============================================================================
+
+/**
+ * Document ACL record representing explicit user permissions on a document
+ * Simpler than folder ACL: no recursive field, supports expiration date
+ */
+export interface IAclDocumento {
+  /** Unique permission record identifier */
+  id: number;
+
+  /** Document ID this permission applies to */
+  documento_id: number;
+
+  /** User ID who has this permission */
+  usuario_id: number;
+
+  /** User details (embedded object) */
+  usuario: IUsuario;
+
+  /** Access level granted (LECTURA, ESCRITURA, ADMINISTRACION) */
+  nivel_acceso: INivelAcceso;
+
+  /** Optional expiration date for temporary access (ISO 8601 format) */
+  fecha_expiracion: string | null;
+
+  /** ISO 8601 timestamp when permission was assigned */
+  fecha_asignacion: string;
+}
+
+/**
+ * Request payload for creating a new document ACL
+ * Backend implements upsert behavior (creates or updates)
+ */
+export interface CreateAclDocumentoDTO {
+  /** User ID to grant access to */
+  usuario_id: number;
+
+  /** Access level code (LECTURA, ESCRITURA, ADMINISTRACION) */
+  nivel_acceso_codigo: CodigoNivelAcceso;
+
+  /** Optional expiration date for temporary access (ISO 8601 format) */
+  fecha_expiracion?: string | null;
+}
+
+/**
+ * Request payload for updating an existing document ACL
+ * Note: Backend uses same endpoint as create (upsert)
+ */
+export interface UpdateAclDocumentoDTO {
+  /** New access level code */
+  nivel_acceso_codigo: CodigoNivelAcceso;
+
+  /** Updated expiration date (optional) */
+  fecha_expiracion?: string | null;
+}
+
+/**
+ * API response envelope for a single document ACL record
+ */
+export interface AclDocumentoApiResponse {
+  id: number;
+  documento_id: number;
+  usuario_id: number;
+  usuario: IUsuario;
+  nivel_acceso: INivelAcceso;
+  fecha_expiracion: string | null;
+  fecha_asignacion: string;
+}
+
+/**
+ * API response envelope for list of document ACL records
+ */
+export interface ListAclDocumentoApiResponse {
+  permisos: AclDocumentoApiResponse[];
+}

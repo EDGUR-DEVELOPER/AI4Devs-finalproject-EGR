@@ -19,6 +19,11 @@ export type {
   UpdateAclCarpetaDTO,
   AclCarpetaApiResponse,
   ListAclCarpetaApiResponse,
+  IAclDocumento,
+  CreateAclDocumentoDTO,
+  UpdateAclDocumentoDTO,
+  AclDocumentoApiResponse,
+  ListAclDocumentoApiResponse,
   AclErrorResponse,
 } from './types';
 
@@ -34,6 +39,9 @@ export type { UseAclCarpetaReturn } from './hooks/useAclCarpeta';
 
 export { useMiPermisoCarpeta } from './hooks/useMiPermisoCarpeta';
 export type { UseMiPermisoCarpetaReturn } from './hooks/useMiPermisoCarpeta';
+
+export { useAclDocumento } from './hooks/useAclDocumento';
+export type { UseAclDocumentoReturn } from './hooks/useAclDocumento';
 
 // ============================================================================
 // ATOMIC COMPONENTS
@@ -69,9 +77,19 @@ export type { AclCarpetaListProps } from './components/AclCarpetaList';
 export { AclCarpetaSection } from './components/AclCarpetaSection';
 export type { AclCarpetaSectionProps } from './components/AclCarpetaSection';
 
+export { AclDocumentoModal } from './components/AclDocumentoModal';
+export type { AclDocumentoModalProps } from './components/AclDocumentoModal';
+
+export { AclDocumentoList } from './components/AclDocumentoList';
+export type { AclDocumentoListProps } from './components/AclDocumentoList';
+
+export { AclDocumentoSection } from './components/AclDocumentoSection';
+export type { AclDocumentoSectionProps } from './components/AclDocumentoSection';
+
 // ============================================================================
 // API SERVICES
 // ============================================================================
 
 export { aclApi } from './services/nivelAccesoService';
 export { aclCarpetaApi } from './services/aclCarpetaService';
+export { aclDocumentoApi } from './services/aclDocumentoService';
