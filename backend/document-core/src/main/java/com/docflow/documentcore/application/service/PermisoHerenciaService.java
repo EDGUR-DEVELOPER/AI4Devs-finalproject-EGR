@@ -3,8 +3,8 @@ package com.docflow.documentcore.application.service;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.CarpetaAncestro;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ public class PermisoHerenciaService {
 
         if (permisoDirecto.isPresent()) {
             PermisoCarpetaUsuario permiso = permisoDirecto.get();
-            return Optional.of(PermisoEfectivo.directo(
+            return Optional.of(PermisoEfectivo.carpetaDirecto(
                     permiso.getNivelAcceso(),
                     carpetaId,
                     carpeta.getNombre()
@@ -108,7 +108,7 @@ public class PermisoHerenciaService {
                         carpeta.getNombre()
                 );
 
-                return Optional.of(PermisoEfectivo.heredado(
+                return Optional.of(PermisoEfectivo.carpetaHeredado(
                         permisoAncestro.getNivelAcceso(),
                         ancestro.getId(),
                         ancestro.getNombre(),

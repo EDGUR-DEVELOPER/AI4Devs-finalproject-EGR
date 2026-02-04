@@ -4,8 +4,8 @@ import com.docflow.documentcore.application.service.PermisoHerenciaService;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,8 +62,8 @@ class PermisoHerenciaServiceTest {
         );
 
         assertThat(result).isPresent();
-        assertThat(result.get().isEsHeredado()).isFalse();
-        assertThat(result.get().getCarpetaOrigenId()).isEqualTo(carpetaId);
+        assertThat(result.get().isHeredado()).isFalse();
+        assertThat(result.get().getRecursoOrigenId()).isEqualTo(carpetaId);
         assertThat(result.get().getRutaHerencia()).isNull();
 
         verify(permisoRepository, never()).findByUsuarioIdAndCarpetaIds(any(), any(), any());
@@ -91,8 +91,8 @@ class PermisoHerenciaServiceTest {
         );
 
         assertThat(result).isPresent();
-        assertThat(result.get().isEsHeredado()).isTrue();
-        assertThat(result.get().getCarpetaOrigenId()).isEqualTo(padreId);
+        assertThat(result.get().isHeredado()).isTrue();
+        assertThat(result.get().getRecursoOrigenId()).isEqualTo(padreId);
         assertThat(result.get().getRutaHerencia()).containsExactly("Proyectos", "Q1");
     }
 

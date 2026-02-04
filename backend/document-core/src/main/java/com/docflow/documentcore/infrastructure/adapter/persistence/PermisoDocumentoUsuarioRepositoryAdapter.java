@@ -1,6 +1,6 @@
 package com.docflow.documentcore.infrastructure.adapter.persistence;
 
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
 import com.docflow.documentcore.infrastructure.adapter.persistence.jpa.PermisoDocumentoUsuarioJpaRepository;
 import org.springframework.stereotype.Repository;

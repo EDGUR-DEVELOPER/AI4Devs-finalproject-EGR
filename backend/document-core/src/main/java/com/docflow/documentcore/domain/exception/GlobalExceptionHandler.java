@@ -1,12 +1,10 @@
 package com.docflow.documentcore.domain.exception;
 
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
-import com.docflow.documentcore.domain.exception.AclNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 
-// import com.docflow.documentcore.domain.exceptions.TenantContextMissingException; // TODO: Implementar en US-AUTH-004
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

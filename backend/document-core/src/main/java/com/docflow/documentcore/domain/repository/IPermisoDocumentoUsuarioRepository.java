@@ -1,9 +1,9 @@
 package com.docflow.documentcore.domain.repository;
 
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 
 /**
  * Puerto del repositorio para permisos explícitos de documento (Hexagonal Architecture).

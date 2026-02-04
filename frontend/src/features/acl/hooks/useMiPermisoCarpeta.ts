@@ -1,6 +1,6 @@
 /**
  * Custom hook to fetch effective permission for current user on a folder
- * Handles loading and error states for GET /api/carpetas/{id}/mi-permiso
+ * Handles loading and error states for GET /api/permisos/carpetas/{id}/mi-permiso
  */
 
 import { useCallback, useEffect, useState } from 'react';

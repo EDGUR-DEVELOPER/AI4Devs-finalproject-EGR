@@ -1,12 +1,14 @@
-package com.docflow.documentcore.application.service;
+package com.docflow.documentcore;
 
 import com.docflow.documentcore.application.dto.CreatePermisoDocumentoUsuarioDTO;
+import com.docflow.documentcore.application.service.NivelAccesoService;
+import com.docflow.documentcore.application.service.PermisoDocumentoUsuarioService;
 import com.docflow.documentcore.application.validator.PermisoDocumentoUsuarioValidator;
 import com.docflow.documentcore.domain.event.PermisoDocumentoUsuarioCreatedEvent;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -169,7 +171,7 @@ class PermisoDocumentoUsuarioServiceTest {
         verify(validator).validarDocumentoEnOrganizacion(DOCUMENTO_ID, ORGANIZACION_ID);
         verify(validator).validarAdministrador(ADMIN_ID, DOCUMENTO_ID, ORGANIZACION_ID);
         verify(permisoRepository).delete(permisoMock);
-        verify(eventPublisher).publishEvent(any());
+        verify(eventPublisher).publishEvent(any(Object.class));
     }
 
     @Test

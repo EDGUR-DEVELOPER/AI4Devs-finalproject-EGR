@@ -122,7 +122,7 @@ export interface IAclCarpeta {
 
 /**
  * Effective permission response for current user on a folder
- * Returned by GET /api/carpetas/{carpetaId}/mi-permiso
+ * Returned by GET /api/permisos/carpetas/{carpetaId}/mi-permiso
  */
 export interface IPermisoEfectivo {
   /** Effective access level for the current user */

@@ -2,11 +2,10 @@ package com.docflow.documentcore.application.validator;
 
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
-import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.Documento;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
@@ -23,7 +22,6 @@ public class PermisoDocumentoUsuarioValidator {
     private final DocumentoJpaRepository documentoRepository;
     private final ICarpetaRepository carpetaRepository;
     private final IPermisoCarpetaUsuarioRepository permisoCarpetaRepository;
-    private final IPermisoDocumentoUsuarioRepository permisoRepository;
     private final UsuarioJpaRepository usuarioRepository;
     private final NivelAccesoValidator nivelAccesoValidator;
 
@@ -38,7 +36,6 @@ public class PermisoDocumentoUsuarioValidator {
         this.documentoRepository = documentoRepository;
         this.carpetaRepository = carpetaRepository;
         this.permisoCarpetaRepository = permisoCarpetaRepository;
-        this.permisoRepository = permisoRepository;
         this.usuarioRepository = usuarioRepository;
         this.nivelAccesoValidator = nivelAccesoValidator;
     }
@@ -83,7 +80,7 @@ public class PermisoDocumentoUsuarioValidator {
         
         // Buscar si tiene permiso de ADMINISTRACION en la carpeta padre
         Long carpetaId = documento.getCarpetaId();
-        Carpeta carpeta = carpetaRepository.obtenerPorId(carpetaId, organizacionId)
+        carpetaRepository.obtenerPorId(carpetaId, organizacionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Carpeta", carpetaId));
         
         // Verificar si tiene permiso de ADMINISTRACION en la carpeta

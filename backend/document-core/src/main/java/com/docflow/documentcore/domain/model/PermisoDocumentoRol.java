@@ -1,6 +1,5 @@
-package com.docflow.documentcore.domain.model.permiso;
+package com.docflow.documentcore.domain.model;
 
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,14 +11,17 @@ import org.hibernate.annotations.Filter;
 import java.time.OffsetDateTime;
 
 /**
- * Permisos explícitos de usuarios sobre carpetas (ACL).
+ * Permisos de roles sobre documentos (ACL).
+ * 
+ * Se heredan por los usuarios que poseen ese rol.
+ * Puede tener fecha de expiración para accesos temporales.
  * 
  * AISLAMIENTO MULTI-TENANT (US-AUTH-004):
  * - Hibernate Filter 'tenantFilter' aplica automáticamente WHERE organizacion_id = :tenantId
  * - TenantEntityListener inyecta organizacionId en @PrePersist/@PreUpdate
  */
 @Entity
-@Table(name = "permiso_carpeta_usuario")
+@Table(name = "permiso_documento_rol")
 @EntityListeners(TenantEntityListener.class)
 
 @Filter(name = "tenantFilter", condition = "organizacion_id = :tenantId")
@@ -27,17 +29,17 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PermisoCarpetaUsuario {
+public class PermisoDocumentoRol {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "carpeta_id", nullable = false)
-    private Long carpetaId;
+    @Column(name = "documento_id", nullable = false)
+    private Long documentoId;
     
-    @Column(name = "usuario_id", nullable = false)
-    private Long usuarioId;
+    @Column(name = "rol_id", nullable = false)
+    private Long rolId;
     
     @Column(name = "organizacion_id", nullable = false)
     private Long organizacionId;
@@ -46,8 +48,8 @@ public class PermisoCarpetaUsuario {
     @Column(name = "nivel_acceso", nullable = false, length = 20)
     private NivelAcceso nivelAcceso;
     
-    @Column(nullable = false)
-    private Boolean recursivo = false;
+    @Column(name = "fecha_expiracion")
+    private OffsetDateTime fechaExpiracion;
     
     @Column(name = "fecha_asignacion", nullable = false)
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();

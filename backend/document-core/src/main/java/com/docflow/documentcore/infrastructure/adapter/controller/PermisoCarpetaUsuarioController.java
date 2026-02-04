@@ -8,8 +8,8 @@ import com.docflow.documentcore.application.dto.UsuarioResumenDTO;
 import com.docflow.documentcore.application.mapper.NivelAccesoDtoMapper;
 import com.docflow.documentcore.application.mapper.PermisoCarpetaUsuarioMapper;
 import com.docflow.documentcore.application.service.PermisoCarpetaUsuarioService;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/carpetas/{carpetaId}/permisos")
-@Tag(name = "ACL - Folder Permissions", description = "Endpoints for folder ACL management")
+@Tag(name = "ACL - Permisos Carpetas", description = "Endpoints para administrar ACL carpetas")
 @SecurityRequirement(name = "bearer-jwt")
 public class PermisoCarpetaUsuarioController {
 

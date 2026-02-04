@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/acl/niveles")
-@Tag(name = "ACL - Access Levels", description = "Endpoints for access level catalog management")
+@Tag(name = "ACL - Niveles de Acceso", description = "Endpoints para gestión del catálogo de niveles de acceso")
 public class AclController {
     
     private static final Logger log = LoggerFactory.getLogger(AclController.class);
@@ -45,8 +45,8 @@ public class AclController {
      * List all active access levels
      */
     @GetMapping
-    @Operation(summary = "List all active access levels", 
-               description = "Returns all active access levels ordered by 'orden' field")
+    @Operation(summary = "Listar todos los niveles de acceso activos", 
+               description = "Devuelve todos los niveles de acceso activos ordenados por el campo 'orden'")
     public ResponseEntity<List<NivelAccesoDTO>> listActiveAccessLevels() {
         log.info("GET /api/acl/niveles - Listing active access levels");
         List<NivelAcceso> niveles = service.listAllActive();
@@ -61,8 +61,8 @@ public class AclController {
      * List all access levels including inactive
      */
     @GetMapping("/all")
-    @Operation(summary = "List all access levels (including inactive)", 
-               description = "Returns all access levels ordered by 'orden' field")
+    @Operation(summary = "Listar todos los niveles de acceso (incluyendo inactivos)", 
+               description = "Devuelve todos los niveles de acceso ordenados por el campo 'orden'")
     public ResponseEntity<List<NivelAccesoDTO>> listAllAccessLevels() {
         log.info("GET /api/acl/niveles/all - Listing all access levels");
         List<NivelAcceso> niveles = service.listAll();
@@ -77,8 +77,8 @@ public class AclController {
      * Get access level by ID
      */
     @GetMapping("/{id}")
-    @Operation(summary = "Get access level by ID", 
-               description = "Returns a specific access level by Long")
+    @Operation(summary = "Obtener nivel de acceso por ID", 
+               description = "Devuelve un nivel de acceso específico por su ID (Long)")
     public ResponseEntity<NivelAccesoDTO> getAccessLevelById(@PathVariable Long id) {
         log.info("GET /api/acl/niveles/{} - Fetching access level", id);
         validator.validateExistsById(id);
@@ -91,8 +91,8 @@ public class AclController {
      * Get access level by codigo
      */
     @GetMapping("/codigo/{codigo}")
-    @Operation(summary = "Get access level by codigo", 
-               description = "Returns a specific access level by codigo (LECTURA, ESCRITURA, ADMINISTRACION)")
+    @Operation(summary = "Obtener nivel de acceso por código", 
+               description = "Devuelve un nivel de acceso específico por su código (LECTURA, ESCRITURA, ADMINISTRACION)")
     public ResponseEntity<NivelAccesoDTO> getAccessLevelByCodigo(@PathVariable String codigo) {
         log.info("GET /api/acl/niveles/codigo/{} - Fetching access level", codigo);
         CodigoNivelAcceso codigoEnum = validator.validateCodigoFormat(codigo);
@@ -105,8 +105,8 @@ public class AclController {
      * Check if a specific action is permitted for an access level
      */
     @GetMapping("/{id}/permisos/{accion}")
-    @Operation(summary = "Check if action is permitted", 
-               description = "Verifies if a specific action is allowed for the given access level")
+    @Operation(summary = "Verificar si una acción está permitida", 
+               description = "Verifica si una acción específica está permitida para el nivel de acceso dado")
     public ResponseEntity<Boolean> checkPermission(
             @PathVariable Long id,
             @PathVariable String accion) {

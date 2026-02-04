@@ -7,8 +7,8 @@ import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaExcept
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;

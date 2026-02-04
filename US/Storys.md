@@ -135,17 +135,7 @@
     - *Scenario 2:* Dado que NO existe permiso explícito de documento, Cuando se evalúa el acceso, Entonces se usa el permiso de carpeta (incluyendo herencia si aplica).
 - **Notas Técnicas/Datos:** Regla simple para MVP: `Permiso_Documento` (si existe) > `Permiso_Carpeta`.
 
-**[US-ACL-007] Enforzar permisos de lectura en endpoints de consulta/descarga**
-- **Narrativa:** Como sistema, quiero bloquear lecturas sin permiso, para proteger información.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario sin `LECTURA`, Cuando lista una carpeta o descarga un documento, Entonces recibe `403`.
-
-**[US-ACL-008] Enforzar permisos de escritura en endpoints de creación/actualización**
-- **Narrativa:** Como sistema, quiero bloquear escrituras sin permiso, para evitar cambios no autorizados.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario sin `ESCRITURA`, Cuando intenta subir documento o crear subcarpeta, Entonces recibe `403`.
-
-**[US-ACL-009] UI muestra capacidades (acciones habilitadas) por carpeta/documento**
+**[US-ACL-007] UI muestra capacidades (acciones habilitadas) por carpeta/documento**
 - **Narrativa:** Como usuario, quiero que la UI habilite o deshabilite acciones según mis permisos, para evitar errores.
 - **Criterios de Aceptación:**
     - *Scenario 1:* Dado un usuario con solo `LECTURA`, Cuando navega una carpeta, Entonces la UI deshabilita “Subir” y “Administrar permisos”.

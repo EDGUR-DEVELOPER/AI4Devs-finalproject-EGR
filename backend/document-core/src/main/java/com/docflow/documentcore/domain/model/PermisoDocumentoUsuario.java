@@ -1,9 +1,9 @@
-package com.docflow.documentcore.domain.model.permiso;
+package com.docflow.documentcore.domain.model;
 
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +29,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PermisoDocumentoUsuario {
     
     @Id
@@ -52,5 +53,6 @@ public class PermisoDocumentoUsuario {
     private OffsetDateTime fechaExpiracion;
     
     @Column(name = "fecha_asignacion", nullable = false)
+    @Builder.Default
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();
 }

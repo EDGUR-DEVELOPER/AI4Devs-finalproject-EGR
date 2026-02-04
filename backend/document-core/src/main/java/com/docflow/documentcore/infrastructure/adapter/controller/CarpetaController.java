@@ -5,6 +5,9 @@ import com.docflow.documentcore.application.dto.CreateCarpetaDTO;
 import com.docflow.documentcore.application.mapper.CarpetaDtoMapper;
 import com.docflow.documentcore.application.service.CarpetaService;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.TipoRecurso;
+import com.docflow.documentcore.infrastructure.security.RequierePermiso;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -100,6 +103,11 @@ public class CarpetaController {
      * Obtiene una carpeta por su ID.
      */
     @GetMapping("/{id}")
+    @RequierePermiso(
+        tipoRecurso = TipoRecurso.CARPETA,
+        nivelRequerido = NivelAcceso.LECTURA,
+        errorMessage = "No tienes permisos para ver esta carpeta"
+    )
     @Operation(
         summary = "Obtener carpeta por ID",
         description = "Busca una carpeta específica por su identificador único."
@@ -110,6 +118,7 @@ public class CarpetaController {
             description = "Carpeta encontrada",
             content = @Content(schema = @Schema(implementation = CarpetaDTO.class))
         ),
+        @ApiResponse(responseCode = "403", description = "Sin permisos para ver esta carpeta"),
         @ApiResponse(responseCode = "404", description = "Carpeta no encontrada")
     })
     public ResponseEntity<CarpetaDTO> obtenerPorId(
@@ -125,6 +134,11 @@ public class CarpetaController {
      * Lista las carpetas hijas de una carpeta padre.
      */
     @GetMapping("/{id}/hijos")
+    @RequierePermiso(
+        tipoRecurso = TipoRecurso.CARPETA,
+        nivelRequerido = NivelAcceso.LECTURA,
+        errorMessage = "No tienes permisos para ver el contenido de esta carpeta"
+    )
     @Operation(
         summary = "Listar carpetas hijas",
         description = "Obtiene todas las subcarpetas directas de una carpeta padre."
@@ -134,7 +148,8 @@ public class CarpetaController {
             responseCode = "200",
             description = "Lista de carpetas hijas",
             content = @Content(schema = @Schema(implementation = CarpetaDTO.class))
-        )
+        ),
+        @ApiResponse(responseCode = "403", description = "Sin permisos para ver el contenido de esta carpeta")
     })
     public ResponseEntity<List<CarpetaDTO>> obtenerHijos(
             @PathVariable Long id,
@@ -173,12 +188,18 @@ public class CarpetaController {
      * Elimina lógicamente una carpeta.
      */
     @DeleteMapping("/{id}")
+    @RequierePermiso(
+        tipoRecurso = TipoRecurso.CARPETA,
+        nivelRequerido = NivelAcceso.ADMINISTRACION,
+        errorMessage = "No tienes permisos de administración para eliminar esta carpeta"
+    )
     @Operation(
         summary = "Eliminar carpeta",
         description = "Realiza eliminación lógica de una carpeta (soft delete). La carpeta no se elimina físicamente."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Carpeta eliminada exitosamente"),
+        @ApiResponse(responseCode = "403", description = "Sin permisos para eliminar esta carpeta"),
         @ApiResponse(responseCode = "404", description = "Carpeta no encontrada")
     })
     public ResponseEntity<Void> eliminar(

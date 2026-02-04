@@ -7,8 +7,8 @@ import com.docflow.documentcore.application.dto.UsuarioResumenDTO;
 import com.docflow.documentcore.application.mapper.NivelAccesoDtoMapper;
 import com.docflow.documentcore.application.mapper.PermisoDocumentoUsuarioMapper;
 import com.docflow.documentcore.application.service.PermisoDocumentoUsuarioService;
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/documentos/{documentoId}/permisos")
-@Tag(name = "ACL - Document Permissions", description = "Endpoints for document ACL management")
+@Tag(name = "ACL - Permisos de Documento", description = "Endpoints para gestión de permisos (ACL) de documentos")
 @SecurityRequirement(name = "bearer-jwt")
 public class PermisoDocumentoUsuarioController {
 

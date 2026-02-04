@@ -1,69 +1,44 @@
 package com.docflow.documentcore.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
 
-import java.util.List;
+import java.time.OffsetDateTime;
 
 /**
- * DTO de respuesta para permiso efectivo de carpeta (directo o heredado).
+ * DTO for representing effective permission information in API responses.
+ * 
+ * <p>This DTO is returned by permission query endpoints to inform clients
+ * about the user's effective permission on a resource (document or folder),
+ * including the origin of that permission.</p>
+ * 
+ * <h3>Extended for US-ACL-006</h3>
+ * <p>Now supports both document and folder permissions, with explicit origin tracking.</p>
+ * 
+ * @see com.docflow.documentcore.domain.model.PermisoEfectivo
  */
+@Data
+@Builder
 public class PermisoEfectivoDTO {
 
     @JsonProperty("nivel_acceso")
     private String nivelAcceso;
+    
+    /**
+     * Origin of permission: DOCUMENTO, CARPETA_DIRECTO, or CARPETA_HEREDADO
+     */
+    @JsonProperty("origen")
+    private String origen;
+    
+    @JsonProperty("recurso_origen_id")
+    private Long recursoOrigenId;
+    
+    @JsonProperty("tipo_recurso")
+    private String tipoRecurso;
+    
+    @JsonProperty("evaluado_en")
+    private OffsetDateTime evaluadoEn;
 
-    @JsonProperty("es_heredado")
-    private boolean esHeredado;
-
-    @JsonProperty("carpeta_origen_id")
-    private Long carpetaOrigenId;
-
-    @JsonProperty("carpeta_origen_nombre")
-    private String carpetaOrigenNombre;
-
-    @JsonProperty("ruta_herencia")
-    private List<String> rutaHerencia;
-
-    public PermisoEfectivoDTO() {
-    }
-
-    public String getNivelAcceso() {
-        return nivelAcceso;
-    }
-
-    public void setNivelAcceso(String nivelAcceso) {
-        this.nivelAcceso = nivelAcceso;
-    }
-
-    public boolean isEsHeredado() {
-        return esHeredado;
-    }
-
-    public void setEsHeredado(boolean esHeredado) {
-        this.esHeredado = esHeredado;
-    }
-
-    public Long getCarpetaOrigenId() {
-        return carpetaOrigenId;
-    }
-
-    public void setCarpetaOrigenId(Long carpetaOrigenId) {
-        this.carpetaOrigenId = carpetaOrigenId;
-    }
-
-    public String getCarpetaOrigenNombre() {
-        return carpetaOrigenNombre;
-    }
-
-    public void setCarpetaOrigenNombre(String carpetaOrigenNombre) {
-        this.carpetaOrigenNombre = carpetaOrigenNombre;
-    }
-
-    public List<String> getRutaHerencia() {
-        return rutaHerencia;
-    }
-
-    public void setRutaHerencia(List<String> rutaHerencia) {
-        this.rutaHerencia = rutaHerencia;
-    }
 }
+

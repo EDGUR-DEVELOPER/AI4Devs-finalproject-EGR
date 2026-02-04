@@ -1,9 +1,9 @@
 package com.docflow.documentcore.domain.repository;
 
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 
 /**
  * Puerto de repositorio para permisos explícitos de usuarios sobre carpetas.

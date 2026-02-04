@@ -1,6 +1,5 @@
-package com.docflow.documentcore.domain.model.permiso;
+package com.docflow.documentcore.domain.model;
 
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

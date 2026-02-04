@@ -1,7 +1,8 @@
 package com.docflow.documentcore.application.mapper;
 
 import com.docflow.documentcore.application.dto.PermisoDocumentoUsuarioDTO;
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
+
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

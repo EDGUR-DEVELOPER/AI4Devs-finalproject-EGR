@@ -1,7 +1,6 @@
 package com.docflow.documentcore.domain.repository;
 
 import com.docflow.documentcore.domain.model.entity.UsuarioEntity;
-import com.docflow.documentcore.domain.model.entity.UsuarioOrganizacionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

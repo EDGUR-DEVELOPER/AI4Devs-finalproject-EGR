@@ -1,7 +1,8 @@
 package com.docflow.documentcore.application.mapper;
 
 import com.docflow.documentcore.application.dto.PermisoCarpetaUsuarioDTO;
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

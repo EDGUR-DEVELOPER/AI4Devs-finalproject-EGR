@@ -26,7 +26,7 @@ const ACL_CARPETA_ENDPOINTS = {
     `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
   DELETE: (carpetaId: number, usuarioId: number) =>
     `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
-  MI_PERMISO: (carpetaId: number) => `/api/carpetas/${carpetaId}/mi-permiso`,
+  MI_PERMISO: (carpetaId: number) => `/api/permisos/carpetas/${carpetaId}/mi-permiso`,
 } as const;
 
 /**

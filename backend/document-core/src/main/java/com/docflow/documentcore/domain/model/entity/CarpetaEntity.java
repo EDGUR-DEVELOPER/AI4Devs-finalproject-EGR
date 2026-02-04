@@ -2,7 +2,7 @@ package com.docflow.documentcore.domain.model.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 /**
@@ -32,7 +32,7 @@ import java.time.Instant;
     }
 )
 @SQLDelete(sql = "UPDATE carpetas SET fecha_eliminacion = CURRENT_TIMESTAMP WHERE id = ?")
-@Where(clause = "fecha_eliminacion IS NULL")
+@SQLRestriction(value = "fecha_eliminacion IS NULL")
 public class CarpetaEntity {
     
     @Id

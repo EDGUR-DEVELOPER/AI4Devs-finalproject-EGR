@@ -1,6 +1,6 @@
 package com.docflow.documentcore.domain.repository.adapter;
 
-import com.docflow.documentcore.domain.model.permiso.PermisoCarpetaUsuario;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.PermisoCarpetaUsuarioJpaRepository;
 import org.springframework.stereotype.Component;

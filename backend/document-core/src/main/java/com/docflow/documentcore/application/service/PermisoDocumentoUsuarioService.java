@@ -8,9 +8,9 @@ import com.docflow.documentcore.domain.event.PermisoDocumentoUsuarioRevokedEvent
 import com.docflow.documentcore.domain.event.PermisoDocumentoUsuarioUpdatedEvent;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.entity.UsuarioEntity;
-import com.docflow.documentcore.domain.model.permiso.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
 import org.slf4j.Logger;
