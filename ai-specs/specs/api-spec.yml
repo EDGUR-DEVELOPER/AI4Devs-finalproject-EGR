@@ -1241,6 +1241,128 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # Document Permission Management (ACL)
+  /api/documentos/{documentoId}/permisos:
+    post:
+      summary: Create or update document permission
+      description: |
+        Creates a new explicit ACL entry for a user on a document, or updates existing one (upsert behavior).
+        Requires ADMIN role or ADMINISTRACION permission on parent folder.
+      tags:
+        - ACL - Document Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentoId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Document ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermisoDocumentoUsuarioRequest'
+      responses:
+        '201':
+          description: Permission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermisoDocumentoUsuarioResponse'
+        '200':
+          description: Permission updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermisoDocumentoUsuarioResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List document permissions
+      description: Lists all explicit ACLs assigned to a document
+      tags:
+        - ACL - Document Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentoId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Document ID
+      responses:
+        '200':
+          description: Permissions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermisoDocumentoUsuarioResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/documentos/{documentoId}/permisos/{usuarioId}:
+    delete:
+      summary: Revoke document permission
+      description: Revokes a user's explicit ACL over a document (hard delete)
+      tags:
+        - ACL - Document Permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentoId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Document ID
+        - name: usuarioId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '204':
+          description: Permission revoked successfully
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Permission, document, or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     # Authentication Schemas
@@ -1941,6 +2063,57 @@ components:
         - carpeta_origen_id
         - carpeta_origen_nombre
     
+    # Document Permission Schemas
+    CreatePermisoDocumentoUsuarioRequest:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+          description: User ID to grant access
+        nivel_acceso_codigo:
+          type: string
+          enum: [LECTURA, ESCRITURA, ADMINISTRACION]
+          description: Access level code
+        fecha_expiracion:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional expiration date for temporary access
+      required:
+        - usuario_id
+        - nivel_acceso_codigo
+
+    PermisoDocumentoUsuarioResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Permission ID
+        documento_id:
+          type: integer
+          description: Document ID
+        usuario_id:
+          type: integer
+          description: User ID
+        usuario:
+          $ref: '#/components/schemas/UsuarioResumenDTO'
+        nivel_acceso:
+          $ref: '#/components/schemas/NivelAccesoDTO'
+        fecha_expiracion:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration date for temporary access
+        fecha_asignacion:
+          type: string
+          format: date-time
+          description: When permission was assigned
+      required:
+        - id
+        - documento_id
+        - usuario_id
+        - fecha_asignacion
+    
     ErrorResponse:
       type: object
       properties:
@@ -1977,6 +2150,8 @@ tags:
     description: Access level catalog for role-based access control (LECTURA, ESCRITURA, ADMINISTRACION)
   - name: ACL - Folder Permissions
     description: User-level permissions for folders (ACL per folder)
+  - name: ACL - Document Permissions
+    description: User-level permissions for documents (explicit ACL per document)
   - name: Documents
     description: Document management operations (CRUD, search, versioning)
   - name: Document Versions

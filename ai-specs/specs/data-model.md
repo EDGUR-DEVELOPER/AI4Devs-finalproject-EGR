@@ -194,6 +194,49 @@ Represents explicit user permissions applied to a folder, with optional recursiv
 
 ---
 
+### 6.1. Document User Permission (permiso_documento_usuario)
+Explicit access control list (ACL) entries for users on specific documents. Allows granting exceptions without modifying parent folder permissions (US-ACL-005).
+
+**Fields:**
+- `id`: Long - Unique permission identifier (Primary Key)
+- `documentId`: Long - Foreign key to Document (`documento_id`)
+- `userId`: Long - Foreign key to User (`usuario_id`)
+- `organizationId`: Long - Foreign key to Organization (`organizacion_id`)
+- `accessLevel`: Enum [LECTURA, ESCRITURA, ADMINISTRACION] (`nivel_acceso`)
+- `expirationDate`: DateTime (nullable) (`fecha_expiracion`) - Optional expiration for temporary access
+- `assignedAt`: DateTime (`fecha_asignacion`) - When permission was granted
+
+**Validation Rules:**
+- A user can have only one explicit permission per document
+- `accessLevel` must be one of the catalog values
+- `organizationId` must match both user and document organization
+- Document permissions do not affect folder inheritance
+
+**Relationships:**
+- `document`: Many-to-one with Document
+- `user`: Many-to-one with User
+- `organization`: Many-to-one with Organization
+
+**Performance Indices:**
+- **Document lookup index**: `idx_permiso_documento_id`
+    - Columns: `(documento_id)`
+    - Purpose: Fast permission retrieval for a document
+- **User lookup index**: `idx_permiso_usuario_id`
+    - Columns: `(usuario_id)`
+    - Purpose: Fast permission retrieval for a user
+- **Organization index**: `idx_permiso_organizacion_id`
+    - Columns: `(organizacion_id)`
+    - Purpose: Multi-tenant isolation
+- **Unique constraint**: `uk_permiso_doc_user`
+    - Columns: `(documento_id, usuario_id)`
+    - Purpose: Prevent duplicate permissions
+
+**Multi-tenant Isolation:**
+- Hibernate Filter `tenantFilter` automatically applies `WHERE organizacion_id = :tenantId`
+- TenantEntityListener injects `organizacionId` on @PrePersist/@PreUpdate
+
+---
+
 ### 7. Folder
 Represents a hierarchical folder structure for organizing documents.
 
