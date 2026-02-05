@@ -4,7 +4,19 @@
 
 ---
 
-## 1. Resumen de alcance detectado
+## [original]
+
+### Narrativa
+Como usuario, quiero listar el historial de versiones, para entender la evolución del documento.
+
+### Criterios de Aceptación
+- **Scenario 1:** Dado un documento, Cuando consulto versiones, Entonces recibo una lista ordenada ascendente por `numero_secuencial`.
+
+---
+
+## [enhanced]
+
+### 1. Resumen de alcance detectado
 
 ### Capacidades encontradas:
 - Consulta del historial de versiones de un documento
