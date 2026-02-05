@@ -261,7 +261,9 @@ Represents a hierarchical folder structure for organizing documents.
 - Name is required, 1-255 characters
 - Must not have circular parent relationships
 - Folders can be nested to any depth
-- Deleting a folder soft-deletes all child documents and folders
+- Root folders cannot be deleted
+- Folder deletion is soft delete only and allowed only when the folder is empty
+- A folder is considered empty when it has no active subfolders and no active documents
 - Folder names must be unique per parent folder (within organization)
 
 **Relationships:**

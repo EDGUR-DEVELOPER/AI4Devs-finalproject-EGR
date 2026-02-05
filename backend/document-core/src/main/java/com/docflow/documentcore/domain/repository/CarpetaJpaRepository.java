@@ -181,4 +181,92 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
             @Param("usuarioId") Long usuarioId,
             @Param("organizacionId") Long organizacionId
     );
+
+    /**
+     * Verifica si existen subcarpetas activas (no eliminadas) de una carpeta.
+     * 
+     * <p>Utiliza EXISTS para eficiencia (evita contar todas las filas).</p>
+     * 
+     * @param carpetaId identificador de la carpeta padre
+     * @param organizacionId identificador de la organización
+     * @return true si existe al menos una subcarpeta activa, false en caso contrario
+     */
+    @Query(value = """
+        SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM carpetas c
+            WHERE c.carpeta_padre_id = :carpetaId
+              AND c.organizacion_id = :organizacionId
+              AND c.fecha_eliminacion IS NULL
+        ) THEN true ELSE false END
+        """, nativeQuery = true)
+    boolean existsSubcarpetasActivas(
+            @Param("carpetaId") Long carpetaId,
+            @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Verifica si existen documentos activos (no eliminados) en una carpeta.
+     * 
+     * <p>Utiliza EXISTS para eficiencia (evita contar todas las filas).</p>
+     * 
+     * @param carpetaId identificador de la carpeta
+     * @param organizacionId identificador de la organización
+     * @return true si existe al menos un documento activo, false en caso contrario
+     */
+    @Query(value = """
+        SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM documentos d
+            WHERE d.carpeta_id = :carpetaId
+              AND d.organizacion_id = :organizacionId
+              AND d.fecha_eliminacion IS NULL
+        ) THEN true ELSE false END
+        """, nativeQuery = true)
+    boolean existsDocumentosActivos(
+            @Param("carpetaId") Long carpetaId,
+            @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Cuenta el número de subcarpetas activas directas de una carpeta.
+     * 
+     * <p>Se usa para reportar el número de subcarpetas que impiden
+     * la eliminación en respuestas de error.</p>
+     * 
+     * @param carpetaId identificador de la carpeta padre
+     * @param organizacionId identificador de la organización
+     * @return número de subcarpetas con fecha_eliminacion IS NULL
+     */
+    @Query(value = """
+        SELECT COUNT(c.id)
+        FROM carpetas c
+        WHERE c.carpeta_padre_id = :carpetaId
+          AND c.organizacion_id = :organizacionId
+          AND c.fecha_eliminacion IS NULL
+        """, nativeQuery = true)
+    int countSubcarpetasActivas(
+            @Param("carpetaId") Long carpetaId,
+            @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Cuenta el número de documentos activos en una carpeta.
+     * 
+     * <p>Se usa para reportar el número de documentos que impiden
+     * la eliminación en respuestas de error.</p>
+     * 
+     * @param carpetaId identificador de la carpeta
+     * @param organizacionId identificador de la organización
+     * @return número de documentos con fecha_eliminacion IS NULL
+     */
+    @Query(value = """
+        SELECT COUNT(d.id)
+        FROM documentos d
+        WHERE d.carpeta_id = :carpetaId
+          AND d.organizacion_id = :organizacionId
+          AND d.fecha_eliminacion IS NULL
+        """, nativeQuery = true)
+    int countDocumentosActivos(
+            @Param("carpetaId") Long carpetaId,
+            @Param("organizacionId") Long organizacionId
+    );
 }

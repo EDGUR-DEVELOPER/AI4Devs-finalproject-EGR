@@ -128,4 +128,20 @@ public class CarpetaRepositoryAdapter implements ICarpetaRepository {
                 usuarioId,
                 organizacionId);
     }
+
+    @Override
+    public boolean estaVacia(Long carpetaId, Long organizacionId) {
+        return !jpaRepository.existsSubcarpetasActivas(carpetaId, organizacionId) &&
+               !jpaRepository.existsDocumentosActivos(carpetaId, organizacionId);
+    }
+
+    @Override
+    public int contarSubcarpetasActivas(Long carpetaId, Long organizacionId) {
+        return jpaRepository.countSubcarpetasActivas(carpetaId, organizacionId);
+    }
+
+    @Override
+    public int contarDocumentosActivos(Long carpetaId, Long organizacionId) {
+        return jpaRepository.countDocumentosActivos(carpetaId, organizacionId);
+    }
 }

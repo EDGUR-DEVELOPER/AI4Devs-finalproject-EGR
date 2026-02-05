@@ -2,7 +2,11 @@ package com.docflow.documentcore.application.validator;
 
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaNoVaciaException;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminableException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
+import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import org.springframework.stereotype.Component;
 
@@ -100,4 +104,75 @@ public class CarpetaValidator {
         // STUB temporal: siempre permitir
         // Comentar esta línea cuando se integre con ACL real
     }
+
+    /**
+     * Valida que el usuario tiene permisos específicos sobre una carpeta.
+     *
+     * <p><strong>Requisito:</strong> Permiso del nivel requerido en la carpeta.</p>
+     *
+     * <p><strong>TODO:</strong> Integrar con PermissionEvaluator real cuando US-ACL-006 esté lista.
+     * Por ahora usa un stub que siempre permite.</p>
+     *
+     * @param usuarioId identificador del usuario
+     * @param carpetaId identificador de la carpeta
+     * @param organizacionId identificador de la organización
+     * @param nivelRequerido nivel de acceso requerido
+     * @throws SinPermisoCarpetaException si el usuario no tiene permisos suficientes
+     */
+    public void validarPermisos(
+            Long usuarioId,
+            Long carpetaId,
+            Long organizacionId,
+            NivelAcceso nivelRequerido
+    ) {
+        // TODO: Implementar integración real con sistema ACL
+        // Por ahora, STUB que siempre permite (para desarrollo inicial)
+        // Cuando se implemente, validar nivelRequerido (ADMINISTRACION, ESCRITURA, etc.)
+    }
+    
+    /**
+     * Valida que la carpeta existe (ya que se necesita para verificar otras propiedades).
+     * 
+     * @param carpetaId identificador de la carpeta a validar
+     * @param organizacionId identificador de la organización
+     * @return Carpeta encontrada
+     * @throws CarpetaNotFoundException si la carpeta no existe
+     */
+    public Carpeta validarCarpetaExiste(Long carpetaId, Long organizacionId) {
+        return carpetaRepository.obtenerPorId(carpetaId, organizacionId)
+                .orElseThrow(() -> new CarpetaNotFoundException(carpetaId));
+    }
+    
+    /**
+     * Valida que la carpeta no es una carpeta raíz (no tiene padre).
+     * 
+     * @param carpetaId identificador de la carpeta a validar
+     * @param organizacionId identificador de la organización
+     * @throws CarpetaRaizNoEliminableException si es una carpeta raíz
+     * @throws CarpetaNotFoundException si la carpeta no existe
+     */
+    public void validarNoEsRaiz(Long carpetaId, Long organizacionId) {
+        Carpeta carpeta = validarCarpetaExiste(carpetaId, organizacionId);
+        
+        if (carpeta.getCarpetaPadreId() == null) {
+            throw new CarpetaRaizNoEliminableException(carpetaId);
+        }
+    }
+    
+    /**
+     * Valida que la carpeta está vacía (sin subcarpetas ni documentos activos).
+     * 
+     * @param carpetaId identificador de la carpeta a validar
+     * @param organizacionId identificador de la organización
+     * @throws CarpetaNoVaciaException si la carpeta contiene contenido activo
+     */
+    public void validarCarpetaVacia(Long carpetaId, Long organizacionId) {
+        if (!carpetaRepository.estaVacia(carpetaId, organizacionId)) {
+            int subcarpetasActivas = carpetaRepository.contarSubcarpetasActivas(carpetaId, organizacionId);
+            int documentosActivos = carpetaRepository.contarDocumentosActivos(carpetaId, organizacionId);
+            
+            throw new CarpetaNoVaciaException(carpetaId, subcarpetasActivas, documentosActivos);
+        }
+    }
 }
+

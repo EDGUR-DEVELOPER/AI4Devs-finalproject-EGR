@@ -148,4 +148,46 @@ public interface ICarpetaRepository {
             Long usuarioId,
             Long organizacionId
     );
+
+    /**
+     * Verifica si una carpeta está vacía (sin subcarpetas ni documentos activos).
+     * 
+     * <p><strong>Regla de Negocio (US-FOLDER-004):</strong>
+     * Una carpeta está vacía si:
+     * - No tiene subcarpetas con fecha_eliminacion IS NULL
+     * - No tiene documentos con fecha_eliminacion IS NULL
+     * </p>
+     * 
+     * <p>Esta consulta utiliza EXISTS para eficiencia (evita conteos completos).</p>
+     * 
+     * @param carpetaId identificador de la carpeta a verificar
+     * @param organizacionId identificador de la organización
+     * @return true si la carpeta está vacía, false si contiene contenido activo
+     */
+    boolean estaVacia(Long carpetaId, Long organizacionId);
+
+    /**
+     * Cuenta las subcarpetas activas directas de una carpeta.
+     * 
+     * <p>Se utiliza para reportar el número de subcarpetas que impiden
+     * la eliminación de una carpeta en respuestas de error.</p>
+     * 
+     * @param carpetaId identificador de la carpeta padre
+     * @param organizacionId identificador de la organización
+     * @return número de subcarpetas con fecha_eliminacion IS NULL
+     */
+    int contarSubcarpetasActivas(Long carpetaId, Long organizacionId);
+
+    /**
+     * Cuenta los documentos activos directos de una carpeta.
+     * 
+     * <p>Se utiliza para reportar el número de documentos que impiden
+     * la eliminación de una carpeta en respuestas de error.</p>
+     * 
+     * @param carpetaId identificador de la carpeta
+     * @param organizacionId identificador de la organización
+     * @return número de documentos con fecha_eliminacion IS NULL
+     */
+    int contarDocumentosActivos(Long carpetaId, Long organizacionId);
 }
+

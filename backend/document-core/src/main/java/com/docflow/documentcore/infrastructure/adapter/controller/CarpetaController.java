@@ -185,7 +185,7 @@ public class CarpetaController {
     }
     
     /**
-     * Elimina lógicamente una carpeta.
+     * Elimina lógicamente una carpeta vacía.
      */
     @DeleteMapping("/{id}")
     @RequierePermiso(
@@ -194,19 +194,27 @@ public class CarpetaController {
         errorMessage = "No tienes permisos de administración para eliminar esta carpeta"
     )
     @Operation(
-        summary = "Eliminar carpeta",
-        description = "Realiza eliminación lógica de una carpeta (soft delete). La carpeta no se elimina físicamente."
+        summary = "Eliminar carpeta vacía",
+        description = "Realiza eliminación lógica de una carpeta vacía (soft delete). "
+                + "Requiere permisos de ADMINISTRACION y que no tenga subcarpetas ni documentos activos."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Carpeta eliminada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "No se puede eliminar una carpeta raíz"),
         @ApiResponse(responseCode = "403", description = "Sin permisos para eliminar esta carpeta"),
-        @ApiResponse(responseCode = "404", description = "Carpeta no encontrada")
+        @ApiResponse(responseCode = "404", description = "Carpeta no encontrada"),
+        @ApiResponse(responseCode = "409", description = "Carpeta contiene subcarpetas o documentos activos")
     })
     public ResponseEntity<Void> eliminar(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Organization-Id", required = false, defaultValue = "1") Long organizacionId
+            @RequestHeader(value = "X-Organization-Id", required = false, defaultValue = "1")
+            @Parameter(description = "ID de la organización desde el token JWT", hidden = true)
+            Long organizacionId,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "1")
+            @Parameter(description = "ID del usuario desde el token JWT", hidden = true)
+            Long usuarioId
     ) {
-        carpetaService.eliminar(id, organizacionId);
+        carpetaService.eliminarCarpeta(id, usuarioId, organizacionId);
         return ResponseEntity.noContent().build();
     }
 }

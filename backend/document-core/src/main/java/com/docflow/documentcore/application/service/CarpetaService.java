@@ -2,9 +2,13 @@ package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.validator.CarpetaValidator;
 import com.docflow.documentcore.domain.event.CarpetaCreatedEvent;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaNoVaciaException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminableException;
+import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.CarpetaAncestro;
+import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,6 +164,43 @@ public class CarpetaService {
                 .orElseThrow(() -> new CarpetaNotFoundException(
                         "No se encontró carpeta raíz para la organización: " + organizacionId
                 ));
+    }
+
+    /**
+     * Elimina lógicamente una carpeta vacía (soft delete) con validaciones completas.
+     *
+     * @param carpetaId identificador de la carpeta
+     * @param usuarioId identificador del usuario solicitante
+     * @param organizacionId identificador de la organización
+     * @throws CarpetaNotFoundException si no se encuentra la carpeta
+     * @throws CarpetaRaizNoEliminableException si la carpeta es raíz
+     * @throws SinPermisoCarpetaException si el usuario no tiene permisos
+     * @throws CarpetaNoVaciaException si la carpeta no está vacía
+     */
+    public void eliminarCarpeta(Long carpetaId, Long usuarioId, Long organizacionId) {
+        logger.info("Iniciando eliminación de carpeta {} en organización {} por usuario {}",
+                carpetaId, organizacionId, usuarioId);
+
+        // 1. Validar existencia
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+
+        // 2. Validar que no es carpeta raíz
+        validator.validarNoEsRaiz(carpetaId, organizacionId);
+
+        // 3. Validar permisos de administración
+        validator.validarPermisos(usuarioId, carpetaId, organizacionId, NivelAcceso.ADMINISTRACION);
+
+        // 4. Validar que la carpeta está vacía
+        validator.validarCarpetaVacia(carpetaId, organizacionId);
+
+        // 5. Ejecutar soft delete
+        boolean eliminada = carpetaRepository.eliminarLogicamente(carpetaId, organizacionId);
+
+        if (!eliminada) {
+            throw new CarpetaNotFoundException(carpetaId);
+        }
+
+        logger.info("Carpeta {} eliminada lógicamente por usuario {}", carpetaId, usuarioId);
     }
     
     /**

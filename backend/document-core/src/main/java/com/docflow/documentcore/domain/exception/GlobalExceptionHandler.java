@@ -1,7 +1,9 @@
 package com.docflow.documentcore.domain.exception;
 
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaNoVaciaException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
+import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminableException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 
@@ -225,6 +227,56 @@ public class GlobalExceptionHandler {
         problem.setProperty("timestamp", Instant.now());
         problem.setProperty("errorCode", ex.getErrorCode());
         
+        return problem;
+    }
+
+    /**
+     * Maneja CarpetaNoVaciaException y retorna HTTP 409.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 409
+     */
+    @ExceptionHandler(CarpetaNoVaciaException.class)
+    public ProblemDetail handleCarpetaNoVacia(CarpetaNoVaciaException ex) {
+        log.debug("Carpeta no vacía: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            "La carpeta debe vaciarse antes de eliminarla"
+        );
+
+        problem.setTitle("Carpeta No Vacía");
+        problem.setType(URI.create("https://docflow.com/errors/carpeta-not-empty"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", ex.getErrorCode());
+        problem.setProperty("carpetaId", ex.getCarpetaId());
+        problem.setProperty("subcarpetasActivas", ex.getSubcarpetasActivas());
+        problem.setProperty("documentosActivos", ex.getDocumentosActivos());
+
+        return problem;
+    }
+
+    /**
+     * Maneja CarpetaRaizNoEliminableException y retorna HTTP 400.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(CarpetaRaizNoEliminableException.class)
+    public ProblemDetail handleCarpetaRaizNoEliminable(CarpetaRaizNoEliminableException ex) {
+        log.debug("Intento de eliminar carpeta raíz: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+
+        problem.setTitle("Carpeta Raíz No Eliminable");
+        problem.setType(URI.create("https://docflow.com/errors/carpeta-root-not-deletable"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", ex.getErrorCode());
+        problem.setProperty("carpetaId", ex.getCarpetaId());
+
         return problem;
     }
 
