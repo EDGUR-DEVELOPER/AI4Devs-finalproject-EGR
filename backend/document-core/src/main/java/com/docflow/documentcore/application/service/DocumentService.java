@@ -2,21 +2,31 @@ package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.dto.CreateDocumentoRequest;
 import com.docflow.documentcore.application.dto.DocumentoResponse;
+import com.docflow.documentcore.application.dto.DownloadDocumentDto;
 import com.docflow.documentcore.application.mapper.DocumentoMapper;
 import com.docflow.documentcore.application.validator.DocumentValidator;
+import com.docflow.documentcore.domain.exception.AccessDeniedException;
 import com.docflow.documentcore.domain.exception.DocumentValidationException;
+import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
+import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.model.Documento;
+import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.Version;
 import com.docflow.documentcore.domain.repository.DocumentoRepository;
 import com.docflow.documentcore.domain.repository.VersionRepository;
+import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
 import com.docflow.documentcore.infrastructure.security.SecurityContext;
+import com.docflow.documentcore.infrastructure.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
@@ -37,6 +47,8 @@ public class DocumentService {
     private final DocumentValidator documentValidator;
     private final DocumentoMapper documentoMapper;
     private final SecurityContext securityContext;
+    private final IEvaluadorPermisos evaluadorPermisos;
+    private final ApplicationEventPublisher eventPublisher;
     
     /**
      * Crea un nuevo documento con su primera versión.
@@ -155,6 +167,122 @@ public class DocumentService {
             log.error("Error al crear documento", e);
             throw new RuntimeException("Error al crear documento: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Descarga la versión actual de un documento.
+     * 
+     * <p>Este método implementa US-DOC-002 y realiza las siguientes validaciones:</p>
+     * <ol>
+     *   <li>Validar que el documento existe y pertenece a la organización (tenant isolation)</li>
+     *   <li>Validar que el usuario tiene permiso de LECTURA sobre el documento</li>
+     *   <li>Obtener la versión actual del documento</li>
+     *   <li>Descargar el archivo desde el almacenamiento</li>
+     *   <li>Resolver el tipo MIME a partir de la extensión</li>
+     *   <li>Registrar evento de auditoría DOCUMENTO_DESCARGADO</li>
+     * </ol>
+     *
+     * @param documentId ID del documento a descargar
+     * @return DTO con InputStream del archivo y metadatos
+     * @throws ResourceNotFoundException si el documento no existe o no pertenece a la organización (404)
+     * @throws AccessDeniedException si el usuario no tiene permiso de LECTURA (403)
+     * @throws StorageException si el archivo no está disponible en almacenamiento (500)
+     */
+    @Transactional(readOnly = true)
+    public DownloadDocumentDto downloadDocument(Long documentId) {
+        // 1. Obtener contexto de seguridad
+        Long organizacionId = securityContext.getOrganizacionId();
+        Long usuarioId = securityContext.getUsuarioId();
+        
+        log.info("Iniciando descarga - documentoId={}, usuarioId={}, organizacionId={}", 
+            documentId, usuarioId, organizacionId);
+        
+        // 2. Validar que documento existe y pertenece a la organización
+        Documento documento = documentoRepository.findByIdAndOrganizacionId(documentId, organizacionId)
+            .orElseThrow(() -> {
+                log.warn("Documento no encontrado o no pertenece a la organización: documentoId={}, organizacionId={}", 
+                    documentId, organizacionId);
+                return new ResourceNotFoundException("Documento", documentId);
+            });
+        
+        // 3. Validar permiso de lectura
+        boolean tienePermiso = evaluadorPermisos.tieneAcceso(
+            usuarioId,
+            documentId,
+            TipoRecurso.DOCUMENTO,
+            NivelAcceso.LECTURA,
+            organizacionId
+        );
+        
+        if (!tienePermiso) {
+            log.warn("Acceso denegado: usuarioId={} no tiene permiso de LECTURA sobre documentoId={}", 
+                usuarioId, documentId);
+            throw new AccessDeniedException("No tiene permisos de lectura sobre este documento");
+        }
+        
+        // 4. Obtener versión actual
+        if (documento.getVersionActualId() == null) {
+            log.error("Documento sin versión actual: documentoId={}", documentId);
+            throw new StorageException("El documento no tiene una versión actual asignada");
+        }
+        
+        Version versionActual = versionRepository.findById(documento.getVersionActualId())
+            .orElseThrow(() -> {
+                log.error("Versión actual no encontrada: versionId={}, documentoId={}", 
+                    documento.getVersionActualId(), documentId);
+                return new StorageException("La versión actual del documento no está disponible");
+            });
+        
+        log.debug("Versión actual encontrada: versionId={}, numeroSecuencial={}, rutaAlmacenamiento={}", 
+            versionActual.getId(), versionActual.getNumeroSecuencial(), versionActual.getRutaAlmacenamiento());
+        
+        // 5. Descargar archivo desde almacenamiento
+        InputStream stream;
+        try {
+            stream = storageService.download(versionActual.getRutaAlmacenamiento());
+            log.debug("Archivo descargado exitosamente desde almacenamiento: {}", versionActual.getRutaAlmacenamiento());
+        } catch (StorageException e) {
+            log.error("Error al descargar archivo desde almacenamiento: documentoId={}, versionId={}, ruta={}", 
+                documentId, versionActual.getId(), versionActual.getRutaAlmacenamiento(), e);
+            throw new StorageException("El archivo del documento no está disponible en el almacenamiento");
+        }
+        
+        // 6. Resolver tipo MIME
+        String mimeType  = MimeTypeResolver.getMimeType(documento.getExtension());
+        log.debug("Tipo MIME resuelto: extension={}, mimeType={}", documento.getExtension(), mimeType);
+        
+        // 7. Crear DTO de respuesta
+        DownloadDocumentDto downloadDto = new DownloadDocumentDto(
+            stream,
+            documento.getNombre(),
+            documento.getExtension(),
+            mimeType,
+            documento.getTamanioBytes()
+        );
+        
+        // 8. Emitir evento de auditoría (asíncrono, no bloquea la descarga)
+        try {
+            DocumentDownloadedEvent event = new DocumentDownloadedEvent(
+                this,
+                documentId,
+                versionActual.getId(),
+                usuarioId,
+                organizacionId,
+                documento.getTamanioBytes()
+            );
+            eventPublisher.publishEvent(event);
+            log.debug("Evento de auditoría DOCUMENTO_DESCARGADO publicado: documentoId={}, usuarioId={}", 
+                documentId, usuarioId);
+        } catch (Exception e) {
+            // No fallar la descarga si falla el evento de auditoría
+            log.error("Error al publicar evento de auditoría para descarga: documentoId={}, usuarioId={}", 
+                documentId, usuarioId, e);
+        }
+        
+        log.info("Descarga completada exitosamente: documentoId={}, versionId={}, usuarioId={}, tamanioBytes={}", 
+            documentId, versionActual.getId(), usuarioId, documento.getTamanioBytes());
+        
+        return downloadDto;
     }
     
     /**

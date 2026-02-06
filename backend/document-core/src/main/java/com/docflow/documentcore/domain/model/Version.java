@@ -1,18 +1,12 @@
 package com.docflow.documentcore.domain.model;
 
-import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.Type;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Entidad física del documento (el archivo inmutable en un momento del tiempo).

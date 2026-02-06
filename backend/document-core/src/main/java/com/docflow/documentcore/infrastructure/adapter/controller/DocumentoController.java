@@ -1,7 +1,9 @@
 package com.docflow.documentcore.infrastructure.adapter.controller;
 
 import com.docflow.documentcore.application.dto.DocumentoMovidoResponse;
+import com.docflow.documentcore.application.dto.DownloadDocumentDto;
 import com.docflow.documentcore.application.dto.MoverDocumentoRequest;
+import com.docflow.documentcore.application.service.DocumentService;
 import com.docflow.documentcore.application.service.DocumentoMoverService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,12 +12,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import java.io.InputStream;
 
 /**
  * Controlador REST para operaciones sobre documentos.
@@ -36,6 +43,7 @@ import org.springframework.web.bind.annotation.*;
 public class DocumentoController {
     
     private final DocumentoMoverService documentoMoverService;
+    private final DocumentService documentService;
     
     /**
      * Mueve un documento de una carpeta a otra.
@@ -134,5 +142,163 @@ public class DocumentoController {
         
         log.info("REST: Document moved successfully - documentoId={}", id);
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Descarga la versión actual de un documento.
+     * 
+     * <p>Endpoint para descargar el archivo de la versión actual de un documento.
+     * Utiliza streaming para soportar archivos grandes sin consumir memoria excesiva.
+     * 
+     * <p><b>Validaciones:</b>
+     * <ul>
+     *   <li>El documento debe existir y pertenecer a la organización del usuario</li>
+     *   <li>El usuario debe tener permiso de LECTURA sobre el documento</li>
+     *   <li>El archivo físico debe estar disponible en el almacenamiento</li>
+     * </ul>
+     * 
+     * <p><b>Auditoría:</b> Emite evento DOCUMENTO_DESCARGADO para trazabilidad.
+     * 
+     * <p><b>US-DOC-002:</b> Descarga de versión actual de documento.
+     * 
+     * @param id ID del documento a descargar
+     * @param response HttpServletResponse para configurar headers
+     * @return StreamingResponseBody con el contenido del archivo (200) o error (403, 404, 500)
+     */
+    @GetMapping("/{id}/download")
+    @Operation(
+        summary = "Descargar versión actual de un documento",
+        description = """
+            Descarga el archivo de la versión actual del documento.
+            
+            La operación requiere:
+            - Documento debe existir y pertenecer a la organización del usuario (tenant isolation)
+            - Usuario debe tener permiso de LECTURA, ESCRITURA o ADMINISTRACION sobre el documento
+            - Archivo físico debe estar disponible en almacenamiento
+            
+            La descarga se hace mediante streaming para soportar archivos grandes.
+            Se emite un evento de auditoría DOCUMENTO_DESCARGADO.
+            
+            Importante para seguridad:
+            - HTTP 404 en lugar de 403 para documentos de otras organizaciones (security by obscurity)
+            - HTTP 403 solo cuando el usuario está autenticado pero sin permisos en su propia organización
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Archivo descargado exitosamente",
+            content = @Content(
+                mediaType = "application/octet-stream"
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado - Token JWT ausente o inválido",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Acceso denegado - Sin permiso de LECTURA sobre el documento",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Documento no encontrado o no pertenece a la organización",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error de almacenamiento - Archivo no disponible",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        )
+    })
+    public ResponseEntity<StreamingResponseBody> downloadDocument(
+            @PathVariable
+            @Parameter(description = "ID del documento a descargar", required = true, example = "100")
+            Long id,
+            
+            HttpServletResponse response
+    ) {
+        log.info("REST: GET /api/documentos/{}/download", id);
+        
+        // Delegar al servicio (que valida permisos y tenant isolation)
+        DownloadDocumentDto downloadDto = documentService.downloadDocument(id);
+        
+        // Construir nombre de archivo completo con extensión
+        String fullFilename = downloadDto.getFullFilename();
+        
+        // Sanitizar nombre de archivo para prevenir inyección de headers HTTP
+        String sanitizedFilename = sanitizeFilename(fullFilename);
+        
+        // Configurar headers de respuesta
+        String contentDisposition = String.format("attachment; filename=\"%s\"", sanitizedFilename);
+        
+        // Crear StreamingResponseBody para transmisión eficiente
+        StreamingResponseBody stream = outputStream -> {
+            try (InputStream inputStream = downloadDto.stream()) {
+                byte[] buffer = new byte[8192]; // Buffer 8KB
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                outputStream.flush();
+                log.debug("File streamed successfully: {} bytes", downloadDto.sizeBytes());
+            } catch (Exception e) {
+                log.error("Error streaming file for documentId={}", id, e);
+                throw new RuntimeException("Error streaming file", e);
+            }
+        };
+        
+        log.info("REST: Document download initiated successfully - documentoId={}, filename={}, sizeBytes={}", 
+            id, sanitizedFilename, downloadDto.sizeBytes());
+        
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, downloadDto.mimeType())
+            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(downloadDto.sizeBytes()))
+            .body(stream);
+    }
+    
+    /**
+     * Sanitiza el nombre de archivo para prevenir inyección de headers HTTP.
+     * 
+     * <p>Elimina caracteres peligrosos que podrían inyectar headers adicionales:
+     * <ul>
+     *   <li>Comillas dobles (") → Se reemplazan por comillas simples (')</li>
+     *   <li>Saltos de línea (\r, \n) → Se eliminan</li>
+     *   <li>Caracteres de control → Se eliminan</li>
+     * </ul>
+     * 
+     * <p>Esto previene ataques de HTTP Response Splitting.
+     * 
+     * @param filename nombre de archivo original
+     * @return nombre sanitizado seguro para usar en headers HTTP
+     */
+    private String sanitizeFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "download";
+        }
+        
+        return filename
+            // Eliminar saltos de línea y retornos de carro
+            .replaceAll("[\r\n]", "")
+            // Reemplazar comillas dobles por comillas simples
+            .replace("\"", "'")
+            // Eliminar caracteres de control ASCII (0x00-0x1F, 0x7F)
+            .replaceAll("[\\x00-\\x1F\\x7F]", "")
+            .trim();
     }
 }
