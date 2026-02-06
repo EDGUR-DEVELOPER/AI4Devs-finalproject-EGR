@@ -1,4 +1,4 @@
-package com.docflow.documentcore.domain.repository;
+package com.docflow.documentcore.domain.model;
 
 /**
  * Proyección para rutas de ancestros de carpetas.

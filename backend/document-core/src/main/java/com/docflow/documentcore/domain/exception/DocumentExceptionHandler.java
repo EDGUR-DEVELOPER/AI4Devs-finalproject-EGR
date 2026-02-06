@@ -1,7 +1,5 @@
-package com.docflow.documentcore.presentation.exception;
+package com.docflow.documentcore.domain.exception;
 
-import com.docflow.documentcore.application.storage.StorageException;
-import com.docflow.documentcore.domain.exception.DocumentValidationException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

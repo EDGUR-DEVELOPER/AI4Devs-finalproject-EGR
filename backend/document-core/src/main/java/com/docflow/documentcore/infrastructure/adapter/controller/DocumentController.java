@@ -1,4 +1,4 @@
-package com.docflow.documentcore.presentation.controller;
+package com.docflow.documentcore.infrastructure.adapter.controller;
 
 import com.docflow.documentcore.application.dto.CreateDocumentoRequest;
 import com.docflow.documentcore.application.dto.DocumentoResponse;

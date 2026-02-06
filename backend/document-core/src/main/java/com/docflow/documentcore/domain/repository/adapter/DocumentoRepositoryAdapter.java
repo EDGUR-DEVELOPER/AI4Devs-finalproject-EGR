@@ -4,8 +4,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.docflow.documentcore.domain.model.Documento;
+import com.docflow.documentcore.domain.repository.DocumentoJpaRepository;
 import com.docflow.documentcore.domain.repository.IDocumentoRepository;
-import com.docflow.documentcore.infrastructure.adapter.persistence.jpa.DocumentoJpaRepository;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.docflow.documentcore.infrastructure.adapter.persistence.jpa;
+package com.docflow.documentcore.domain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

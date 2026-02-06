@@ -6,6 +6,7 @@ import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundExceptio
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminableException;
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,10 @@ import java.time.Instant;
  * Maneja específicamente excepciones relacionadas con aislamiento multi-tenant:
  * - ResourceNotFoundException → 404 (security by obscurity)
  * - TenantContextMissingException → 401 (no autenticado o sin contexto)
+ * 
+ * IMPORTANTE: Este handler debe ser cargado ANTES que cualquier otro en pruebas
+ * unitarias. Los handlers más específicos (carpeta, documento, etc.) se evalúan
+ * antes del handler genérico de Exception.
  * 
  * Parte de US-AUTH-004: Aislamiento de datos por organización.
  */
@@ -276,6 +281,78 @@ public class GlobalExceptionHandler {
         problem.setProperty("timestamp", Instant.now());
         problem.setProperty("errorCode", ex.getErrorCode());
         problem.setProperty("carpetaId", ex.getCarpetaId());
+
+        return problem;
+    }
+
+    /**
+     * Maneja DocumentValidationException y retorna HTTP 400.
+     * Consolidado de DocumentExceptionHandler.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(DocumentValidationException.class)
+    public ProblemDetail handleDocumentValidationException(DocumentValidationException ex) {
+        log.warn("Error de validación de documento: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+
+        problem.setTitle("Error de Validación");
+        problem.setType(URI.create("https://docflow.com/errors/document-validation"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "VALIDATION_ERROR");
+
+        return problem;
+    }
+
+    /**
+     * Maneja StorageException y retorna HTTP 500.
+     * Consolidado de DocumentExceptionHandler.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 500
+     */
+    @ExceptionHandler(StorageException.class)
+    public ProblemDetail handleStorageException(StorageException ex) {
+        log.error("Error de almacenamiento: {}", ex.getMessage(), ex);
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Error al guardar el archivo en almacenamiento"
+        );
+
+        problem.setTitle("Error de Almacenamiento");
+        problem.setType(URI.create("https://docflow.com/errors/storage-error"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "STORAGE_ERROR");
+
+        return problem;
+    }
+
+    /**
+     * Maneja MaxUploadSizeExceededException y retorna HTTP 413.
+     * Consolidado de DocumentExceptionHandler.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 413
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail handleMaxSizeException(MaxUploadSizeExceededException ex) {
+        log.warn("Archivo demasiado grande: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.PAYLOAD_TOO_LARGE,
+            "El archivo excede el tamaño máximo permitido"
+        );
+
+        problem.setTitle("Archivo Muy Grande");
+        problem.setType(URI.create("https://docflow.com/errors/file-too-large"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "FILE_TOO_LARGE");
 
         return problem;
     }

@@ -2,34 +2,61 @@ package com.docflow.documentcore.infrastructure;
 
 import com.docflow.documentcore.application.mapper.CarpetaDtoMapper;
 import com.docflow.documentcore.application.service.CarpetaService;
+import com.docflow.documentcore.domain.exception.GlobalExceptionHandler;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNoVaciaException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminableException;
 import com.docflow.documentcore.infrastructure.adapter.controller.CarpetaController;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = CarpetaController.class)
+/**
+ * Tests unitarios para CarpetaController.
+ * 
+ * <p>Usa MockMvcBuilders.standaloneSetup() en lugar de @WebMvcTest
+ * para control total del setup y asegurar que GlobalExceptionHandler
+ * se carga correctamente con setControllerAdvice().</p>
+ */
+@ExtendWith(MockitoExtension.class)
 @DisplayName("CarpetaController - Tests Unitarios")
 class CarpetaControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @Mock
     private CarpetaService carpetaService;
 
-    @MockitoBean
+    @Mock
     private CarpetaDtoMapper carpetaDtoMapper;
+
+    @InjectMocks
+    private CarpetaController carpetaController;
+
+    @BeforeEach
+    void setUp() {
+        // Configurar MockMvc con:
+        // 1. Controller específico
+        // 2. GlobalExceptionHandler registrado como @ControllerAdvice
+        // 3. Jackson JSON converter para serialización
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(carpetaController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
+                .build();
+    }
 
     @Test
     @DisplayName("should_Return_204_When_EmptyFolderDeleted")

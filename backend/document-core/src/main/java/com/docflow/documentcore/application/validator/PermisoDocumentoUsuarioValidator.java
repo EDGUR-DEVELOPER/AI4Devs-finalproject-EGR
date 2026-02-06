@@ -6,11 +6,11 @@ import com.docflow.documentcore.domain.model.Documento;
 import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
+import com.docflow.documentcore.domain.repository.DocumentoJpaRepository;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
 import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
-import com.docflow.documentcore.infrastructure.adapter.persistence.jpa.DocumentoJpaRepository;
 import org.springframework.stereotype.Component;
 
 /**

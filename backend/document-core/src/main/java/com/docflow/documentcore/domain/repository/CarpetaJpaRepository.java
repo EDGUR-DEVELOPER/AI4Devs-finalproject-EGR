@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.docflow.documentcore.domain.model.CarpetaAncestroProjection;
 import com.docflow.documentcore.domain.model.entity.CarpetaEntity;
 
 import java.util.List;

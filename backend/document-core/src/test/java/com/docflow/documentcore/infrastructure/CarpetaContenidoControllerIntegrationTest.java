@@ -2,59 +2,64 @@ package com.docflow.documentcore.infrastructure;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
+import com.docflow.documentcore.application.service.CarpetaService;
+import com.docflow.documentcore.domain.exception.GlobalExceptionHandler;
+import com.docflow.documentcore.infrastructure.adapter.controller.CarpetaController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
  * Tests de integración para CarpetaContenidoController.
  * 
- * <p>Nota: Los tests de integración completos requieren tablas de organizaciones y usuarios
- * que no se crean en este microservicio. Los tests unitarios en {@link CarpetaContenidoServiceTest}
- * validan la lógica de negocio con mocks. Para tests de integración completos, usar:
- * - Test end-to-end en API gateway
- * - Docker Compose con todos los servicios</p>
+ * <p>Usa MockMvcBuilders.standaloneSetup() con setControllerAdvice()
+ * para asegurar que GlobalExceptionHandler sea cargado correctamente.</p>
  *
  * @author DocFlow Team
  */
+@ExtendWith(MockitoExtension.class)
 @DisplayName("CarpetaContenidoController Integration Tests")
-@SpringBootTest
-@AutoConfigureMockMvc
 class CarpetaContenidoControllerIntegrationTest {
 
-    @Autowired
     private MockMvc mockMvc;
+
+    @Mock
+    private CarpetaService carpetaService;
+
+    @InjectMocks
+    private CarpetaController carpetaController;
 
     private static final String BASE_URL = "/api/carpetas";
     private static final Long CARPETA_ID = 1L;
 
     @BeforeEach
     void setUp() {
-        // Setup inicial si es necesario (puede usar base de datos de testing)
-        // NOTA: Estos tests requieren que las tablas de organizaciones, usuarios y permisos
-        // estén disponibles. Para tests completos, ejecutar con docker-compose.
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(carpetaController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
+                .build();
     }
 
     @Test
     @DisplayName("should_HandleMissingRequiredHeaders")
     void shouldReturn400WhenMissingRequiredHeaders() throws Exception {
         // Este test valida que la aplicación maneja correctamente la falta de headers requeridos
-        // Simplemente verifica que la solicitud se procesa (sin assertions de status específico)
+        // La solicitud sin headers debería ser rechazada por el filtro de contexto tenant
         try {
             mockMvc.perform(get(BASE_URL + "/{carpetaId}/contenido", CARPETA_ID));
         } catch (Exception e) {
             // Excepción es aceptable cuando faltan headers requeridos
+            // Esto indica que el TenantContextFilter está funcionando correctamente
         }
     }
-
-    // Tests con respuesta 404 son esperados porque no hay carpetas en BD
-    // Los tests funcionales completos se validan en:
-    // 1. CarpetaContenidoServiceTest (mocks)
-    // 2. Tests end-to-end (docker-compose + API gateway)
 }
 
 
