@@ -36,6 +36,14 @@ spring:
         jdbc:
           time_zone: UTC
 
+  # Multipart/File Upload Configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+      file-size-threshold: 2KB
+
 # Server Configuration
 server:
   port: 8082
@@ -76,3 +84,9 @@ logging:
     com.docflow.documentcore: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# DocFlow Custom Configuration
+docflow:
+  storage:
+    local:
+      path: ${DOCFLOW_STORAGE_PATH:./storage}

@@ -179,7 +179,7 @@ public class DocumentoMoverService {
         Long usuarioId,
         Long organizacionId
     ) {
-        DocumentoMovidoEvent event = new DocumentoMovidoEvent(
+        new DocumentoMovidoEvent(
             documentoId,
             carpetaOrigenId,
             carpetaDestinoId,

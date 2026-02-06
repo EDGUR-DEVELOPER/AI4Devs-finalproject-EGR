@@ -229,14 +229,14 @@ public class CarpetaContenidoService {
         CapacidadesUsuario capacidades = convertirPermisoACapacidades(permisoEfectivo);
 
         UsuarioResumen creadoPor = new UsuarioResumen(
-                documento.getPropietarioId(),
-                "Usuario " + documento.getPropietarioId()); // Placeholder - en realidad se debería obtener nombre del usuario
+                documento.getCreadoPor(),
+                "Usuario " + documento.getCreadoPor()); // Placeholder - en realidad se debería obtener nombre del usuario
 
         return new DocumentoItem(
                 documento.getId(),
                 documento.getNombre(),
-                "", // Extension - no está en modelo actual, se podría extraer del nombre
-                0L,  // Tamanio - no está disponible en documento, se debería obtener de version
+                documento.getExtension() != null ? documento.getExtension() : "", // Extension desde el modelo actualizado
+                documento.getTamanioBytes() != null ? documento.getTamanioBytes() : 0L,  // Tamaño desde el modelo actualizado
                 documento.getVersionActualId(), // Versión actual ID
                 documento.getFechaCreacion(),
                 documento.getFechaActualizacion(),

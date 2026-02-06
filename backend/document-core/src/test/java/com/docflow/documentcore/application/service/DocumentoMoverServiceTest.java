@@ -347,7 +347,7 @@ class DocumentoMoverServiceTest {
         doc.setCarpetaId(carpetaId);
         doc.setOrganizacionId(ORGANIZACION_ID);
         doc.setNombre("test-documento.pdf");
-        doc.setPropietarioId(USUARIO_ID);
+        doc.setCreadoPor(USUARIO_ID);
         doc.setFechaCreacion(OffsetDateTime.now());
         doc.setFechaActualizacion(OffsetDateTime.now());
         return doc;
