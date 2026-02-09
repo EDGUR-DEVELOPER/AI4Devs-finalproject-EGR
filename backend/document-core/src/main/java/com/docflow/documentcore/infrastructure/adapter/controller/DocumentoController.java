@@ -273,6 +273,121 @@ public class DocumentoController {
     }
     
     /**
+     * Crea una nueva versión de un documento existente.
+     * 
+     * <p>Este endpoint implementa US-DOC-003 y permite subir una nueva versión de un documento
+     * manteniendo un historial completo de cambios. El sistema incrementará automáticamente el
+     * número de versión secuencial y actualizará la referencia de versión actual del documento.
+     * 
+     * <p><b>Reglas de negocio:</b>
+     * <ul>
+     *   <li>Requiere permiso de ESCRITURA en el documento</li>
+     *   <li>El número de versión se incrementa automáticamente</li>
+     *   <li>Las versiones son inmutables (no pueden modificarse o eliminarse)</li>
+     *   <li>La versión actual se actualiza automáticamente</li>
+     *   <li>Tamaño máximo de archivo: 500 MB</li>
+     * </ul>
+     * 
+     * @param id ID del documento al que agregar nueva versión
+     * @param file Archivo a cargar como nueva versión
+     * @param comentarioCambio Descripción opcional de los cambios (máx 500 caracteres)
+     * @return Response con información de la nueva versión creada
+     */
+    @PostMapping("/{id}/versiones")
+    @Operation(
+        summary = "Subir nueva versión de documento",
+        description = """
+            Crea una nueva versión de un documento existente con historial inmutable.
+            
+            La operación requiere:
+            - Permiso de ESCRITURA en el documento
+            - Archivo válido (no vacío, máx 500 MB)
+            - Documento debe existir y no estar eliminado
+            
+            El número de versión se incrementa automáticamente y la nueva versión se convierte
+            en la versión actual del documento. Las versiones anteriores permanecen accesibles
+            en el historial.
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Nueva versión creada exitosamente",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.docflow.documentcore.application.dto.VersionResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Archivo inválido (vacío, demasiado grande, etc.)",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Sin permiso de ESCRITURA en el documento",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Documento no encontrado o no pertenece a la organización",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflicto en la creación de versión (carga concurrente)",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "413",
+            description = "Archivo demasiado grande (>500 MB)",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        )
+    })
+    public ResponseEntity<com.docflow.documentcore.application.dto.VersionResponse> createVersion(
+            @PathVariable 
+            @Parameter(description = "ID del documento al que agregar nueva versión", required = true, example = "100")
+            Long id,
+            
+            @RequestParam("file")
+            @Parameter(description = "Archivo a cargar como nueva versión", required = true)
+            org.springframework.web.multipart.MultipartFile file,
+            
+            @RequestParam(value = "comentarioCambio", required = false)
+            @Parameter(description = "Descripción opcional de los cambios (máx 500 caracteres)", example = "Actualización de contenido Q1 2026")
+            String comentarioCambio
+    ) {
+        log.info("REST: POST /api/documentos/{}/versiones", id);
+        
+        // Construir request
+        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
+            new com.docflow.documentcore.application.dto.CreateVersionRequest(file, comentarioCambio);
+        
+        // Delegar al servicio (que valida permisos y tenant isolation)
+        com.docflow.documentcore.application.dto.VersionResponse response = documentService.createVersion(id, request);
+        
+        log.info("REST: Nueva versión creada exitosamente - documentoId={}, versionId={}, numeroSecuencial={}", 
+            id, response.getId(), response.getNumeroSecuencial());
+        
+        return ResponseEntity.status(201).body(response);
+    }
+    
+    /**
      * Sanitiza el nombre de archivo para prevenir inyección de headers HTTP.
      * 
      * <p>Elimina caracteres peligrosos que podrían inyectar headers adicionales:

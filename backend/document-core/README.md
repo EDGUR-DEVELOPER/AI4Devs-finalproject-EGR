@@ -97,6 +97,49 @@ Endpoints to list folder contents (subfolders and documents) with user-specific 
 
 Revocation performs a hard delete of the permission entry and is intended for administrators.
 
+### Document Versioning (US-DOC-003)
+
+The service supports complete document version history with immutable version storage.
+
+- **Create new version**: `POST /api/documentos/{id}/versiones`
+  - Content-Type: `multipart/form-data`
+  - Form fields:
+    - `file` (required): The file to upload as the new version (max 500 MB)
+    - `comentarioCambio` (optional): Description of changes in this version (max 500 characters)
+  - Headers: `X-User-Id` (required), `X-Organization-Id` (required)
+  - Requirements: User must have ESCRITURA (write) permission on the document
+  - Response: Version details including sequential version number and metadata
+  - HTTP Status:
+    - `201 Created`: Version created successfully
+    - `400 Bad Request`: Invalid file (empty, too large, etc.)
+    - `403 Forbidden`: User lacks ESCRITURA permission
+    - `404 Not Found`: Document not found
+    - `409 Conflict`: Concurrent version upload detected
+    - `413 Payload Too Large`: File exceeds 500 MB
+
+**Version Management Features:**
+- Automatic sequential version numbering (1, 2, 3, ...)
+- Immutable version history (versions cannot be modified or deleted)
+- SHA256 hash calculation for content integrity
+- Current version tracking (`version_actual_id` updated automatically)
+- Document metadata updated with each new version (size, modification date)
+
+Response example:
+
+```json
+{
+    "id": 201,
+    "documentoId": 100,
+    "numeroSecuencial": 2,
+    "tamanioBytes": 2048576,
+    "hashContenido": "a3c7f9e2b1d4c5a6e8f9b2d3c4e5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3",
+    "comentarioCambio": "Actualización Q1 2026",
+    "creadoPor": 1,
+    "fechaCreacion": "2026-02-09T14:30:00Z",
+    "esVersionActual": true
+}
+```
+
 ### Effective Folder Permissions (US-ACL-004)
 
 The service also exposes an endpoint to resolve the effective permission for the authenticated user,

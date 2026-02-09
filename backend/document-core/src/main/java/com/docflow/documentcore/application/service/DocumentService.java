@@ -1,8 +1,10 @@
 package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.dto.CreateDocumentoRequest;
+import com.docflow.documentcore.application.dto.CreateVersionRequest;
 import com.docflow.documentcore.application.dto.DocumentoResponse;
 import com.docflow.documentcore.application.dto.DownloadDocumentDto;
+import com.docflow.documentcore.application.dto.VersionResponse;
 import com.docflow.documentcore.application.mapper.DocumentoMapper;
 import com.docflow.documentcore.application.validator.DocumentValidator;
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
@@ -166,6 +168,143 @@ public class DocumentService {
             // Rollback automático por @Transactional
             log.error("Error al crear documento", e);
             throw new RuntimeException("Error al crear documento: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Crea una nueva versión de un documento existente.
+     * 
+     * <p>Este método implementa US-DOC-003 y realiza las siguientes operaciones:</p>
+     * <ol>
+     *   <li>Validar que el documento existe y pertenece a la organización (tenant isolation)</li>
+     *   <li>Validar que el usuario tiene permiso de ESCRITURA sobre el documento</li>
+     *   <li>Validar el archivo (tamaño, formato, no vacío)</li>
+     *   <li>Calcular hash SHA256 del contenido</li>
+     *   <li>Obtener siguiente número secuencial (última versión + 1)</li>
+     *   <li>Subir archivo a almacenamiento</li>
+     *   <li>Crear registro de versión en BD</li>
+     *   <li>Actualizar referencia de versión actual en documento</li>
+     * </ol>
+     *
+     * @param documentId ID del documento al que agregar nueva versión
+     * @param request Solicitud con archivo y comentario opcional
+     * @return DTO con información de la nueva versión creada
+     * @throws ResourceNotFoundException si el documento no existe o no pertenece a la organización (404)
+     * @throws AccessDeniedException si el usuario no tiene permiso de ESCRITURA (403)
+     * @throws DocumentValidationException si el archivo no es válido (400)
+     * @throws StorageException si falla el almacenamiento (500)
+     */
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.SERIALIZABLE)
+    public VersionResponse createVersion(Long documentId, CreateVersionRequest request) {
+        // 1. Obtener contexto de seguridad
+        Long organizacionId = securityContext.getOrganizacionId();
+        Long usuarioId = securityContext.getUsuarioId();
+        
+        log.info("Iniciando creación de nueva versión - documentoId={}, usuarioId={}, organizacionId={}", 
+            documentId, usuarioId, organizacionId);
+        
+        // 2. Validar que documento existe y pertenece a la organización
+        Documento documento = documentoRepository.findByIdAndOrganizacionId(
+            documentId, organizacionId
+        ).orElseThrow(() -> new ResourceNotFoundException(
+            "Documento no encontrado con id: " + documentId
+        ));
+        
+        log.debug("Documento encontrado: id={}, nombre={}", documento.getId(), documento.getNombre());
+        
+        // 3. Validar permisos de ESCRITURA
+        if (!evaluadorPermisos.tieneAcceso(
+            usuarioId, 
+            documentId,
+            TipoRecurso.DOCUMENTO,
+            NivelAcceso.ESCRITURA,
+            organizacionId
+        )) {
+            log.warn("Acceso denegado: usuario {} no tiene permiso de ESCRITURA en documento {}", 
+                usuarioId, documentId);
+            throw new AccessDeniedException(
+                "No tiene permisos para crear versiones en este documento"
+            );
+        }
+        
+        // 4. Validar archivo
+        documentValidator.validateFile(request.getFile());
+        long fileSize = request.getFile().getSize();
+        
+        log.debug("Archivo validado: tamaño={} bytes", fileSize);
+        
+        try {
+            // 5. Calcular hash SHA256 del contenido
+            String hashContenido = calculateSHA256(request.getFile().getBytes());
+            log.debug("Hash calculado: {}", hashContenido);
+            
+            // 6. Obtener siguiente número secuencial
+            Integer ultimoNumero = documento.getNumeroVersiones();
+            Integer nuevoNumero = ultimoNumero + 1;
+            
+            log.debug("Número de versión calculado: {} (anterior: {})", nuevoNumero, ultimoNumero);
+            
+            // 7. Guardar archivo en almacenamiento
+            String storagePath = storageService.upload(
+                organizacionId,
+                documento.getCarpetaId(),
+                documento.getId(),
+                nuevoNumero,
+                request.getFile().getInputStream(),
+                fileSize
+            );
+            
+            log.debug("Archivo almacenado en: {}", storagePath);
+            
+            // 8. Crear versión
+            Version version = new Version();
+            version.setDocumentoId(documento.getId());
+            version.setNumeroSecuencial(nuevoNumero);
+            version.setTamanioBytes(fileSize);
+            version.setRutaAlmacenamiento(storagePath);
+            version.setHashContenido(hashContenido);
+            version.setComentarioCambio(request.getComentarioCambio());
+            version.setCreadoPor(usuarioId);
+            version.setFechaCreacion(OffsetDateTime.now());
+            version.setDescargas(0);
+            
+            version = versionRepository.save(version);
+            log.info("Versión {} creada con ID: {}", nuevoNumero, version.getId());
+            
+            // 9. Actualizar documento
+            documento.setVersionActualId(version.getId());
+            documento.setNumeroVersiones(nuevoNumero);
+            documento.setFechaActualizacion(OffsetDateTime.now());
+            documento.setTamanioBytes(fileSize); // Actualizar tamaño con el de la nueva versión
+            documentoRepository.save(documento);
+            
+            log.info("Documento {} actualizado con nueva versión {} (ID: {})", 
+                documento.getId(), nuevoNumero, version.getId());
+            
+            // 10. Construir respuesta
+            VersionResponse response = VersionResponse.builder()
+                .id(version.getId())
+                .documentoId(version.getDocumentoId())
+                .numeroSecuencial(version.getNumeroSecuencial())
+                .tamanioBytes(version.getTamanioBytes())
+                .hashContenido(version.getHashContenido())
+                .comentarioCambio(version.getComentarioCambio())
+                .creadoPor(version.getCreadoPor())
+                .fechaCreacion(version.getFechaCreacion())
+                .esVersionActual(true)
+                .build();
+            
+            return response;
+            
+        } catch (IOException e) {
+            log.error("Error al procesar archivo para nueva versión: documentoId={}", documentId, e);
+            throw new StorageException("Error al procesar el archivo", e);
+        } catch (StorageException e) {
+            // Re-lanzar StorageException tal como es (sin envolver)
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al crear nueva versión: documentoId={}", documentId, e);
+            throw new RuntimeException("Error al crear nueva versión: " + e.getMessage(), e);
         }
     }
     

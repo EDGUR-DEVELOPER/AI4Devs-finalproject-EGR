@@ -72,6 +72,9 @@ class DocumentServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
     
+    @Mock
+    private com.docflow.documentcore.application.validator.DocumentValidator documentValidator;
+    
     private DocumentService service;
     
     private static final Long DOCUMENTO_ID = 100L;
@@ -87,13 +90,12 @@ class DocumentServiceTest {
     @BeforeEach
     void setUp() {
         // Crear servicio con todas las dependencias mockeadas
-        // (Solo falta inyectar otras dependencias del DocumentService que no se usan en downloadDocument)
         service = new DocumentService(
             documentoRepository,
             versionRepository,
             storageService,
-            null, // documentValidator (no usado en download)
-            null, // documentoMapper (no usado en download)
+            documentValidator,
+            null, // documentoMapper (no usado en tests actuales)
             securityContext,
             evaluadorPermisos,
             eventPublisher
@@ -395,6 +397,155 @@ class DocumentServiceTest {
         // Act & Assert - La descarga NO debe fallar si falla el evento
         assertThatCode(() -> service.downloadDocument(DOCUMENTO_ID))
             .doesNotThrowAnyException();
+    }
+    
+    // ========================================================================
+    // TESTS DE CREACIÓN DE VERSIÓN (US-DOC-003)
+    // ========================================================================
+    
+    @Test
+    @DisplayName("should_CreateNewVersion_When_UserHasWritePermission")
+    void shouldCreateNewVersionWhenUserHasWritePermission() throws Exception {
+        // Arrange
+        Documento documento = crearDocumento();
+        documento.setNumeroVersiones(1);
+        documento.setVersionActualId(VERSION_ID);
+        
+        org.springframework.web.multipart.MultipartFile mockFile = 
+            mock(org.springframework.web.multipart.MultipartFile.class);
+        when(mockFile.getBytes()).thenReturn("new content".getBytes());
+        when(mockFile.getSize()).thenReturn(2048L);
+        when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream("new content".getBytes()));
+        
+        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
+            new com.docflow.documentcore.application.dto.CreateVersionRequest(mockFile, "Actualización Q1 2026");
+        
+        when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+        when(evaluadorPermisos.tieneAcceso(
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            .thenReturn(true);
+        when(storageService.upload(anyLong(), nullable(Long.class), anyLong(), anyInt(), any(), anyLong()))
+            .thenReturn("org_1/carpeta_10/doc_100/version_2/file");
+        
+        Version savedVersion = new Version();
+        savedVersion.setId(201L);
+        savedVersion.setDocumentoId(DOCUMENTO_ID);
+        savedVersion.setNumeroSecuencial(2);
+        savedVersion.setTamanioBytes(2048L);
+        savedVersion.setRutaAlmacenamiento("org_1/carpeta_10/doc_100/version_2/file");
+        savedVersion.setHashContenido("newhash123");
+        savedVersion.setComentarioCambio("Actualización Q1 2026");
+        savedVersion.setCreadoPor(USUARIO_ID);
+        savedVersion.setFechaCreacion(OffsetDateTime.now());
+        
+        when(versionRepository.save(any(Version.class))).thenReturn(savedVersion);
+        when(documentoRepository.save(any(Documento.class))).thenReturn(documento);
+        
+        // Act
+        com.docflow.documentcore.application.dto.VersionResponse result = 
+            service.createVersion(DOCUMENTO_ID, request);
+        
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(201L);
+        assertThat(result.getDocumentoId()).isEqualTo(DOCUMENTO_ID);
+        assertThat(result.getNumeroSecuencial()).isEqualTo(2);
+        assertThat(result.getTamanioBytes()).isEqualTo(2048L);
+        assertThat(result.getComentarioCambio()).isEqualTo("Actualización Q1 2026");
+        assertThat(result.getEsVersionActual()).isTrue();
+        
+        // Verificar que se guardó la versión
+        ArgumentCaptor<Version> versionCaptor = ArgumentCaptor.forClass(Version.class);
+        verify(versionRepository).save(versionCaptor.capture());
+        Version capturedVersion = versionCaptor.getValue();
+        assertThat(capturedVersion.getNumeroSecuencial()).isEqualTo(2);
+        
+        // Verificar que se actualizó el documento
+        ArgumentCaptor<Documento> documentoCaptor = ArgumentCaptor.forClass(Documento.class);
+        verify(documentoRepository).save(documentoCaptor.capture());
+        Documento capturedDocumento = documentoCaptor.getValue();
+        assertThat(capturedDocumento.getNumeroVersiones()).isEqualTo(2);
+        assertThat(capturedDocumento.getVersionActualId()).isEqualTo(201L);
+    }
+    
+    @Test
+    @DisplayName("should_ThrowResourceNotFoundException_When_DocumentNotFound_OnCreateVersion")
+    void shouldThrowResourceNotFoundExceptionWhenDocumentNotFoundOnCreateVersion() {
+        // Arrange
+        org.springframework.web.multipart.MultipartFile mockFile = 
+            mock(org.springframework.web.multipart.MultipartFile.class);
+        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
+            new com.docflow.documentcore.application.dto.CreateVersionRequest(mockFile, "Test");
+        
+        when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.empty());
+        
+        // Act & Assert
+        assertThatThrownBy(() -> service.createVersion(DOCUMENTO_ID, request))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("Documento no encontrado");
+        
+        // Verificar que no se intentó guardar nada
+        verify(versionRepository, never()).save(any());
+        verify(storageService, never()).upload(anyLong(), anyLong(), anyLong(), anyInt(), any(), anyLong());
+    }
+    
+    @Test
+    @DisplayName("should_ThrowAccessDeniedException_When_UserLacksWritePermission_OnCreateVersion")
+    void shouldThrowAccessDeniedExceptionWhenUserLacksWritePermissionOnCreateVersion() {
+        // Arrange
+        Documento documento = crearDocumento();
+        org.springframework.web.multipart.MultipartFile mockFile = 
+            mock(org.springframework.web.multipart.MultipartFile.class);
+        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
+            new com.docflow.documentcore.application.dto.CreateVersionRequest(mockFile, "Test");
+        
+        when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+        when(evaluadorPermisos.tieneAcceso(
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            .thenReturn(false);
+        
+        // Act & Assert
+        assertThatThrownBy(() -> service.createVersion(DOCUMENTO_ID, request))
+            .isInstanceOf(AccessDeniedException.class)
+            .hasMessageContaining("No tiene permisos para crear versiones");
+        
+        // Verificar que no se intentó guardar nada
+        verify(versionRepository, never()).save(any());
+        verify(storageService, never()).upload(anyLong(), anyLong(), anyLong(), anyInt(), any(), anyLong());
+    }
+    
+    @Test
+    @DisplayName("should_ThrowStorageException_When_FileUploadFails_OnCreateVersion")
+    void shouldThrowStorageExceptionWhenFileUploadFailsOnCreateVersion() throws Exception {
+        // Arrange
+        Documento documento = crearDocumento();
+        org.springframework.web.multipart.MultipartFile mockFile = 
+            mock(org.springframework.web.multipart.MultipartFile.class);
+        when(mockFile.getBytes()).thenReturn("content".getBytes());
+        when(mockFile.getSize()).thenReturn(1024L);
+        when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream("content".getBytes()));
+        
+        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
+            new com.docflow.documentcore.application.dto.CreateVersionRequest(mockFile, "Test");
+        
+        when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+        when(evaluadorPermisos.tieneAcceso(
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            .thenReturn(true);
+        when(storageService.upload(anyLong(), nullable(Long.class), anyLong(), anyInt(), any(), anyLong()))
+            .thenThrow(new StorageException("Storage error"));
+        
+        // Act & Assert
+        assertThatThrownBy(() -> service.createVersion(DOCUMENTO_ID, request))
+            .isInstanceOf(StorageException.class)
+            .hasMessageContaining("Storage error");
+        
+        // Verificar que no se guardó la versión
+        verify(versionRepository, never()).save(any());
     }
     
     // ========================================================================
