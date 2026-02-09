@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -210,6 +211,33 @@ public class GlobalExceptionHandler {
         problem.setProperty("codigo", "AUTO_DEACTIVACION_NO_PERMITIDA");
         problem.setInstance(URI.create(request.getRequestURI()));
 
+        return ResponseEntity.badRequest().body(problem);
+    }
+
+    /**
+     * Maneja MissingRequestHeaderException y retorna HTTP 400.
+     * 
+     * Captura cuando un header requerido no está presente en la solicitud.
+     * Típicamente ocurre con headers obligatorios como 'X-User-Id'.
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ProblemDetail> handleMissingRequestHeader(
+            MissingRequestHeaderException ex,
+            HttpServletRequest request) {
+        String headerName = ex.getHeaderName();
+        log.warn("Header requerido ausente: {}", headerName);
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("Header requerido '%s' no está presente en la solicitud", headerName)
+        );
+        
+        problem.setType(URI.create(ERROR_URI_BASE + "header-requerido-ausente"));
+        problem.setTitle("Header Requerido Ausente");
+        problem.setProperty("codigo", "HEADER_REQUERIDO_AUSENTE");
+        problem.setProperty("headerName", headerName);
+        problem.setInstance(URI.create(request.getRequestURI()));
+        
         return ResponseEntity.badRequest().body(problem);
     }
 

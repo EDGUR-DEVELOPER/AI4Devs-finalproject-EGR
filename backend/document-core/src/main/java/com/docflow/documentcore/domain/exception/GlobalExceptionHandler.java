@@ -7,7 +7,10 @@ import com.docflow.documentcore.domain.exception.carpeta.CarpetaRaizNoEliminable
 import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaException;
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -17,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 /**
  * Manejador global de excepciones para el servicio de document-core.
@@ -457,6 +461,64 @@ public class GlobalExceptionHandler {
         }
         
         problem.setProperty("timestamp", Instant.now());
+        
+        return problem;
+    }
+    
+    /**
+     * Maneja MissingRequestHeaderException y retorna HTTP 400.
+     * 
+     * Captura cuando un header requerido no está presente en la solicitud.
+     * Típicamente ocurre con headers obligatorios como 'X-User-Id'.
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ProblemDetail handleMissingRequestHeader(MissingRequestHeaderException ex) {
+        String headerName = ex.getHeaderName();
+        log.warn("Header requerido ausente: {}", headerName);
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("Header requerido '%s' no está presente en la solicitud", headerName)
+        );
+        
+        problem.setTitle("Header Requerido Ausente");
+        problem.setType(URI.create("https://docflow.com/errors/missing-request-header"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "MISSING_REQUEST_HEADER");
+        problem.setProperty("headerName", headerName);
+        
+        return problem;
+    }
+
+    /**
+     * Maneja ConstraintViolationException y retorna HTTP 400.
+     * 
+     * Captura violaciones de validación Bean Validation en parámetros de request
+     * (ej: @Min, @Max, @NotNull en parámetros de método del controller).
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
+        String violationsMessage = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining("; "));
+        
+        log.warn("Violación de validación: {}", violationsMessage);
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            violationsMessage
+        );
+        
+        problem.setTitle("Error de Validación");
+        problem.setType(URI.create("https://docflow.com/errors/validation-error"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "VALIDATION_ERROR");
         
         return problem;
     }

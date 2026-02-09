@@ -113,28 +113,9 @@ public class DocumentExceptionHandler {
             .body(error);
     }
     
-    /**
-     * Maneja excepciones genéricas.
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-        Exception ex,
-        WebRequest request
-    ) {
-        log.error("Error inesperado: {}", ex.getMessage(), ex);
-        
-        ErrorResponse error = new ErrorResponse(
-            "INTERNAL_ERROR",
-            "Ha ocurrido un error inesperado. Por favor, intenta de nuevo más tarde.",
-            500,
-            OffsetDateTime.now(),
-            request.getDescription(false).replace("uri=", "")
-        );
-        
-        return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(error);
-    }
+    // NOTA: El handler genérico de Exception.class fue removido para evitar conflictos
+    // con GlobalExceptionHandler que usa ProblemDetail (RFC 7807).
+    // GlobalExceptionHandler maneja todas las excepciones no específicas.
     
     /**
      * DTO de respuesta de error.

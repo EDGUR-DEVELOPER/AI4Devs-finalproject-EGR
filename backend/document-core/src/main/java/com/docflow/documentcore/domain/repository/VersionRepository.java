@@ -1,6 +1,8 @@
 package com.docflow.documentcore.domain.repository;
 
 import com.docflow.documentcore.domain.model.Version;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -52,6 +54,23 @@ public interface VersionRepository extends JpaRepository<Version, Long> {
      */
     @Query("SELECT v FROM Version v WHERE v.documentoId = :documentoId ORDER BY v.numeroSecuencial ASC")
     List<Version> findByDocumentoIdOrderByNumeroSecuencialAsc(@Param("documentoId") Long documentoId);
+        /**
+         * Busca todas las versiones de un documento ordenadas por número secuencial ascendente
+         * con soporte de paginación.
+         * 
+         * US-DOC-004: Método con Pageable para listado de versiones con paginación opcional.
+         * El ordenamiento está embebido en la consulta para aprovechar el índice de la base de datos.
+         * 
+         * @param documentoId ID del documento padre
+         * @param pageable Configuración de paginación y ordenamiento
+         * @return Página de versiones con metadatos de paginación
+         */
+        @Query("SELECT v FROM Version v WHERE v.documentoId = :documentoId ORDER BY v.numeroSecuencial ASC")
+        Page<Version> findByDocumentoIdOrderByNumeroSecuencialAsc(
+            @Param("documentoId") Long documentoId, 
+            Pageable pageable
+        );
+    
     
     /**
      * Obtiene la versión más reciente de un documento.

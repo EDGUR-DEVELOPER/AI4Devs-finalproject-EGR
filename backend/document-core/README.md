@@ -140,6 +140,51 @@ Response example:
 }
 ```
 
+### Document Version History (US-DOC-004)
+
+The service exposes an endpoint to list the full version history of a document, ordered by sequential version number.
+
+- **List document versions**: `GET /api/documentos/{documentoId}/versiones`
+  - Query params: `pagina` (base 1, optional), `tamanio` (1-100, default 20)
+  - Headers: `X-User-Id` (required), `X-Organization-Id` (required)
+  - Requirements: User must have LECTURA (read) permission on the document
+  - Response: List of versions with optional pagination metadata
+
+Response example:
+
+```json
+{
+  "versiones": [
+    {
+      "id": 200,
+      "numeroSecuencial": 1,
+      "tamanioBytes": 1024,
+      "hashContenido": "a3c7f9e2b1d4c5a6e8f9b2d3c4e5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3",
+      "comentarioCambio": "Inicial",
+      "creadoPor": {
+        "id": 1,
+        "nombreCompleto": "Usuario Test",
+        "email": "test@docflow.com"
+      },
+      "fechaCreacion": "2026-02-09T14:30:00Z",
+      "descargas": 2,
+      "ultimaDescargaEn": "2026-02-10T10:00:00Z",
+      "esVersionActual": false
+    }
+  ],
+  "documentoId": 100,
+  "totalVersiones": 1,
+  "paginacion": {
+    "paginaActual": 1,
+    "tamanio": 20,
+    "totalPaginas": 1,
+    "totalElementos": 1,
+    "primeraPagina": true,
+    "ultimaPagina": true
+  }
+}
+```
+
 ### Effective Folder Permissions (US-ACL-004)
 
 The service also exposes an endpoint to resolve the effective permission for the authenticated user,
