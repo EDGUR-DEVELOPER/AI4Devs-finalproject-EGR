@@ -27,8 +27,8 @@ import com.docflow.documentcore.application.mapper.VersionListMapper;
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.model.Documento;
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.TipoRecurso;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.Version;
 import com.docflow.documentcore.domain.repository.DocumentoRepository;
 import com.docflow.documentcore.domain.repository.VersionRepository;
@@ -105,7 +105,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(true);
             when(versionRepository.findByDocumentoIdOrderByNumeroSecuencialAsc(DOCUMENTO_ID))
                 .thenReturn(versiones);
@@ -126,7 +126,7 @@ class DocumentoVersionServiceTest {
             // Verificar interacciones
             verify(documentoRepository).findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID);
             verify(evaluadorPermisos).tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID);
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID);
             verify(versionRepository).findByDocumentoIdOrderByNumeroSecuencialAsc(DOCUMENTO_ID);
             verify(versionRepository, never()).findByDocumentoIdOrderByNumeroSecuencialAsc(
                 eq(DOCUMENTO_ID), any(Pageable.class));
@@ -142,7 +142,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(true);
             when(versionRepository.findByDocumentoIdOrderByNumeroSecuencialAsc(DOCUMENTO_ID))
                 .thenReturn(versionesVacias);
@@ -184,7 +184,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(true);
             when(versionRepository.findByDocumentoIdOrderByNumeroSecuencialAsc(
                 eq(DOCUMENTO_ID), any(Pageable.class)))
@@ -228,7 +228,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(true);
             when(versionRepository.findByDocumentoIdOrderByNumeroSecuencialAsc(
                 eq(DOCUMENTO_ID), any(Pageable.class)))
@@ -267,7 +267,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(true);
             when(versionRepository.findByDocumentoIdOrderByNumeroSecuencialAsc(
                 eq(DOCUMENTO_ID), any(Pageable.class)))
@@ -344,7 +344,7 @@ class DocumentoVersionServiceTest {
             when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
                 .thenReturn(Optional.of(documento));
             when(evaluadorPermisos.tieneAcceso(
-                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+                USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
                 .thenReturn(false);
             
             // Act & Assert

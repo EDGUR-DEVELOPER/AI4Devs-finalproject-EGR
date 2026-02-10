@@ -13,9 +13,9 @@ import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
 import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.model.Documento;
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.Version;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.repository.DocumentoRepository;
 import com.docflow.documentcore.domain.repository.VersionRepository;
 import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
@@ -217,7 +217,7 @@ public class DocumentService {
             usuarioId, 
             documentId,
             TipoRecurso.DOCUMENTO,
-            NivelAcceso.ESCRITURA,
+            CodigoNivelAcceso.ESCRITURA,
             organizacionId
         )) {
             log.warn("Acceso denegado: usuario {} no tiene permiso de ESCRITURA en documento {}", 
@@ -349,7 +349,7 @@ public class DocumentService {
             usuarioId,
             documentId,
             TipoRecurso.DOCUMENTO,
-            NivelAcceso.LECTURA,
+            CodigoNivelAcceso.LECTURA,
             organizacionId
         );
         

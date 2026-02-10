@@ -4,6 +4,7 @@ import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.PermisoDocumentoUsuario;
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
 import com.docflow.documentcore.domain.model.TipoRecurso;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.repository.IPermisoDocumentoUsuarioRepository;
 import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
 import lombok.RequiredArgsConstructor;
@@ -125,7 +126,7 @@ public class EvaluadorPermisosService implements IEvaluadorPermisos {
             Long usuarioId,
             Long recursoId,
             TipoRecurso tipoRecurso,
-            NivelAcceso nivelRequerido,
+            CodigoNivelAcceso nivelRequerido,
             Long organizacionId
     ) {
         if (usuarioId == null || recursoId == null || tipoRecurso == null ||
@@ -200,7 +201,7 @@ public class EvaluadorPermisosService implements IEvaluadorPermisos {
      * @param requerido the minimum required permission level
      * @return true if actual >= required in the hierarchy
      */
-    private boolean cumpleNivelRequerido(NivelAcceso actual, NivelAcceso requerido) {
+    private boolean cumpleNivelRequerido(NivelAcceso actual, CodigoNivelAcceso requerido) {
         int nivelActual = getNivelJerarquico(actual);
         int nivelReq = getNivelJerarquico(requerido);
         return nivelActual >= nivelReq;
@@ -214,6 +215,20 @@ public class EvaluadorPermisosService implements IEvaluadorPermisos {
      */
     private int getNivelJerarquico(NivelAcceso nivel) {
         return switch (nivel) {
+            case LECTURA -> 1;
+            case ESCRITURA -> 2;
+            case ADMINISTRACION -> 3;
+        };
+    }
+
+    /**
+     * Maps CodigoNivelAcceso enum to a hierarchical numeric value.
+     * 
+     * @param codigo the access level code
+     * @return numeric value (1 = LECTURA, 2 = ESCRITURA, 3 = ADMINISTRACION)
+     */
+    private int getNivelJerarquico(CodigoNivelAcceso codigo) {
+        return switch (codigo) {
             case LECTURA -> 1;
             case ESCRITURA -> 2;
             case ADMINISTRACION -> 3;

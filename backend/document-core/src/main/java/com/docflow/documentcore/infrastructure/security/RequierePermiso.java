@@ -1,7 +1,7 @@
 package com.docflow.documentcore.infrastructure.security;
 
 import com.docflow.documentcore.domain.model.TipoRecurso;
-import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -76,7 +76,7 @@ public @interface RequierePermiso {
      * 
      * @return the minimum required access level
      */
-    NivelAcceso nivelRequerido();
+    CodigoNivelAcceso nivelRequerido();
     
     /**
      * Index of the method parameter that contains the resource ID.

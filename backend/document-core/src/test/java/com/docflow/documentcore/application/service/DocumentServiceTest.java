@@ -24,9 +24,9 @@ import com.docflow.documentcore.domain.exception.AccessDeniedException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
 import com.docflow.documentcore.domain.model.Documento;
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.Version;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.repository.DocumentoRepository;
 import com.docflow.documentcore.domain.repository.VersionRepository;
 import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
@@ -121,7 +121,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -163,7 +163,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true); // ESCRITURA incluye LECTURA
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -189,7 +189,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true); // ADMINISTRACION incluye LECTURA
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -217,7 +217,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(false);
         
         // Act & Assert
@@ -279,7 +279,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         
         // Act & Assert
@@ -297,7 +297,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.empty()); // Versión no encontrada
@@ -318,7 +318,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -349,7 +349,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -385,7 +385,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.LECTURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.LECTURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(versionRepository.findById(VERSION_ID))
             .thenReturn(Optional.of(version));
@@ -423,7 +423,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.ESCRITURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(storageService.upload(anyLong(), nullable(Long.class), anyLong(), anyInt(), any(), anyLong()))
             .thenReturn("org_1/carpeta_10/doc_100/version_2/file");
@@ -504,7 +504,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.ESCRITURA, ORGANIZACION_ID))
             .thenReturn(false);
         
         // Act & Assert
@@ -534,7 +534,7 @@ class DocumentServiceTest {
         when(documentoRepository.findByIdAndOrganizacionId(DOCUMENTO_ID, ORGANIZACION_ID))
             .thenReturn(Optional.of(documento));
         when(evaluadorPermisos.tieneAcceso(
-            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, NivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.ESCRITURA, ORGANIZACION_ID))
             .thenReturn(true);
         when(storageService.upload(anyLong(), nullable(Long.class), anyLong(), anyInt(), any(), anyLong()))
             .thenThrow(new StorageException("Storage error"));

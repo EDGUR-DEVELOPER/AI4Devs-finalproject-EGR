@@ -5,8 +5,8 @@ import com.docflow.documentcore.application.dto.CreateCarpetaDTO;
 import com.docflow.documentcore.application.mapper.CarpetaDtoMapper;
 import com.docflow.documentcore.application.service.CarpetaService;
 import com.docflow.documentcore.domain.model.Carpeta;
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.TipoRecurso;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.infrastructure.security.RequierePermiso;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -105,7 +105,7 @@ public class CarpetaController {
     @GetMapping("/{id}")
     @RequierePermiso(
         tipoRecurso = TipoRecurso.CARPETA,
-        nivelRequerido = NivelAcceso.LECTURA,
+        nivelRequerido = CodigoNivelAcceso.LECTURA,
         errorMessage = "No tienes permisos para ver esta carpeta"
     )
     @Operation(
@@ -136,7 +136,7 @@ public class CarpetaController {
     @GetMapping("/{id}/hijos")
     @RequierePermiso(
         tipoRecurso = TipoRecurso.CARPETA,
-        nivelRequerido = NivelAcceso.LECTURA,
+        nivelRequerido = CodigoNivelAcceso.LECTURA,
         errorMessage = "No tienes permisos para ver el contenido de esta carpeta"
     )
     @Operation(
@@ -190,7 +190,7 @@ public class CarpetaController {
     @DeleteMapping("/{id}")
     @RequierePermiso(
         tipoRecurso = TipoRecurso.CARPETA,
-        nivelRequerido = NivelAcceso.ADMINISTRACION,
+        nivelRequerido = CodigoNivelAcceso.ADMINISTRACION,
         errorMessage = "No tienes permisos de administración para eliminar esta carpeta"
     )
     @Operation(

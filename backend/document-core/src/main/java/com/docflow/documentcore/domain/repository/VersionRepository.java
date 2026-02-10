@@ -36,6 +36,25 @@ public interface VersionRepository extends JpaRepository<Version, Long> {
     );
     
     /**
+     * Busca una versión específica que pertenece a un documento.
+     * 
+     * <p>Este método asegura que la versión solicitada efectivamente pertenece
+     * al documento especificado, previniendo accesos a versiones de otros documentos.</p>
+     * 
+     * <p><strong>Seguridad:</strong> Valida la relación versión-documento antes
+     * de permitir operaciones como rollback.</p>
+     * 
+     * @param versionId ID de la versión a buscar
+     * @param documentoId ID del documento al que debe pertenecer la versión
+     * @return Optional con la versión si existe y pertenece al documento
+     */
+    @Query("SELECT v FROM Version v WHERE v.id = :versionId AND v.documentoId = :documentoId")
+    Optional<Version> findByIdAndDocumentoId(
+        @Param("versionId") Long versionId, 
+        @Param("documentoId") Long documentoId
+    );
+    
+    /**
      * Busca todas las versiones de un documento ordenadas por número secuencial descendente.
      * La primera versión en la lista es la más reciente.
      *

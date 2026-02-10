@@ -6,9 +6,9 @@ import com.docflow.documentcore.application.mapper.VersionListMapper;
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.model.Documento;
-import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.Version;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.repository.DocumentoRepository;
 import com.docflow.documentcore.domain.repository.VersionRepository;
 import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
@@ -92,7 +92,7 @@ public class DocumentoVersionService {
                 usuarioId,
                 documentoId,
                 TipoRecurso.DOCUMENTO,
-                NivelAcceso.LECTURA,
+                CodigoNivelAcceso.LECTURA,
                 organizacionId
         );
         

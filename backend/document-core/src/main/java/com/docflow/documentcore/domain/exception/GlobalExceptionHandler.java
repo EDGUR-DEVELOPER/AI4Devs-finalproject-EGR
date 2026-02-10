@@ -8,6 +8,7 @@ import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaExcept
 import com.docflow.documentcore.domain.exception.permiso.PermisoCarpetaDuplicadoException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -87,6 +88,67 @@ public class GlobalExceptionHandler {
         problem.setProperty("timestamp", Instant.now());
         problem.setProperty("errorCode", "ACL_NOT_FOUND");
 
+        return problem;
+    }
+
+    /**
+     * Maneja VersionNotBelongToDocumentException y retorna HTTP 400.
+     * 
+     * <p>Esta excepción se lanza cuando se intenta realizar una operación
+     * (como rollback) con una versión que no pertenece al documento especificado.</p>
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(VersionNotBelongToDocumentException.class)
+    public ProblemDetail handleVersionNotBelongToDocument(VersionNotBelongToDocumentException ex) {
+        log.warn("Intento de operación con versión no válida: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "La versión solicitada no pertenece al documento"
+        );
+        
+        problem.setTitle("Versión No Válida");
+        problem.setType(URI.create("https://docflow.com/errors/invalid-version"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "VERSION_NOT_BELONG_TO_DOCUMENT");
+        problem.setProperty("versionId", ex.getVersionId());
+        problem.setProperty("documentoId", ex.getDocumentoId());
+        
+        return problem;
+    }
+
+    /**
+     * Maneja InsufficientPermissionsException y retorna HTTP 403.
+     * 
+     * <p>Esta excepción se lanza cuando un usuario intenta realizar una operación
+     * sin el nivel de permiso necesario (ej. intentar rollback sin permiso ADMINISTRACION).</p>
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 403
+     */
+    @ExceptionHandler(InsufficientPermissionsException.class)
+    public ProblemDetail handleInsufficientPermissions(InsufficientPermissionsException ex) {
+        log.warn("Usuario intenta operación sin permisos suficientes: {}", ex.getMessage());
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        
+        problem.setTitle("Permisos Insuficientes");
+        problem.setType(URI.create("https://docflow.com/errors/insufficient-permissions"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "INSUFFICIENT_PERMISSIONS");
+        
+        if (ex.getNivelRequerido() != null) {
+            problem.setProperty("nivelRequerido", ex.getNivelRequerido());
+        }
+        if (ex.getTipoRecurso() != null) {
+            problem.setProperty("tipoRecurso", ex.getTipoRecurso());
+        }
+        
         return problem;
     }
 
@@ -509,6 +571,36 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
         
         log.warn("Violación de validación: {}", violationsMessage);
+        
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            violationsMessage
+        );
+        
+        problem.setTitle("Error de Validación");
+        problem.setType(URI.create("https://docflow.com/errors/validation-error"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "VALIDATION_ERROR");
+        
+        return problem;
+    }
+    
+    /**
+     * Maneja MethodArgumentNotValidException y retorna HTTP 400.
+     * 
+     * Captura violaciones de validación Bean Validation en objetos @RequestBody
+     * con @Valid (ej: @NotNull, @Positive en campos de DTOs).
+     * 
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 400
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String violationsMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        
+        log.warn("Error de validación en request body: {}", violationsMessage);
         
         var problem = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,

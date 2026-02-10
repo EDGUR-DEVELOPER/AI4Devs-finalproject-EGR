@@ -2,6 +2,7 @@ package com.docflow.documentcore.domain.service;
 
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
 import com.docflow.documentcore.domain.model.TipoRecurso;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.domain.model.NivelAcceso;
 
 /**
@@ -133,7 +134,7 @@ public interface IEvaluadorPermisos {
      * @param usuarioId ID of the user
      * @param recursoId ID of the resource (document or folder)
      * @param tipoRecurso Type of the resource
-     * @param nivelRequerido Minimum required access level
+     * @param administracion Minimum required access level
      * @param organizacionId ID of the organization
      * @return true if user has at least the required level, false otherwise
      * @throws IllegalArgumentException if any parameter is null
@@ -142,7 +143,7 @@ public interface IEvaluadorPermisos {
         Long usuarioId, 
         Long recursoId, 
         TipoRecurso tipoRecurso,
-        NivelAcceso nivelRequerido,
+        CodigoNivelAcceso administracion,
         Long organizacionId
     );
 }

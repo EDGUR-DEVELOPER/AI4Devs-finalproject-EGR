@@ -1,8 +1,10 @@
 package com.docflow.documentcore.infrastructure.adapter.controller;
 
+import com.docflow.documentcore.application.dto.CreateVersionRequest;
 import com.docflow.documentcore.application.dto.DocumentoMovidoResponse;
 import com.docflow.documentcore.application.dto.DownloadDocumentDto;
 import com.docflow.documentcore.application.dto.MoverDocumentoRequest;
+import com.docflow.documentcore.application.dto.VersionResponse;
 import com.docflow.documentcore.application.service.DocumentService;
 import com.docflow.documentcore.application.service.DocumentoMoverService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -315,7 +317,7 @@ public class DocumentoController {
             description = "Nueva versión creada exitosamente",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = com.docflow.documentcore.application.dto.VersionResponse.class)
+                schema = @Schema(implementation = VersionResponse.class)
             )
         ),
         @ApiResponse(
@@ -359,7 +361,7 @@ public class DocumentoController {
             )
         )
     })
-    public ResponseEntity<com.docflow.documentcore.application.dto.VersionResponse> createVersion(
+    public ResponseEntity<VersionResponse> createVersion(
             @PathVariable 
             @Parameter(description = "ID del documento al que agregar nueva versión", required = true, example = "100")
             Long id,
@@ -375,11 +377,11 @@ public class DocumentoController {
         log.info("REST: POST /api/documentos/{}/versiones", id);
         
         // Construir request
-        com.docflow.documentcore.application.dto.CreateVersionRequest request = 
-            new com.docflow.documentcore.application.dto.CreateVersionRequest(file, comentarioCambio);
+        CreateVersionRequest request = 
+            new CreateVersionRequest(file, comentarioCambio);
         
         // Delegar al servicio (que valida permisos y tenant isolation)
-        com.docflow.documentcore.application.dto.VersionResponse response = documentService.createVersion(id, request);
+        VersionResponse response = documentService.createVersion(id, request);
         
         log.info("REST: Nueva versión creada exitosamente - documentoId={}, versionId={}, numeroSecuencial={}", 
             id, response.getId(), response.getNumeroSecuencial());
