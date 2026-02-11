@@ -8,5 +8,5 @@ WHERE fecha_eliminacion IS NULL;
 
 -- Documentos activos por carpeta
 CREATE INDEX IF NOT EXISTS idx_documento_carpeta_eliminacion
-ON documentos(carpeta_id, fecha_eliminacion, organizacion_id)
+ON documento(carpeta_id, fecha_eliminacion, organizacion_id)
 WHERE fecha_eliminacion IS NULL;

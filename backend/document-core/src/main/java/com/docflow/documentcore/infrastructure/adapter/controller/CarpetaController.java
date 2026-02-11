@@ -1,10 +1,12 @@
 package com.docflow.documentcore.infrastructure.adapter.controller;
 
 import com.docflow.documentcore.application.dto.CarpetaDTO;
+import com.docflow.documentcore.application.dto.CarpetaRutaDTO;
 import com.docflow.documentcore.application.dto.CreateCarpetaDTO;
 import com.docflow.documentcore.application.mapper.CarpetaDtoMapper;
 import com.docflow.documentcore.application.service.CarpetaService;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
 import com.docflow.documentcore.infrastructure.security.RequierePermiso;
@@ -35,6 +37,7 @@ import java.util.List;
  *   <li>POST /api/carpetas - Crear carpeta</li>
  *   <li>GET /api/carpetas/{id} - Obtener carpeta por ID</li>
  *   <li>GET /api/carpetas/{id}/hijos - Listar carpetas hijas</li>
+ *   <li>GET /api/carpetas/{id}/ruta - Obtener ruta de navegación (breadcrumb)</li>
  *   <li>GET /api/carpetas/raiz - Obtener carpeta raíz de la organización</li>
  *   <li>DELETE /api/carpetas/{id} - Eliminar carpeta (soft delete)</li>
  * </ul>
@@ -157,6 +160,37 @@ public class CarpetaController {
     ) {
         List<Carpeta> hijos = carpetaService.obtenerHijos(id, organizacionId);
         List<CarpetaDTO> response = mapper.toDtoList(hijos);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Obtiene la ruta de navegación (breadcrumb) de una carpeta.
+     */
+    @GetMapping("/{id}/ruta")
+    @RequierePermiso(
+        tipoRecurso = TipoRecurso.CARPETA,
+        nivelRequerido = CodigoNivelAcceso.LECTURA,
+        errorMessage = "No tienes permisos para ver esta carpeta"
+    )
+    @Operation(
+        summary = "Obtener ruta de navegación",
+        description = "Obtiene la ruta completa de ancestros de una carpeta (breadcrumb) desde la raíz hasta la carpeta actual."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Ruta de carpetas encontrada",
+            content = @Content(schema = @Schema(implementation = CarpetaRutaDTO.class))
+        ),
+        @ApiResponse(responseCode = "403", description = "Sin permisos para ver esta carpeta"),
+        @ApiResponse(responseCode = "404", description = "Carpeta no encontrada")
+    })
+    public ResponseEntity<List<CarpetaRutaDTO>> obtenerRuta(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Organization-Id", required = false, defaultValue = "1") Long organizacionId
+    ) {
+        List<CarpetaAncestro> ruta = carpetaService.obtenerRutaAncestros(id, organizacionId);
+        List<CarpetaRutaDTO> response = mapper.ancestrosToRutaDtoList(ruta);
         return ResponseEntity.ok(response);
     }
     

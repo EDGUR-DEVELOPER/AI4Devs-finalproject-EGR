@@ -34,7 +34,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
      */
     @Query(value = """
         SELECT d.*
-        FROM documentos d
+        FROM documento d
         WHERE d.carpeta_id = :carpetaId
           AND d.organizacion_id = :organizacionId
           AND d.fecha_eliminacion IS NULL
@@ -42,7 +42,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
               SELECT 1 FROM permisos_documento_usuario pdu
               WHERE pdu.documento_id = d.id
                 AND pdu.usuario_id = :usuarioId
-                AND pdu.nivel_acceso >= 1
+                AND pdu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
           )
         ORDER BY d.nombre ASC
         """, nativeQuery = true)
@@ -63,7 +63,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
      */
     @Query(value = """
         SELECT COUNT(DISTINCT d.id)
-        FROM documentos d
+        FROM documento d
         WHERE d.carpeta_id = :carpetaId
           AND d.organizacion_id = :organizacionId
           AND d.fecha_eliminacion IS NULL
@@ -71,7 +71,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
               SELECT 1 FROM permisos_documento_usuario pdu
               WHERE pdu.documento_id = d.id
                 AND pdu.usuario_id = :usuarioId
-                AND pdu.nivel_acceso >= 1
+                AND pdu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
           )
         """, nativeQuery = true)
     long countDocumentosConPermiso(

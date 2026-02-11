@@ -2,14 +2,6 @@
 
 **[US-ACL-009] UI muestra capacidades (acciones habilitadas) por carpeta/documento**
 
-- **Narrativa:** Como usuario, quiero que la UI habilite o deshabilite acciones según mis permisos, para evitar errores.
-- **Criterios de Aceptación:**
-    - *Scenario 1:* Dado un usuario con solo `LECTURA`, Cuando navega una carpeta, Entonces la UI deshabilita “Subir” y “Administrar permisos”.
-
----
-
-## [enhanced]
-
 ### 1) Descripción funcional
 Como usuario autenticado, quiero que la UI refleje mis capacidades por carpeta y documento, habilitando o deshabilitando acciones según permisos, para evitar errores y confusión.
 

@@ -52,12 +52,12 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
     Optional<CarpetaEntity> findByIdAndOrganizacionId(Long id, Long organizacionId);
     
     /**
-     * Encuentra la carpeta raíz de una organización (carpeta_padre_id IS NULL).
+     * Encuentra las carpetas raíz de una organización (carpeta_padre_id IS NULL).
      * 
      * @param organizacionId identificador de la organización
-     * @return Optional con la carpeta raíz si existe
+     * @return lista de carpetas con padreId NULL (idealmente debería haber solo 1)
      */
-    Optional<CarpetaEntity> findByOrganizacionIdAndCarpetaPadreIdIsNull(Long organizacionId);
+    List<CarpetaEntity> findByOrganizacionIdAndCarpetaPadreIdIsNull(Long organizacionId);
     
     /**
      * Verifica si existe una carpeta con el mismo nombre en el mismo nivel.
@@ -135,16 +135,17 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
         WITH RECURSIVE carpetas_accesibles AS (
             -- Subcarpetas directas con permiso directo en carpeta
             SELECT c.id, c.nombre, c.descripcion, c.fecha_creacion, 
-                   c.fecha_actualizacion, c.carpeta_padre_id, c.organizacion_id
+                   c.fecha_actualizacion, c.carpeta_padre_id, c.organizacion_id,
+                   c.creado_por, c.fecha_eliminacion
             FROM carpetas c
             WHERE c.carpeta_padre_id = :carpetaPadreId
               AND c.organizacion_id = :organizacionId
               AND c.fecha_eliminacion IS NULL
               AND EXISTS (
-                  SELECT 1 FROM permisos_carpeta_usuario pcu
+                  SELECT 1 FROM permiso_carpeta_usuario pcu
                   WHERE pcu.carpeta_id = c.id
                     AND pcu.usuario_id = :usuarioId
-                    AND pcu.nivel_acceso >= 1
+                    AND pcu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
               )
         )
         SELECT * FROM carpetas_accesibles
@@ -171,10 +172,10 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
           AND c.organizacion_id = :organizacionId
           AND c.fecha_eliminacion IS NULL
           AND EXISTS (
-              SELECT 1 FROM permisos_carpeta_usuario pcu
+              SELECT 1 FROM permiso_carpeta_usuario pcu
               WHERE pcu.carpeta_id = c.id
                 AND pcu.usuario_id = :usuarioId
-                AND pcu.nivel_acceso >= 1
+                AND pcu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
           )
         """, nativeQuery = true)
     int countSubcarpetasConPermiso(
@@ -216,7 +217,7 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
      */
     @Query(value = """
         SELECT CASE WHEN EXISTS (
-            SELECT 1 FROM documentos d
+            SELECT 1 FROM documento d
             WHERE d.carpeta_id = :carpetaId
               AND d.organizacion_id = :organizacionId
               AND d.fecha_eliminacion IS NULL
@@ -261,7 +262,7 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
      */
     @Query(value = """
         SELECT COUNT(d.id)
-        FROM documentos d
+        FROM documento d
         WHERE d.carpeta_id = :carpetaId
           AND d.organizacion_id = :organizacionId
           AND d.fecha_eliminacion IS NULL

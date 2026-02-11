@@ -116,7 +116,7 @@ Common steps:
 ### 10. **Notes**
 - Important reminders and constraints
 - Business rules
-- Language requirements (English only)
+- Language requirements (spanish only)
 - TypeScript vs JavaScript considerations
 
 ### 11. **Next Steps After Implementation**

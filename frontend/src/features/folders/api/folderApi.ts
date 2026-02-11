@@ -14,11 +14,11 @@ import type {
 const BASE_URL = '/doc/carpetas'; // Via gateway: /api/doc/carpetas -> document-core service
 
 /**
- * Obtener contenido de carpeta raíz
- * GET /api/carpetas/raiz
+ * Obtener contenido de carpeta raíz (subcarpetas + documentos)
+ * GET /api/carpetas/raiz/contenido
  */
 export const getRootContent = async (): Promise<FolderContent> => {
-  const { data } = await apiClient.get<FolderContent>(`${BASE_URL}/raiz`);
+  const { data } = await apiClient.get<FolderContent>(`${BASE_URL}/raiz/contenido`);
   return data;
 };
 

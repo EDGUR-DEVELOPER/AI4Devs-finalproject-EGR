@@ -65,8 +65,22 @@ public class CarpetaRepositoryAdapter implements ICarpetaRepository {
     
     @Override
     public Optional<Carpeta> obtenerRaiz(Long organizacionId) {
-        return jpaRepository.findByOrganizacionIdAndCarpetaPadreIdIsNull(organizacionId)
-                .map(mapper::toDomain);
+        List<CarpetaEntity> raices = jpaRepository.findByOrganizacionIdAndCarpetaPadreIdIsNull(organizacionId);
+        
+        if (raices.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        // Si hay múltiples carpetas raíz, retornar la primera y loguear advertencia
+        // Esta es una situación anómala que debería ser corregida en los datos
+        if (raices.size() > 1) {
+            System.err.println("[ADVERTENCIA] Se encontraron " + raices.size() 
+                    + " carpetas raíz para la organización " + organizacionId 
+                    + ". Se devolviendo la primera. IDs: " 
+                    + raices.stream().map(CarpetaEntity::getId).collect(Collectors.toList()));
+        }
+        
+        return Optional.of(mapper.toDomain(raices.get(0)));
     }
     
     @Override

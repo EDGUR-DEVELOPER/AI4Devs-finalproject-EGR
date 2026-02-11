@@ -1,7 +1,9 @@
 package com.docflow.documentcore.application.mapper;
 
 import com.docflow.documentcore.application.dto.CarpetaDTO;
+import com.docflow.documentcore.application.dto.CarpetaRutaDTO;
 import com.docflow.documentcore.domain.model.Carpeta;
+import com.docflow.documentcore.domain.model.CarpetaAncestro;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -34,4 +36,20 @@ public interface CarpetaDtoMapper {
      * @return lista de DTOs
      */
     List<CarpetaDTO> toDtoList(List<Carpeta> carpetas);
+    
+    /**
+     * Convierte CarpetaAncestro a CarpetaRutaDTO.
+     * 
+     * @param ancestro modelo de ancestro
+     * @return DTO de ruta
+     */
+    CarpetaRutaDTO ancestroToRutaDto(CarpetaAncestro ancestro);
+    
+    /**
+     * Convierte lista de CarpetaAncestro a lista de CarpetaRutaDTO.
+     * 
+     * @param ancestros lista de ancestros
+     * @return lista de DTOs de ruta
+     */
+    List<CarpetaRutaDTO> ancestrosToRutaDtoList(List<CarpetaAncestro> ancestros);
 }
