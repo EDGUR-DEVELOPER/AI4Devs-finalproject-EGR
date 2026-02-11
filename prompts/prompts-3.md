@@ -15,3 +15,12 @@ Next steps - Copy these prompts to GitHub Copilot:
    "Please explain the OpenSpec workflow from openspec/AGENTS.md
     and how I should work with you on this project"
 ```
+
+## Implementacion SDD
+Se implemento ai-specs para el orden de desarrollo, para tener una orquestacion en el orden de desarrollo.
+Respetando las especificaciones del desarrollo.
+`Se actualizaron las especificaciones con el siguiente prompt:`
+```prompt
+"Please read openspec/project.md and help me fill it out
+    with details about my project, tech stack, and conventions"
+```

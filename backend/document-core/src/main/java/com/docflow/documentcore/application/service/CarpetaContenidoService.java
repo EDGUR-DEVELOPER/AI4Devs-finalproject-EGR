@@ -152,8 +152,8 @@ public class CarpetaContenidoService {
                 documentos,
                 totalSubcarpetas,
                 (int) totalDocumentos,
-                opciones.pagina(),
-                calcularTotalPaginas((int) totalDocumentos, opciones.tamanio()));
+                opciones.getPagina(),
+                calcularTotalPaginas((int) totalDocumentos, opciones.getTamanio()));
     }
 
     /**
@@ -276,12 +276,12 @@ public class CarpetaContenidoService {
      */
     private Pageable convertirOpcionesAPageable(OpcionesListado opciones) {
         // Convertir de 1-based a 0-based
-        int pageIndex = opciones.pagina() - 1;
+        int pageIndex = opciones.getPagina() - 1;
         
         return org.springframework.data.domain.PageRequest.of(
                 pageIndex,
-                opciones.tamanio(),
-                org.springframework.data.domain.Sort.by(opciones.direccion(), opciones.campoOrden()));
+                opciones.getTamanio(),
+                org.springframework.data.domain.Sort.by(opciones.getDireccion(), opciones.getCampoOrden()));
     }
 
     /**

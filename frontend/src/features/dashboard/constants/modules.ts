@@ -25,6 +25,15 @@ export const SYSTEM_MODULES: SystemModule[] = [
         enabled: true,
     },
     {
+        id: 'folders',
+        name: 'Carpetas',
+        description: 'Organiza y gestiona carpetas de documentos',
+        icon: 'folders',
+        path: '/carpetas',
+        color: 'amber',
+        enabled: true,
+    },
+    {
         id: 'workflow',
         name: 'Flujo de Trabajo',
         description: 'Configura flujos y automatizaciones',

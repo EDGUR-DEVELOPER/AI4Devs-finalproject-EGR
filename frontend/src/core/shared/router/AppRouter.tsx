@@ -5,6 +5,7 @@ import { PrivateRoute } from './PrivateRoute';
 import { NotFoundPage } from '../../../common/ui/pages/NotFoundPage';
 import { DashboardPage } from '../../../features/dashboard/pages/DashboardPage';
 import { UsersManagementPage, AccessDeniedPage, AdminRouteGuard } from '../../../features/admin';
+import { FoldersPage } from '../../../features/folders';
 
 /**
  * Application router
@@ -49,6 +50,24 @@ export function AppRouter() {
             <DashboardPage />
           </PrivateRoute>
         } 
+      />
+      
+      {/* Rutas protegidas para navegación de carpetas */}
+      <Route
+        path="/carpetas"
+        element={
+          <PrivateRoute>
+            <FoldersPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/carpetas/:id"
+        element={
+          <PrivateRoute>
+            <FoldersPage />
+          </PrivateRoute>
+        }
       />
       
       {/* Ruta protegida para administración de usuarios */}

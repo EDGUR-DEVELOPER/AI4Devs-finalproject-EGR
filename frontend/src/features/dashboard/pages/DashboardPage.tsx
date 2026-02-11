@@ -44,9 +44,9 @@ export const DashboardPage: React.FC = () => {
                         <SystemInfoCard info={systemInfo} />
 
                         {/* Tip del día / Ayuda rápida */}
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-4 sm:p-6">
+                        <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-4 sm:p-6">
                             <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                     <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>

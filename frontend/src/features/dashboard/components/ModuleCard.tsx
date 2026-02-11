@@ -51,6 +51,11 @@ const colorClasses: Record<ModuleColor, { bg: string; icon: string; hover: strin
         icon: 'text-pink-600',
         hover: 'hover:bg-pink-100 hover:border-pink-200',
     },
+    amber: {
+        bg: 'bg-amber-50',
+        icon: 'text-amber-600',
+        hover: 'hover:bg-amber-100 hover:border-amber-200',
+    },
 };
 
 /**
@@ -65,7 +70,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module }) => {
     const cardContent = (
         <>
             {/* Icono con fondo de color */}
-            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}>
                 <DashboardIcon name={module.icon} className={`w-6 h-6 sm:w-7 sm:h-7 ${colors.icon}`} />
             </div>
 
@@ -88,7 +93,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module }) => {
 
             {/* Flecha indicadora (solo si está habilitado) */}
             {!isDisabled && (
-                <div className="flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors">
+                <div className="shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

@@ -48,10 +48,12 @@ public class GatewayConfig {
                                 .stripPrefix(2)
                                 .prefixPath("/api/v1"))
                         .uri(IAM_SERVICE_URI))
-                // Document Service Route: /api/doc/** -> http://localhost:8082/**
+                // Document Service Route: /api/doc/** -> http://localhost:8082/api/**
                 .route("doc-service", r -> r
                         .path("/api/doc/**")
-                        .filters(f -> f.stripPrefix(2))
+                        .filters(f -> f
+                                .stripPrefix(2)
+                                .prefixPath("/api"))
                         .uri(DOC_SERVICE_URI))
                 .build();
     }
