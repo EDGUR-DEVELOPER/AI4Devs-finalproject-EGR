@@ -29,7 +29,8 @@
     "paths": {
       "@core/*": ["src/core/*"],
       "@features/*": ["src/features/*"],
-      "@ui/*": ["src/common/ui/*"]
+      "@ui/*": ["src/common/ui/*"],
+      "@common/*": ["src/common/*"]
     }
   },
   "include": ["src"]

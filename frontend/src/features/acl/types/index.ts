@@ -301,3 +301,73 @@ export interface AclDocumentoApiResponse {
 export interface ListAclDocumentoApiResponse {
   permisos: AclDocumentoApiResponse[];
 }
+
+// ============================================================================
+// PERMISSION CAPABILITIES TYPES
+// ============================================================================
+
+/**
+ * User capabilities derived from access level
+ * Defines which actions the user can perform
+ */
+export interface ICapabilities {
+  /** Read/view/list content */
+  canRead: boolean;
+
+  /** Write/modify content */
+  canWrite: boolean;
+
+  /** Manage permissions and configuration */
+  canAdminister: boolean;
+
+  /** Upload documents to a folder */
+  canUpload: boolean;
+
+  /** Download documents */
+  canDownload: boolean;
+
+  /** Create new document versions */
+  canCreateVersion: boolean;
+
+  /** Delete folder */
+  canDeleteFolder: boolean;
+
+  /** Manage folder/document permissions */
+  canManagePermissions: boolean;
+
+  /** Change current document version */
+  canChangeVersion: boolean;
+}
+
+/**
+ * Permission evaluation result
+ */
+export interface IPermissionEvaluationResult {
+  nivelAcceso: CodigoNivelAcceso | null;
+  origen: 'documento' | 'carpeta' | 'ninguno';
+  capabilities: ICapabilities;
+  hasAnyPermission: boolean;
+}
+
+/**
+ * Permission evaluation context
+ */
+export interface IPermissionContext {
+  entityId: number;
+  entityType: 'documento' | 'carpeta';
+  usuarioId: number;
+}
+
+/**
+ * Disabled action tooltip data
+ */
+export interface IDisabledActionTooltip {
+  action: string;
+  reason: string;
+  requiredLevel?: CodigoNivelAcceso;
+}
+
+/**
+ * Action to required permission mapping
+ */
+export type ActionRequirement = Record<string, CodigoNivelAcceso | null>;

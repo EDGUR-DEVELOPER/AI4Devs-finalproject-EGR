@@ -13,12 +13,14 @@ interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   parentFolderId: string | null;
+  canWrite?: boolean;
 }
 
 export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   isOpen,
   onClose,
   parentFolderId,
+  canWrite = true,
 }) => {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -26,6 +28,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
   const createFolderMutation = useCreateFolder();
   const { showNotification } = useNotificationStore();
+  const isReadOnly = !canWrite;
 
   // Reset form cuando se cierra modal
   useEffect(() => {
@@ -39,6 +42,11 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (isReadOnly) {
+      setErrorMessage('No tienes permisos para crear carpetas aqui');
+      return;
+    }
 
     // Validación local
     if (!nombre.trim()) {
@@ -101,6 +109,13 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isReadOnly && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md" role="status">
+              <p className="text-sm text-amber-800">
+                No tienes permisos para crear carpetas en esta ubicacion.
+              </p>
+            </div>
+          )}
           <div>
             <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
               Nombre *
@@ -114,6 +129,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
               autoFocus
               maxLength={255}
               required
+              disabled={isReadOnly}
             />
           </div>
 
@@ -130,6 +146,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={3}
               maxLength={500}
+              disabled={isReadOnly}
             />
             <p className="text-xs text-gray-500 mt-1">
               {descripcion.length}/500 caracteres
@@ -161,7 +178,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
               type="submit"
               variant="primary"
               loading={createFolderMutation.isPending}
-              disabled={!nombre.trim()}
+              disabled={isReadOnly || !nombre.trim()}
               fullWidth
             >
               Crear carpeta

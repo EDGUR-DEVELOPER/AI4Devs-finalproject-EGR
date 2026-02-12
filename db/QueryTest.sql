@@ -77,5 +77,6 @@ INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, asignad
 INSERT INTO usuarios_roles (usuario_id, rol_id, organizacion_id, activo, asignado_por, fecha_asignacion) VALUES
     (5, 3, 1, true, NULL, now()), -- USER en Acme
     (5, 3, 2, true, NULL, now()); -- USER en Contoso
-
 select * from usuarios_organizaciones;
+
+SELECT * FROM roles

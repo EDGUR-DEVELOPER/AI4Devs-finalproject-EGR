@@ -2,7 +2,7 @@
  * FolderExplorer - Componente principal para navegación por carpetas
  * Orquesta breadcrumb, listado, creación, eliminación y estado vacío
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFolderContent } from '../hooks/useFolderContent';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
@@ -12,6 +12,9 @@ import { EmptyFolderState } from './EmptyFolderState';
 import { CreateFolderModal } from './CreateFolderModal';
 import { DeleteFolderDialog } from './DeleteFolderDialog';
 import { Button } from '@ui/forms/Button';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { PermissionAwareButton, usePermissionCapabilities } from '@features/acl';
+import type { ICapabilities } from '@features/acl';
 
 interface FolderExplorerProps {
   /**
@@ -34,10 +37,23 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
 }) => {
   const { id: folderId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   // Server state
   const { data: content, isLoading, error } = useFolderContent(folderId);
   const { breadcrumb } = useBreadcrumb(folderId);
+
+  const parsedUserId = Number(userId);
+  const permissionContext = useMemo(
+    () => ({
+      entityId: Number(folderId ?? 0),
+      entityType: 'carpeta' as const,
+      usuarioId: Number.isFinite(parsedUserId) ? parsedUserId : 0,
+    }),
+    [folderId, parsedUserId]
+  );
+
+  const permissionState = usePermissionCapabilities(permissionContext);
 
   // UI state - usa estado externo si se provee, sino interno
   const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
@@ -64,7 +80,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || (folderId && permissionState.isLoading)) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -103,6 +119,20 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
   } = content;
   const isEmpty = subcarpetas.length === 0 && documentos.length === 0;
 
+  const fallbackCapabilities: ICapabilities = {
+    canRead: permisos.puede_leer,
+    canWrite: permisos.puede_escribir,
+    canAdminister: permisos.puede_administrar,
+    canUpload: permisos.puede_escribir,
+    canDownload: permisos.puede_leer,
+    canCreateVersion: permisos.puede_escribir,
+    canDeleteFolder: permisos.puede_administrar,
+    canManagePermissions: permisos.puede_administrar,
+    canChangeVersion: permisos.puede_escribir,
+  };
+
+  const capabilities = folderId ? permissionState.capabilities : fallbackCapabilities;
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header: Breadcrumb + Botón Nueva carpeta */}
@@ -112,21 +142,23 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
           onNavigate={handleBreadcrumbNavigate}
         />
 
-        {!hideCreateButton && permisos.puede_escribir && (
-          <Button
+        {!hideCreateButton && (
+          <PermissionAwareButton
             onClick={() => setIsCreateModalOpen(true)}
+            action="crear_carpeta"
+            capabilities={capabilities}
             variant="primary"
             fullWidth={false}
           >
             + Nueva carpeta
-          </Button>
+          </PermissionAwareButton>
         )}
       </div>
 
       {/* Contenido o estado vacío */}
       {isEmpty ? (
         <EmptyFolderState
-          canWrite={permisos.puede_escribir}
+          capabilities={capabilities}
           onCreateClick={() => setIsCreateModalOpen(true)}
         />
       ) : (
@@ -147,6 +179,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         parentFolderId={folderId || null}
+        canWrite={capabilities.canWrite}
       />
 
       {deleteTarget && (

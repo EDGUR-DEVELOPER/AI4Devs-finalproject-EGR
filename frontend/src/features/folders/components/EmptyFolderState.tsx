@@ -3,17 +3,20 @@
  * Muestra mensaje descriptivo y botón de acción si usuario tiene permisos
  */
 import React from 'react';
-import { Button } from '@ui/forms/Button';
+import { PermissionAwareButton } from '@features/acl';
+import type { ICapabilities } from '@features/acl';
 
 interface EmptyFolderStateProps {
-  canWrite: boolean;
+  capabilities: ICapabilities;
   onCreateClick: () => void;
 }
 
 export const EmptyFolderState: React.FC<EmptyFolderStateProps> = ({
-  canWrite,
+  capabilities,
   onCreateClick,
 }) => {
+  const canWrite = capabilities.canWrite;
+
   return (
     <div 
       className="flex flex-col items-center justify-center py-16 px-4 text-center"
@@ -37,15 +40,15 @@ export const EmptyFolderState: React.FC<EmptyFolderStateProps> = ({
       </p>
 
       {/* CTA solo si tiene permisos */}
-      {canWrite && (
-        <Button
-          onClick={onCreateClick}
-          variant="primary"
-          fullWidth={false}
-        >
-          + Nueva carpeta
-        </Button>
-      )}
+      <PermissionAwareButton
+        onClick={onCreateClick}
+        action="crear_carpeta"
+        capabilities={capabilities}
+        variant="primary"
+        fullWidth={false}
+      >
+        + Nueva carpeta
+      </PermissionAwareButton>
     </div>
   );
 };

@@ -25,6 +25,11 @@ export type {
   AclDocumentoApiResponse,
   ListAclDocumentoApiResponse,
   AclErrorResponse,
+  ICapabilities,
+  IPermissionEvaluationResult,
+  IPermissionContext,
+  IDisabledActionTooltip,
+  ActionRequirement,
 } from './types';
 
 // ============================================================================
@@ -43,6 +48,9 @@ export type { UseMiPermisoCarpetaReturn } from './hooks/useMiPermisoCarpeta';
 export { useAclDocumento } from './hooks/useAclDocumento';
 export type { UseAclDocumentoReturn } from './hooks/useAclDocumento';
 
+export { usePermissionCapabilities } from './hooks/usePermissionCapabilities';
+export type { UsePermissionCapabilitiesResult } from './hooks/usePermissionCapabilities';
+
 // ============================================================================
 // ATOMIC COMPONENTS
 // ============================================================================
@@ -52,6 +60,15 @@ export type { PermissionBadgeProps } from './components/PermissionBadge';
 
 export { RecursiveIndicator } from './components/RecursiveIndicator';
 export type { RecursiveIndicatorProps } from './components/RecursiveIndicator';
+
+export { PermissionTooltip } from './components/PermissionTooltip';
+export type { PermissionTooltipProps } from './components/PermissionTooltip';
+
+export { PermissionAwareButton } from './components/PermissionAwareButton';
+export type { PermissionAwareButtonProps } from './components/PermissionAwareButton';
+
+export { PermissionAwareMenu } from './components/PermissionAwareMenu';
+export type { PermissionAwareMenuProps, MenuAction } from './components/PermissionAwareMenu';
 
 // ============================================================================
 // MOLECULE COMPONENTS
@@ -93,3 +110,14 @@ export type { AclDocumentoSectionProps } from './components/AclDocumentoSection'
 export { aclApi } from './services/nivelAccesoService';
 export { aclCarpetaApi } from './services/aclCarpetaService';
 export { aclDocumentoApi } from './services/aclDocumentoService';
+
+// ============================================================================
+// PERMISSION EVALUATION UTILITIES
+// ============================================================================
+
+export {
+  getCapabilitiesFromLevel,
+  canPerformAction,
+  getDisabledActionMessage,
+  filterAvailableActions,
+} from './utils/permissionEvaluator';
