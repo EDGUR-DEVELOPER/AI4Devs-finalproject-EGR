@@ -6,7 +6,9 @@ import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
+import com.docflow.documentcore.domain.repository.IPermisoCarpetaRolRepository;
 import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
+import com.docflow.documentcore.infrastructure.adapter.persistence.UsuarioRolesAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PermisoHerenciaService - Tests Unitarios")
@@ -30,7 +33,13 @@ class PermisoHerenciaServiceTest {
     private IPermisoCarpetaUsuarioRepository permisoRepository;
 
     @Mock
+    private IPermisoCarpetaRolRepository permisoRolRepository;
+
+    @Mock
     private ICarpetaRepository carpetaRepository;
+
+    @Mock
+    private UsuarioRolesAdapter usuarioRolesAdapter;
 
     @InjectMocks
     private PermisoHerenciaService service;
@@ -44,6 +53,11 @@ class PermisoHerenciaServiceTest {
         usuarioId = Math.abs(new Random().nextLong());
         organizacionId = Math.abs(new Random().nextLong());
         carpetaId = Math.abs(new Random().nextLong());
+        
+        // Mock por defecto: usuario sin roles (solo prueba permisos directos de usuario)
+        // Lenient porque no todos los tests llegan a usar este stub (ej: permisos directos)
+        lenient().when(usuarioRolesAdapter.obtenerRolesDelUsuario(anyLong(), anyLong()))
+                .thenReturn(List.of());
     }
 
     @Test

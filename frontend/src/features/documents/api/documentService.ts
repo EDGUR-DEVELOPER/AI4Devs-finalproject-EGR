@@ -62,7 +62,7 @@ export async function uploadDocument(
   };
 
   const response = await apiClient.post<DocumentDTO>(
-    `/folders/${folderId}/documents`,
+    `/doc/v1/folders/${folderId}/documents`,
     formData,
     config
   );
@@ -79,7 +79,7 @@ export async function getDocumentMetadata(
   documentId: string
 ): Promise<DocumentDTO> {
   const response = await apiClient.get<DocumentDTO>(
-    `/documents/${documentId}`
+    `/doc/documentos/${documentId}`
   );
   return response.data;
 }
@@ -97,7 +97,7 @@ export async function getDocumentVersions(
   size: number = 20
 ): Promise<DocumentVersionListResponse> {
   const response = await apiClient.get<DocumentVersionListResponse>(
-    `/documents/${documentId}/versions`,
+    `/doc/documentos/${documentId}/versiones`,
     {
       params: { page, size },
     }
@@ -118,7 +118,7 @@ export async function downloadDocumentVersion(
   inline: boolean = false
 ): Promise<Blob> {
   const response = await apiClient.get<Blob>(
-    `/documents/${documentId}/versions/${versionId}/download`,
+    `/doc/documentos/${documentId}/versiones/${versionId}/download`,
     {
       params: { inline },
       responseType: 'blob',
@@ -177,7 +177,7 @@ export async function uploadNewVersion(
   };
 
   const response = await apiClient.post<DocumentVersionDTO>(
-    `/documents/${documentId}/versions`,
+    `/doc/documentos/${documentId}/versiones`,
     formData,
     config
   );

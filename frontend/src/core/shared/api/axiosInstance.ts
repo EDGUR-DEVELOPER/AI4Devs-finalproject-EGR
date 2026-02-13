@@ -60,21 +60,33 @@ apiClient.interceptors.request.use(
         
         config.headers.Authorization = `Bearer ${token}`;
         
-        // Inyectar headers de contexto multi-tenant desde el almacenamiento de auth
-        // Intentar obtener del store de auth (estado actual)
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          try {
-            const { state } = JSON.parse(authStorage);
-            if (state?.userId) {
-              config.headers['X-User-Id'] = state.userId;
+        // Inyectar headers de contexto multi-tenant desde el JWT token
+        // Decodificar el token para obtener userId y organizacionId
+        try {
+          const decoded = jwtDecode<JwtPayload>(token);
+          if (decoded.sub) {
+            config.headers['X-User-Id'] = decoded.sub;
+          }
+          if (decoded.organizacion_id) {
+            config.headers['X-Organization-Id'] = decoded.organizacion_id;
+          }
+        } catch (decodeError) {
+          // Fallback: intentar obtener del almacenamiento de auth
+          console.warn('Error decodificando token para headers:', decodeError);
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            try {
+              const { state } = JSON.parse(authStorage);
+              if (state?.userId) {
+                config.headers['X-User-Id'] = state.userId;
+              }
+              if (state?.organizacionId) {
+                config.headers['X-Organization-Id'] = state.organizacionId;
+              }
+            } catch (parseError) {
+              // Ignorar error de parsing - los headers no serán inyectados
+              console.warn('Error extrayendo headers de auth storage:', parseError);
             }
-            if (state?.organizacionId) {
-              config.headers['X-Organization-Id'] = state.organizacionId;
-            }
-          } catch (parseError) {
-            // Ignorar error de parsing - los headers no serán inyectados
-            console.warn('Error extrayendo headers de auth storage:', parseError);
           }
         }
       }

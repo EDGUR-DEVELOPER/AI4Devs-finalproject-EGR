@@ -19,19 +19,23 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Filtro global para extraer el ID de organización del JWT y propagarlo
- * como header HTTP a los servicios downstream.
+ * Filtro global para extraer el ID de organización y usuario del JWT y propagarlos
+ * como headers HTTP a los servicios downstream.
  * 
  * FLUJO:
  * 1. Extrae el token JWT del header "Authorization: Bearer <token>"
- * 2. Parsea el token y extrae el claim "org_id" (organizacionId)
- * 3. Inyecta el header "X-Organization-Id: <org_id>" en la request downstream
- * 4. Los servicios backend (identity, document-core, auditLog) leen este header
- *    vía TenantContextFilter para establecer el contexto tenant
+ * 2. Parsea el token y extrae:
+ *    - El claim "org_id" (organizacionId)
+ *    - El subject "sub" (usuarioId)
+ * 3. Inyecta los headers:
+ *    - "X-Organization-Id: <org_id>"
+ *    - "X-User-Id: <user_id>"
+ * 4. Los servicios backend (identity, document-core, auditLog) leen estos headers
+ *    vía TenantContextFilter para establecer el contexto tenant y usuario
  * 
  * SEGURIDAD:
  * - El Gateway es el único punto de entrada confiable (trusted boundary)
- * - Los servicios backend confían ciegamente en el header X-Organization-Id
+ * - Los servicios backend confían ciegamente en los headers X-Organization-Id y X-User-Id
  * - Los servicios backend NO deben ser accesibles directamente desde internet
  * - JWT debe estar firmado con la misma secret key que identity-service
  * 
@@ -58,6 +62,12 @@ public class TenantPropagationFilter implements GlobalFilter, Ordered {
      * Los servicios downstream leen este header para establecer el contexto tenant.
      */
     private static final String TENANT_HEADER = "X-Organization-Id";
+
+    /**
+     * Header HTTP que se inyecta con el ID de usuario.
+     * Los servicios downstream leen este header para establecer el contexto del usuario.
+     */
+    private static final String USER_ID_HEADER = "X-User-Id";
 
     /**
      * Nombre del claim en el JWT que contiene el ID de organización.
@@ -120,14 +130,22 @@ public class TenantPropagationFilter implements GlobalFilter, Ordered {
                 return chain.filter(exchange);
             }
 
-            // Inyecta el header X-Organization-Id en la request downstream
+            // Extrae el user_id del subject (es parte estándar del JWT)
+            String userId = claims.getSubject();
+            if (userId == null || userId.isBlank()) {
+                log.warn("Token JWT válido pero sin subject (user_id). Org: {}", orgId);
+                return chain.filter(exchange);
+            }
+
+            // Inyecta AMBOS headers en la request downstream
             ServerHttpRequest modifiedRequest = exchange.getRequest()
                     .mutate()
                     .header(TENANT_HEADER, orgId.toString())
+                    .header(USER_ID_HEADER, userId)
                     .build();
 
-            log.debug("Inyectado header {}: {} para request: {}", 
-                    TENANT_HEADER, orgId, exchange.getRequest().getPath());
+            log.debug("Inyectados headers - {}: {}, {}: {} para request: {}", 
+                    TENANT_HEADER, orgId, USER_ID_HEADER, userId, exchange.getRequest().getPath());
 
             // Continúa con la request modificada
             return chain.filter(exchange.mutate().request(modifiedRequest).build());

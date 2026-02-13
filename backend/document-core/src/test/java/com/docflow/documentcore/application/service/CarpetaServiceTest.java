@@ -1,17 +1,20 @@
 package com.docflow.documentcore.application.service;
 
 import com.docflow.documentcore.application.validator.CarpetaValidator;
+import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
 import com.docflow.documentcore.domain.event.CarpetaCreatedEvent;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNombreDuplicadoException;
 import com.docflow.documentcore.domain.exception.carpeta.CarpetaNotFoundException;
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
+import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
+import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
+import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -51,8 +54,22 @@ class CarpetaServiceTest {
     
     @Mock
     private ApplicationEventPublisher eventPublisher;
-    
-    @InjectMocks
+
+        @Mock
+        private IEvaluadorPermisos evaluadorPermisos;
+
+        @Mock
+        private IPermisoCarpetaUsuarioRepository permisoRepository;
+
+        @Mock
+        private PermisoCarpetaUsuarioValidator permisoValidator;
+
+        @Mock
+        private UsuarioJpaRepository usuarioRepository;
+
+        @Mock
+        private NivelAccesoService nivelAccesoService;
+
     private CarpetaService carpetaService;
     
     private Long organizacionId;
@@ -64,6 +81,22 @@ class CarpetaServiceTest {
         organizacionId = new Random().nextLong();
         usuarioId = new Random().nextLong();
         carpetaPadreId = new Random().nextLong();
+
+        PermisoCarpetaUsuarioService permisoCarpetaUsuarioService = new PermisoCarpetaUsuarioService(
+                permisoRepository,
+                permisoValidator,
+                usuarioRepository,
+                nivelAccesoService,
+                eventPublisher
+        );
+
+        carpetaService = new CarpetaService(
+                carpetaRepository,
+                validator,
+                eventPublisher,
+                evaluadorPermisos,
+                permisoCarpetaUsuarioService
+        );
     }
     
     // ========================================================================

@@ -9,7 +9,9 @@ import com.docflow.documentcore.domain.exception.carpeta.SinPermisoCarpetaExcept
 import com.docflow.documentcore.domain.model.Carpeta;
 import com.docflow.documentcore.domain.model.CarpetaAncestro;
 import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoEfectivo;
 import com.docflow.documentcore.domain.repository.ICarpetaRepository;
+import com.docflow.documentcore.domain.service.IEvaluadorPermisos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,15 +47,21 @@ public class CarpetaService {
     private final ICarpetaRepository carpetaRepository;
     private final CarpetaValidator validator;
     private final ApplicationEventPublisher eventPublisher;
+    private final IEvaluadorPermisos evaluadorPermisos;
+    private final PermisoCarpetaUsuarioService permisoCarpetaUsuarioService;
     
     public CarpetaService(
             ICarpetaRepository carpetaRepository,
             CarpetaValidator validator,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            IEvaluadorPermisos evaluadorPermisos,
+            PermisoCarpetaUsuarioService permisoCarpetaUsuarioService
     ) {
         this.carpetaRepository = carpetaRepository;
         this.validator = validator;
         this.eventPublisher = eventPublisher;
+        this.evaluadorPermisos = evaluadorPermisos;
+        this.permisoCarpetaUsuarioService = permisoCarpetaUsuarioService;
     }
     
     /**
@@ -103,6 +111,25 @@ public class CarpetaService {
         Carpeta carpetaCreada = carpetaRepository.crear(carpeta);
         
         logger.info("Carpeta creada exitosamente con ID: {}", carpetaCreada.getId());
+
+        NivelAcceso nivelAccesoInicial = NivelAcceso.ADMINISTRACION;
+        if (carpetaPadreId != null) {
+            PermisoEfectivo permisoPadre = evaluadorPermisos.evaluarPermisoCarpeta(
+                usuarioId,
+                carpetaPadreId,
+                organizacionId
+            );
+            nivelAccesoInicial = permisoPadre != null
+                ? permisoPadre.getNivelAcceso()
+                : NivelAcceso.ESCRITURA;
+        }
+
+        permisoCarpetaUsuarioService.crearPermisoInicial(
+            carpetaCreada.getId(),
+            usuarioId,
+            nivelAccesoInicial,
+            organizacionId
+        );
         
         // 6. Emitir evento de dominio para auditoría
         emitirEventoCarpetaCreada(carpetaCreada, usuarioId);

@@ -110,6 +110,38 @@ public class PermisoDocumentoUsuarioService {
         return guardado;
     }
 
+    public PermisoDocumentoUsuario crearPermisoInicial(
+            Long documentoId,
+            Long usuarioId,
+            NivelAcceso nivelAcceso,
+            Long organizacionId
+    ) {
+        log.info("Registrando permiso inicial de documento para usuario {} en documento {}",
+                usuarioId, documentoId);
+
+        PermisoDocumentoUsuario existente = permisoRepository
+                .findByDocumentoIdAndUsuarioId(documentoId, usuarioId)
+                .orElse(null);
+
+        if (existente != null) {
+            return existente;
+        }
+
+        PermisoDocumentoUsuario permiso = new PermisoDocumentoUsuario();
+        permiso.setDocumentoId(documentoId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(nivelAcceso);
+        permiso.setFechaExpiracion(null);
+        permiso.setFechaAsignacion(OffsetDateTime.now());
+
+        PermisoDocumentoUsuario guardado = permisoRepository.save(permiso);
+
+        publicarEventoCreado(guardado, CodigoNivelAcceso.valueOf(nivelAcceso.name()), usuarioId);
+
+        return guardado;
+    }
+
     /**
      * Revoca (elimina) un permiso explícito de documento.
      */

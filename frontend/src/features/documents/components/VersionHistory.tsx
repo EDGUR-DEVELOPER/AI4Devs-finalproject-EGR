@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useDocumentVersions } from '../hooks/useDocumentVersions';
+import { usePermissions } from '../hooks/usePermissions';
 import { VersionItem } from './VersionItem';
 import { DocumentUpload } from './DocumentUpload';
 
@@ -29,6 +30,8 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   onNewVersionUpload,
 }) => {
   const [showUploadForm, setShowUploadForm] = useState(false);
+
+  const { canWrite } = usePermissions(folderId);
 
   const {
     versions,
@@ -116,6 +119,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
           </div>
           <DocumentUpload
             folderId={folderId}
+            canWrite={canWrite}
             onUploadSuccess={handleUploadSuccess}
           />
         </div>

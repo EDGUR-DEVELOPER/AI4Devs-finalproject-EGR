@@ -88,6 +88,38 @@ public class PermisoCarpetaUsuarioService {
         return creado;
     }
 
+    public PermisoCarpetaUsuario crearPermisoInicial(
+            Long carpetaId,
+            Long usuarioId,
+            NivelAcceso nivelAcceso,
+            Long organizacionId
+    ) {
+        log.info("Registrando permiso inicial de carpeta para usuario {} en carpeta {}",
+                usuarioId, carpetaId);
+
+        PermisoCarpetaUsuario existente = permisoRepository
+                .findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElse(null);
+
+        if (existente != null) {
+            return existente;
+        }
+
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(nivelAcceso);
+        permiso.setRecursivo(false);
+        permiso.setFechaAsignacion(OffsetDateTime.now());
+
+        PermisoCarpetaUsuario creado = permisoRepository.save(permiso);
+
+        publicarEventoCreado(creado, CodigoNivelAcceso.valueOf(nivelAcceso.name()), usuarioId);
+
+        return creado;
+    }
+
     public PermisoCarpetaUsuario actualizarPermiso(
             Long carpetaId,
             Long usuarioId,

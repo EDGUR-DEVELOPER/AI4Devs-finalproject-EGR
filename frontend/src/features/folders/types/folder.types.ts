@@ -4,6 +4,17 @@
  */
 
 /**
+ * Capacidades/permisos del usuario sobre un recurso (carpeta o documento)
+ * Refleja la estructura de CapacidadesDTO del backend
+ */
+export interface Capacidades {
+  puede_leer: boolean;
+  puede_escribir: boolean;
+  puede_administrar: boolean;
+  puede_descargar?: boolean;
+}
+
+/**
  * Item de carpeta en lista de contenido
  */
 export interface FolderItem {
@@ -15,9 +26,7 @@ export interface FolderItem {
   fecha_modificacion?: string;
   num_subcarpetas?: number;
   num_documentos?: number;
-  puede_leer: boolean;
-  puede_escribir: boolean;
-  puede_administrar: boolean;
+  capacidades: Capacidades;
 }
 
 /**
@@ -37,13 +46,12 @@ export interface DocumentItem {
     nombre: string;
     email: string;
   };
-  puede_leer: boolean;
-  puede_escribir: boolean;
-  puede_descargar: boolean;
+  capacidades: Capacidades;
 }
 
 /**
  * Permisos del usuario en una carpeta
+ * @deprecated Usar Capacidades directamente
  */
 export interface FolderPermissions {
   puede_leer: boolean;
@@ -59,7 +67,7 @@ export interface FolderContent {
   documentos: DocumentItem[];
   total_subcarpetas: number;
   total_documentos: number;
-  permisos: FolderPermissions;
+  permisos: Capacidades;
 }
 
 /**
@@ -88,9 +96,7 @@ export interface CreateFolderResponse {
   descripcion?: string;
   fecha_creacion: string;
   carpeta_padre_id: string | null;
-  puede_leer: boolean;
-  puede_escribir: boolean;
-  puede_administrar: boolean;
+  capacidades: Capacidades;
 }
 
 /**

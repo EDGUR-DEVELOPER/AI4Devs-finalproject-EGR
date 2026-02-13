@@ -13,6 +13,8 @@ import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
 import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.model.Documento;
+import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoEfectivo;
 import com.docflow.documentcore.domain.model.TipoRecurso;
 import com.docflow.documentcore.domain.model.Version;
 import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
@@ -51,6 +53,7 @@ public class DocumentService {
     private final SecurityContext securityContext;
     private final IEvaluadorPermisos evaluadorPermisos;
     private final ApplicationEventPublisher eventPublisher;
+    private final PermisoDocumentoUsuarioService permisoDocumentoUsuarioService;
     
     /**
      * Crea un nuevo documento con su primera versión.
@@ -119,6 +122,23 @@ public class DocumentService {
         // Guardar documento para obtener ID
         documento = documentoRepository.save(documento);
         log.info("Documento creado con ID: {}", documento.getId());
+
+        NivelAcceso nivelAccesoInicial = NivelAcceso.ESCRITURA;
+        PermisoEfectivo permisoPadre = evaluadorPermisos.evaluarPermisoCarpeta(
+            usuarioId,
+            carpetaId,
+            organizacionId
+        );
+        if (permisoPadre != null) {
+            nivelAccesoInicial = permisoPadre.getNivelAcceso();
+        }
+
+        permisoDocumentoUsuarioService.crearPermisoInicial(
+            documento.getId(),
+            usuarioId,
+            nivelAccesoInicial,
+            organizacionId
+        );
         
         try {
             // 6. Calcular hash SHA256 del contenido

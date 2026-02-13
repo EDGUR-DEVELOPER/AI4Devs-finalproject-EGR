@@ -174,6 +174,7 @@ export const FoldersPage: React.FC = () => {
                 isOpen={isUploadModalOpen}
                 onClose={() => setIsUploadModalOpen(false)}
                 folderId={folderId!}
+                puede_escribir={permisos.puede_escribir}
                 onUploadSuccess={() => {
                     refetch();
                 }}

@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { usePermissions } from '../hooks/usePermissions';
 import { useDocumentUpload } from '../hooks/useDocumentUpload';
 import { DocumentUploadInput } from './DocumentUploadInput';
 import { UploadProgress } from './UploadProgress';
@@ -13,6 +12,7 @@ import { useNotificationStore } from '@ui/notifications/useNotificationStore';
 
 interface DocumentUploadProps {
   folderId: string;
+  canWrite: boolean;
   onUploadSuccess?: (documentId: string, fileName: string) => void;
 }
 
@@ -21,9 +21,9 @@ interface DocumentUploadProps {
  */
 export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   folderId,
+  canWrite,
   onUploadSuccess,
 }) => {
-  const { canWrite } = usePermissions(folderId);
   const showNotification = useNotificationStore(
     (state) => state.showNotification
   );

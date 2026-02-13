@@ -19,15 +19,16 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   onDeleteClick,
 }) => {
   const isFolder = isFolderItem(item);
-  const canOpen = item.puede_leer;
+  const canOpen = item.capacidades?.puede_leer ?? false;
   
   const capabilities: ICapabilities = useMemo(() => {
-    const canWrite = 'puede_escribir' in item ? item.puede_escribir : false;
-    const canAdminister = 'puede_administrar' in item ? item.puede_administrar : false;
-    const canDownload = 'puede_descargar' in item ? item.puede_descargar : false;
+    const canRead = item.capacidades?.puede_leer ?? false;
+    const canWrite = item.capacidades?.puede_escribir ?? false;
+    const canAdminister = item.capacidades?.puede_administrar ?? false;
+    const canDownload = item.capacidades?.puede_descargar ?? false;
 
     return {
-      canRead: item.puede_leer,
+      canRead,
       canWrite,
       canAdminister,
       canUpload: canWrite,
@@ -37,7 +38,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
       canManagePermissions: isFolder && canAdminister,
       canChangeVersion: !isFolder && canWrite,
     };
-  }, [isFolder, item]);
+  }, [isFolder, item.capacidades]);
 
   const folderActions = useMemo(() => {
     if (!isFolder) {
@@ -95,11 +96,11 @@ export const FolderItem: React.FC<FolderItemProps> = ({
             <p className="text-xs text-gray-500 mt-1">
               {isFolder ? (
                 <>
-                  {item.num_subcarpetas || 0} carpetas, {item.num_documentos || 0} documentos
+                  {'num_subcarpetas' in item ? item.num_subcarpetas : 0} carpetas, {'num_documentos' in item ? item.num_documentos : 0} documentos
                 </>
               ) : (
                 <>
-                  Versión {item.version_actual} · {formatDate(item.fecha_modificacion)}
+                  Versión {'version_actual' in item ? item.version_actual : 0} · {formatDate(('fecha_modificacion' in item && item.fecha_modificacion) ? item.fecha_modificacion : item.fecha_creacion)}
                 </>
               )}
             </p>
@@ -118,11 +119,11 @@ export const FolderItem: React.FC<FolderItemProps> = ({
       {/* Badges de permisos (desarrollo/debug) */}
       {import.meta.env.DEV && (
         <div className="flex gap-1 mt-2">
-          {item.puede_leer && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Leer</span>}
-          {'puede_escribir' in item && item.puede_escribir && (
+          {item.capacidades?.puede_leer && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Leer</span>}
+          {item.capacidades?.puede_escribir && (
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Escribir</span>
           )}
-          {'puede_administrar' in item && item.puede_administrar && (
+          {item.capacidades?.puede_administrar && (
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Admin</span>
           )}
         </div>

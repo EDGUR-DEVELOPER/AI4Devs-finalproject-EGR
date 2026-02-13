@@ -11,6 +11,7 @@ interface DocumentUploadModalProps {
   onClose: () => void;
   folderId: string;
   onUploadSuccess?: (documentId: string, fileName: string) => void;
+  puede_escribir: boolean;
 }
 
 /**
@@ -22,6 +23,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   onClose,
   folderId,
   onUploadSuccess,
+  puede_escribir,
 }) => {
   if (!isOpen) return null;
 
@@ -51,6 +53,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         <div className="space-y-4">
           <DocumentUpload
             folderId={folderId}
+            canWrite={puede_escribir}
             onUploadSuccess={(documentId, fileName) => {
               if (onUploadSuccess) {
                 onUploadSuccess(documentId, fileName);

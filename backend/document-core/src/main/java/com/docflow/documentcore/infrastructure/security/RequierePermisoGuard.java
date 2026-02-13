@@ -1,6 +1,7 @@
 package com.docflow.documentcore.infrastructure.security;
 
 import com.docflow.documentcore.application.service.EvaluadorPermisosService;
+import com.docflow.documentcore.domain.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -120,6 +121,10 @@ public class RequierePermisoGuard {
             
         } catch (ResponseStatusException e) {
             // Re-throw permission exceptions
+            throw e;
+        } catch (DomainException e) {
+            // Re-throw domain exceptions (business logic errors)
+            log.debug("Domain exception during method execution: method={}, error={}", methodName, e.getMessage());
             throw e;
         } catch (Exception e) {
             log.error("Error during permission check for method={}: {}", methodName, e.getMessage(), e);

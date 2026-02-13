@@ -71,6 +71,9 @@ class DocumentServiceTest {
     
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private PermisoDocumentoUsuarioService permisoDocumentoUsuarioService;
     
     @Mock
     private com.docflow.documentcore.application.validator.DocumentValidator documentValidator;
@@ -98,7 +101,8 @@ class DocumentServiceTest {
             null, // documentoMapper (no usado en tests actuales)
             securityContext,
             evaluadorPermisos,
-            eventPublisher
+            eventPublisher,
+            permisoDocumentoUsuarioService
         );
         
         // Configurar SecurityContext por defecto
