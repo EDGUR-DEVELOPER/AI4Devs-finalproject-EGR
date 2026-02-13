@@ -57,36 +57,6 @@ public class AclController {
     }
 
     /**
-     * GET /api/acl/niveles/all
-     * List all access levels including inactive
-     */
-    @GetMapping("/all")
-    @Operation(summary = "Listar todos los niveles de acceso (incluyendo inactivos)", 
-               description = "Devuelve todos los niveles de acceso ordenados por el campo 'orden'")
-    public ResponseEntity<List<NivelAccesoDTO>> listAllAccessLevels() {
-        log.info("GET /api/acl/niveles/all - Listing all access levels");
-        List<NivelAcceso> niveles = service.listAll();
-        List<NivelAccesoDTO> dtos = niveles.stream()
-                .map(mapper::toDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
-
-    /**
-     * GET /api/acl/niveles/{id}
-     * Get access level by ID
-     */
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener nivel de acceso por ID", 
-               description = "Devuelve un nivel de acceso específico por su ID (Long)")
-    public ResponseEntity<NivelAccesoDTO> getAccessLevelById(@PathVariable Long id) {
-        log.info("GET /api/acl/niveles/{} - Fetching access level", id);
-        validator.validateExistsById(id);
-        NivelAcceso nivel = service.getById(id);
-        return ResponseEntity.ok(mapper.toDto(nivel));
-    }
-
-    /**
      * GET /api/acl/niveles/codigo/{codigo}
      * Get access level by codigo
      */
@@ -98,20 +68,5 @@ public class AclController {
         CodigoNivelAcceso codigoEnum = validator.validateCodigoFormat(codigo);
         NivelAcceso nivel = service.getByCodigo(codigoEnum);
         return ResponseEntity.ok(mapper.toDto(nivel));
-    }
-
-    /**
-     * GET /api/acl/niveles/{id}/permisos/{accion}
-     * Check if a specific action is permitted for an access level
-     */
-    @GetMapping("/{id}/permisos/{accion}")
-    @Operation(summary = "Verificar si una acción está permitida", 
-               description = "Verifica si una acción específica está permitida para el nivel de acceso dado")
-    public ResponseEntity<Boolean> checkPermission(
-            @PathVariable Long id,
-            @PathVariable String accion) {
-        log.info("GET /api/acl/niveles/{}/permisos/{} - Checking permission", id, accion);
-        boolean isPermitted = service.isAccionPermitida(id, accion);
-        return ResponseEntity.ok(isPermitted);
     }
 }

@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { useAclDocumento } from './useAclDocumento';
+import { useMiPermisoDocumento } from './useMiPermisoDocumento';
 import { useMiPermisoCarpeta } from './useMiPermisoCarpeta';
 import { getCapabilitiesFromLevel } from '../utils/permissionEvaluator';
 import type {
@@ -30,15 +30,18 @@ export function usePermissionCapabilities(
   const isDocumento = context.entityType === 'documento';
   const isCarpeta = context.entityType === 'carpeta';
 
-  const { acls, loading: documentoLoading, error: documentoError, refresh } = useAclDocumento(
-    isDocumento ? context.entityId : 0
-  );
+  const {
+    permiso: permisoDocumento,
+    loading: documentoLoading,
+    error: documentoError,
+    refetch: refetchDocumento,
+  } = useMiPermisoDocumento(isDocumento ? context.entityId : 0);
 
   const {
-    permiso,
+    permiso: permisoCarpeta,
     loading: carpetaLoading,
     error: carpetaError,
-    refetch,
+    refetch: refetchCarpeta,
   } = useMiPermisoCarpeta(isCarpeta ? context.entityId : 0);
 
   const evaluation = useMemo(() => {
@@ -50,17 +53,16 @@ export function usePermissionCapabilities(
     }
 
     if (isDocumento) {
-      const userAcl = acls.find((acl) => acl.usuario_id === context.usuarioId) || null;
       return {
-        nivelAcceso: userAcl?.nivel_acceso?.codigo ?? null,
-        origen: (userAcl ? 'documento' : 'ninguno') as 'documento' | 'carpeta' | 'ninguno',
+        nivelAcceso: permisoDocumento?.nivel_acceso ?? null,
+        origen: (permisoDocumento?.nivel_acceso ? 'documento' : 'ninguno') as 'documento' | 'carpeta' | 'ninguno',
       };
     }
 
     if (isCarpeta) {
       return {
-        nivelAcceso: permiso?.nivel_acceso ?? null,
-        origen: (permiso?.nivel_acceso ? 'carpeta' : 'ninguno') as 'documento' | 'carpeta' | 'ninguno',
+        nivelAcceso: permisoCarpeta?.nivel_acceso ?? null,
+        origen: (permisoCarpeta?.nivel_acceso ? 'carpeta' : 'ninguno') as 'documento' | 'carpeta' | 'ninguno',
       };
     }
 
@@ -68,7 +70,7 @@ export function usePermissionCapabilities(
       nivelAcceso: null as CodigoNivelAcceso | null,
       origen: 'ninguno' as 'documento' | 'carpeta' | 'ninguno',
     };
-  }, [acls, context.usuarioId, isDocumento, isCarpeta, permiso?.nivel_acceso]);
+  }, [context.usuarioId, isDocumento, isCarpeta, permisoDocumento?.nivel_acceso, permisoCarpeta?.nivel_acceso]);
 
   const capabilities = evaluation.nivelAcceso
     ? getCapabilitiesFromLevel(evaluation.nivelAcceso)
@@ -84,6 +86,6 @@ export function usePermissionCapabilities(
     hasAnyPermission: Boolean(evaluation.nivelAcceso),
     isLoading,
     error,
-    refreshPermissions: isDocumento ? refresh : refetch,
+    refreshPermissions: isDocumento ? refetchDocumento : refetchCarpeta,
   };
 }

@@ -10,10 +10,11 @@ import type { INivelAcceso, CodigoNivelAcceso, ApiResponse } from '../types';
 
 /**
  * Base endpoint for ACL operations
+ * Routes through gateway: /api/doc/** -> document-core /api/**
  */
 const ACL_ENDPOINTS = {
-  NIVELES: '/api/acl/niveles',
-  NIVEL_BY_CODIGO: (codigo: CodigoNivelAcceso) => `/api/acl/niveles/${codigo}`,
+  NIVELES: '/doc/acl/niveles',
+  NIVEL_BY_CODIGO: (codigo: CodigoNivelAcceso) => `/doc/acl/niveles/${codigo}`,
 } as const;
 
 /**

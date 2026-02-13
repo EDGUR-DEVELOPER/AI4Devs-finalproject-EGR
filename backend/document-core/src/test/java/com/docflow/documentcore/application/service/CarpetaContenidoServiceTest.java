@@ -113,6 +113,10 @@ class CarpetaContenidoServiceTest {
         assertThat(resultado.totalSubcarpetas()).isEqualTo(0);
         assertThat(resultado.totalDocumentos()).isEqualTo(0);
         assertThat(resultado.paginaActual()).isEqualTo(1);
+        assertThat(resultado.permisos()).isNotNull();
+        assertThat(resultado.permisos().puedeLeer()).isTrue();
+        assertThat(resultado.permisos().puedeEscribir()).isFalse();
+        assertThat(resultado.permisos().puedeAdministrar()).isFalse();
 
         verify(carpetaRepository).obtenerPorId(CARPETA_ID, ORGANIZACION_ID);
         verify(evaluadorPermisos).evaluarPermisoCarpeta(USUARIO_ID, CARPETA_ID, ORGANIZACION_ID);

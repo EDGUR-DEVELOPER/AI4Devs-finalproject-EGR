@@ -22,9 +22,10 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ segments, onNavigate }) 
     >
       {segments.map((segment, index) => {
         const isLast = index === segments.length - 1;
+        const segmentKey = `${segment.id ?? 'root'}-${index}`;
         
         return (
-          <React.Fragment key={segment.id}>
+          <React.Fragment key={segmentKey}>
             {index > 0 && (
               <span className="text-gray-400" aria-hidden="true">
                 /

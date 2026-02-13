@@ -271,4 +271,64 @@ public interface CarpetaJpaRepository extends JpaRepository<CarpetaEntity, Long>
             @Param("carpetaId") Long carpetaId,
             @Param("organizacionId") Long organizacionId
     );
+
+    /**
+     * Cuenta subcarpetas de una carpeta específica filtrando por permisos del usuario.
+     * 
+     * <p>Utilizado para mostrar el número de subcarpetas dentro de cada subcarpeta
+     * retornada en el listado de contenido.</p>
+     * 
+     * @param carpetaId identificador de la carpeta (padre de las subcarpetas a contar)
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número de subcarpetas accesibles para el usuario
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT c.id)
+        FROM carpetas c
+        WHERE c.carpeta_padre_id = :carpetaId
+          AND c.organizacion_id = :organizacionId
+          AND c.fecha_eliminacion IS NULL
+          AND EXISTS (
+              SELECT 1 FROM permiso_carpeta_usuario pcu
+              WHERE pcu.carpeta_id = c.id
+                AND pcu.usuario_id = :usuarioId
+                AND pcu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
+          )
+        """, nativeQuery = true)
+    int countSubcarpetasDeSubcarpetaConPermiso(
+            @Param("carpetaId") Long carpetaId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Cuenta documentos de una carpeta específica filtrando por permisos del usuario.
+     * 
+     * <p>Utilizado para mostrar el número de documentos dentro de cada subcarpeta
+     * retornada en el listado de contenido.</p>
+     * 
+     * @param carpetaId identificador de la carpeta contenedora
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número de documentos accesibles para el usuario
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT d.id)
+        FROM documento d
+        WHERE d.carpeta_id = :carpetaId
+          AND d.organizacion_id = :organizacionId
+          AND d.fecha_eliminacion IS NULL
+          AND EXISTS (
+              SELECT 1 FROM permiso_documento_usuario pdu
+              WHERE pdu.documento_id = d.id
+                AND pdu.usuario_id = :usuarioId
+                AND pdu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
+          )
+        """, nativeQuery = true)
+    int countDocumentosDeSubcarpetaConPermiso(
+            @Param("carpetaId") Long carpetaId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("organizacionId") Long organizacionId
+    );
 }

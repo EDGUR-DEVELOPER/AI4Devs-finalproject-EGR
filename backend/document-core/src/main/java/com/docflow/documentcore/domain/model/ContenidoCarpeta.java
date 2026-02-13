@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Value Object que representa el contenido completo de una carpeta.
- * Contiene subcarpetas, documentos y metadatos de paginación.
+ * Contiene subcarpetas, documentos, metadatos de paginación y permisos del usuario.
  */
 public record ContenidoCarpeta(
     List<CarpetaItem> subcarpetas,
@@ -14,7 +14,8 @@ public record ContenidoCarpeta(
     int totalSubcarpetas,
     int totalDocumentos,
     int paginaActual,
-    int totalPaginas
+    int totalPaginas,
+    CapacidadesUsuario permisos
 ) implements Serializable {
 
     public ContenidoCarpeta {
@@ -24,6 +25,9 @@ public record ContenidoCarpeta(
         }
         if (documentos == null) {
             throw new IllegalArgumentException("documentos no puede ser nulo");
+        }
+        if (permisos == null) {
+            throw new IllegalArgumentException("permisos no puede ser nulo");
         }
         if (paginaActual < 1) {
             throw new IllegalArgumentException("paginaActual debe ser >= 1");

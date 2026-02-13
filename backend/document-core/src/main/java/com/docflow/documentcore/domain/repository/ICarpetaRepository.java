@@ -189,5 +189,39 @@ public interface ICarpetaRepository {
      * @return número de documentos con fecha_eliminacion IS NULL
      */
     int contarDocumentosActivos(Long carpetaId, Long organizacionId);
+
+    /**
+     * Cuenta subcarpetas de una carpeta específica filtrando por permisos del usuario.
+     * 
+     * <p>Utilizado para mostrar el número de subcarpetas dentro de cada subcarpeta
+     * retornada en el listado de contenido.</p>
+     * 
+     * @param carpetaId identificador de la carpeta (padre de las subcarpetas a contar)
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número de subcarpetas accesibles para el usuario
+     */
+    int contarSubcarpetasDeSubcarpetaConPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId
+    );
+
+    /**
+     * Cuenta documentos de una carpeta específica filtrando por permisos del usuario.
+     * 
+     * <p>Utilizado para mostrar el número de documentos dentro de cada subcarpeta
+     * retornada en el listado de contenido.</p>
+     * 
+     * @param carpetaId identificador de la carpeta contenedora
+     * @param usuarioId identificador del usuario
+     * @param organizacionId identificador de la organización
+     * @return número de documentos accesibles para el usuario
+     */
+    int contarDocumentosDeSubcarpetaConPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId
+    );
 }
 

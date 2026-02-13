@@ -1,45 +1,23 @@
 /**
  * Hook para obtener contenido de una carpeta
- * Maneja raíz (folderId = undefined) y carpetas específicas
+ * Utiliza React Query para cacheo automático y manejo eficiente de estado
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { folderApi } from '../api/folderApi';
 import type { FolderContent } from '../types/folder.types';
 
-interface UseFolderContentReturn {
-  data: FolderContent | null;
-  isLoading: boolean;
-  error: Error | null;
-  /** Recarga el contenido de la carpeta actual */
-  refetch: () => Promise<void>;
-}
-
-export const useFolderContent = (folderId: string | undefined): UseFolderContentReturn => {
-  const [data, setData] = useState<FolderContent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  /** Fetch logic extraído para reutilización en useCallback */
-  const fetchContent = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
+export const useFolderContent = (folderId: string | undefined) => {
+  return useQuery<FolderContent>({
+    queryKey: ['folderContent', folderId],
+    queryFn: async () => {
       const content = folderId 
         ? await folderApi.getFolderContent(folderId)
         : await folderApi.getRootContent();
       
-      setData(content);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Error desconocido'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [folderId]);
-
-  useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
-
-  return { data, isLoading, error, refetch: fetchContent };
+      return content;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos (antes conocido como cacheTime)
+    retry: 1,
+  });
 };

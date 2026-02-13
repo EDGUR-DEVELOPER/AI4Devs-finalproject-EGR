@@ -14,6 +14,7 @@ interface CreateFolderModalProps {
   onClose: () => void;
   parentFolderId: string | null;
   canWrite?: boolean;
+  onFolderCreated?: () => Promise<void>;
 }
 
 export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
@@ -21,6 +22,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   onClose,
   parentFolderId,
   canWrite = true,
+  onFolderCreated,
 }) => {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -67,6 +69,11 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       });
 
       showNotification(`Carpeta "${nombre}" creada exitosamente`, 'success');
+
+      // Refetchar el contenido de la carpeta padre después de crear
+      if (onFolderCreated) {
+        await onFolderCreated();
+      }
 
       onClose();
     } catch (error: any) {

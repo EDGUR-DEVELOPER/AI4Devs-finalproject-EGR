@@ -14,12 +14,22 @@ import type {
 const BASE_URL = '/doc/carpetas'; // Via gateway: /api/doc/carpetas -> document-core service
 
 /**
- * Obtener contenido de carpeta raíz (subcarpetas + documentos)
- * GET /api/carpetas/raiz/contenido
+ * Obtener carpeta raíz de la organización
+ * GET /api/carpetas/raiz
+ */
+export const getRootFolder = async (): Promise<{ id: number }> => {
+  const { data } = await apiClient.get<{ id: number }>(`${BASE_URL}/raiz`);
+  return data;
+};
+
+/**
+ * Obtener contenido de carpeta raíz (subcarpetas + documentos)  
+ * @deprecated Use getRootFolder() y luego getFolderContent() con el ID
  */
 export const getRootContent = async (): Promise<FolderContent> => {
-  const { data } = await apiClient.get<FolderContent>(`${BASE_URL}/raiz/contenido`);
-  return data;
+  // Fallback: obtener raíz y luego su contenido
+  const root = await getRootFolder();
+  return getFolderContent(root.id.toString());
 };
 
 /**
@@ -65,6 +75,7 @@ export const deleteFolder = async (folderId: string): Promise<void> => {
 
 // Export default para conveniencia
 export const folderApi = {
+  getRootFolder,
   getRootContent,
   getFolderContent,
   getFolderPath,

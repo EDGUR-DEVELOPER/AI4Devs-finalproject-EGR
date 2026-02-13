@@ -18,20 +18,6 @@ public class NivelAccesoValidator {
     }
 
     /**
-     * Validates that an access level exists by ID
-     * @param id Access level Long
-     * @throws IllegalArgumentException if not found
-     */
-    public void validateExistsById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Access level ID cannot be null");
-        }
-        repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Access level not found with ID: " + id));
-    }
-
-    /**
      * Validates that an access level exists by codigo
      * @param codigo Access level code
      * @throws IllegalArgumentException if not found

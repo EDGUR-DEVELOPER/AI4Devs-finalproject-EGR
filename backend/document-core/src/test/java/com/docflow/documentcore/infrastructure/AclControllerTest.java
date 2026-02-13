@@ -85,55 +85,6 @@ class AclControllerTest {
     }
 
     @Test
-    @DisplayName("should_ReturnAllList_When_ListAllAccessLevels")
-    void should_ReturnAllList_When_ListAllAccessLevels() {
-        // Given
-        List<NivelAcceso> niveles = Arrays.asList(testNivel);
-        when(service.listAll()).thenReturn(niveles);
-        when(mapper.toDto(testNivel)).thenReturn(testDto);
-
-        // When
-        ResponseEntity<List<NivelAccesoDTO>> response = controller.listAllAccessLevels();
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).hasSize(1);
-        verify(service, times(1)).listAll();
-    }
-
-    @Test
-    @DisplayName("should_ReturnNivelAcceso_When_GetAccessLevelById")
-    void should_ReturnNivelAcceso_When_GetAccessLevelById() {
-        // Given
-        doNothing().when(validator).validateExistsById(testId);
-        when(service.getById(testId)).thenReturn(testNivel);
-        when(mapper.toDto(testNivel)).thenReturn(testDto);
-
-        // When
-        ResponseEntity<NivelAccesoDTO> response = controller.getAccessLevelById(testId);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getId()).isEqualTo(testId);
-        verify(validator, times(1)).validateExistsById(testId);
-        verify(service, times(1)).getById(testId);
-    }
-
-    @Test
-    @DisplayName("should_ThrowException_When_GetAccessLevelByIdNotFound")
-    void should_ThrowException_When_GetAccessLevelByIdNotFound() {
-        // Given
-        Long nonExistingId = new Random().nextLong();
-        doThrow(new IllegalArgumentException("Access level not found"))
-                .when(validator).validateExistsById(nonExistingId);
-
-        // When / Then
-        assertThatThrownBy(() -> controller.getAccessLevelById(nonExistingId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Access level not found");
-    }
-
-    @Test
     @DisplayName("should_ReturnNivelAcceso_When_GetAccessLevelByCodigo")
     void should_ReturnNivelAcceso_When_GetAccessLevelByCodigo() {
         // Given
@@ -162,35 +113,5 @@ class AclControllerTest {
         assertThatThrownBy(() -> controller.getAccessLevelByCodigo("INVALID"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid codigo value");
-    }
-
-    @Test
-    @DisplayName("should_ReturnTrue_When_CheckPermissionForAllowedAction")
-    void should_ReturnTrue_When_CheckPermissionForAllowedAction() {
-        // Given
-        when(service.isAccionPermitida(testId, "ver")).thenReturn(true);
-
-        // When
-        ResponseEntity<Boolean> response = controller.checkPermission(testId, "ver");
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isTrue();
-        verify(service, times(1)).isAccionPermitida(testId, "ver");
-    }
-
-    @Test
-    @DisplayName("should_ReturnFalse_When_CheckPermissionForForbiddenAction")
-    void should_ReturnFalse_When_CheckPermissionForForbiddenAction() {
-        // Given
-        when(service.isAccionPermitida(testId, "eliminar")).thenReturn(false);
-
-        // When
-        ResponseEntity<Boolean> response = controller.checkPermission(testId, "eliminar");
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isFalse();
-        verify(service, times(1)).isAccionPermitida(testId, "eliminar");
     }
 }

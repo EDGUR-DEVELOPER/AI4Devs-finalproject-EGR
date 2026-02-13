@@ -49,35 +49,6 @@ class NivelAccesoServiceTest {
     }
 
     @Test
-    @DisplayName("should_ReturnNivelAcceso_When_GetByIdWithExistingId")
-    void should_ReturnNivelAcceso_When_GetByIdWithExistingId() {
-        // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testNivel));
-
-        // When
-        NivelAcceso result = service.getById(testId);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(testId);
-        assertThat(result.getCodigo()).isEqualTo(CodigoNivelAcceso.LECTURA);
-        verify(repository, times(1)).findById(testId);
-    }
-
-    @Test
-    @DisplayName("should_ThrowException_When_GetByIdWithNonExistingId")
-    void should_ThrowException_When_GetByIdWithNonExistingId() {
-        // Given
-        Long nonExistingId = new Random().nextLong();
-        when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
-
-        // When / Then
-        assertThatThrownBy(() -> service.getById(nonExistingId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Access level not found");
-    }
-
-    @Test
     @DisplayName("should_ReturnNivelAcceso_When_GetByCodigoWithExistingCodigo")
     void should_ReturnNivelAcceso_When_GetByCodigoWithExistingCodigo() {
         // Given
@@ -118,71 +89,5 @@ class NivelAccesoServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).isActivo()).isTrue();
         verify(repository, times(1)).findAllActiveOrderByOrden();
-    }
-
-    @Test
-    @DisplayName("should_ReturnAllList_When_ListAll")
-    void should_ReturnAllList_When_ListAll() {
-        // Given
-        NivelAcceso inactiveNivel = NivelAcceso.builder()
-                .id(new Random().nextLong())
-                .codigo(CodigoNivelAcceso.ESCRITURA)
-                .nombre("Escritura")
-                .activo(false)
-                .build();
-        List<NivelAcceso> mockList = Arrays.asList(testNivel, inactiveNivel);
-        when(repository.findAllOrderByOrden()).thenReturn(mockList);
-
-        // When
-        List<NivelAcceso> result = service.listAll();
-
-        // Then
-        assertThat(result).hasSize(2);
-        verify(repository, times(1)).findAllOrderByOrden();
-    }
-
-    @Test
-    @DisplayName("should_ReturnTrue_When_AccionIsPermitted")
-    void should_ReturnTrue_When_AccionIsPermitted() {
-        // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testNivel));
-
-        // When
-        boolean result = service.isAccionPermitida(testId, "ver");
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    @DisplayName("should_ReturnFalse_When_AccionIsNotPermitted")
-    void should_ReturnFalse_When_AccionIsNotPermitted() {
-        // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testNivel));
-
-        // When
-        boolean result = service.isAccionPermitida(testId, "eliminar");
-
-        // Then
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    @DisplayName("should_ReturnFalse_When_NivelIsInactive")
-    void should_ReturnFalse_When_NivelIsInactive() {
-        // Given
-        NivelAcceso inactiveNivel = NivelAcceso.builder()
-                .id(testId)
-                .codigo(CodigoNivelAcceso.LECTURA)
-                .accionesPermitidas(Arrays.asList("ver"))
-                .activo(false)
-                .build();
-        when(repository.findById(testId)).thenReturn(Optional.of(inactiveNivel));
-
-        // When
-        boolean result = service.isAccionPermitida(testId, "ver");
-
-        // Then
-        assertThat(result).isFalse();
     }
 }

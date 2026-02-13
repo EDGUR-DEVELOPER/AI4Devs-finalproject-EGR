@@ -146,14 +146,18 @@ public class CarpetaContenidoService {
                 usuarioId,
                 organizacionId);
 
-        // Step 9: Construir y retornar respuesta
+        // Step 9: Convertir permisos de la carpeta actual a capacidades
+        CapacidadesUsuario permisosCarpeta = convertirPermisoACapacidades(permiso);
+
+        // Step 10: Construir y retornar respuesta
         return new ContenidoCarpeta(
                 subcarpetas,
                 documentos,
                 totalSubcarpetas,
                 (int) totalDocumentos,
                 opciones.getPagina(),
-                calcularTotalPaginas((int) totalDocumentos, opciones.getTamanio()));
+                calcularTotalPaginas((int) totalDocumentos, opciones.getTamanio()),
+                permisosCarpeta);
     }
 
     /**
@@ -202,14 +206,25 @@ public class CarpetaContenidoService {
 
         CapacidadesUsuario capacidades = convertirPermisoACapacidades(permisoEfectivo);
 
+        // Contar subcarpetas y documentos accesibles dentro de esta carpeta
+        int numSubcarpetas = carpetaRepository.contarSubcarpetasDeSubcarpetaConPermiso(
+                carpeta.getId(),
+                usuarioId,
+                organizacionId);
+
+        long numDocumentosLong = documentoRepository.contarDocumentosConPermiso(
+                carpeta.getId(),
+                usuarioId,
+                organizacionId);
+
         return new CarpetaItem(
                 carpeta.getId(),
                 carpeta.getNombre(),
                 carpeta.getDescripcion(),
                 carpeta.getFechaCreacion(),
                 carpeta.getFechaActualizacion(),
-                0, // numSubcarpetas - no se detalla por ahora
-                0,  // numDocumentos - no se detalla por ahora
+                numSubcarpetas,
+                (int) numDocumentosLong,
                 capacidades);
     }
 

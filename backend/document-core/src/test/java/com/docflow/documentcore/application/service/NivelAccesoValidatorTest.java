@@ -47,38 +47,6 @@ class NivelAccesoValidatorTest {
     }
 
     @Test
-    @DisplayName("should_PassValidation_When_IdExists")
-    void should_PassValidation_When_IdExists() {
-        // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testNivel));
-
-        // When / Then
-        validator.validateExistsById(testId);
-        verify(repository, times(1)).findById(testId);
-    }
-
-    @Test
-    @DisplayName("should_ThrowException_When_IdNotFound")
-    void should_ThrowException_When_IdNotFound() {
-        // Given
-        when(repository.findById(testId)).thenReturn(Optional.empty());
-
-        // When / Then
-        assertThatThrownBy(() -> validator.validateExistsById(testId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Access level not found with ID");
-    }
-
-    @Test
-    @DisplayName("should_ThrowException_When_IdIsNull")
-    void should_ThrowException_When_IdIsNull() {
-        // When / Then
-        assertThatThrownBy(() -> validator.validateExistsById(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ID cannot be null");
-    }
-
-    @Test
     @DisplayName("should_PassValidation_When_CodigoExists")
     void should_PassValidation_When_CodigoExists() {
         // Given

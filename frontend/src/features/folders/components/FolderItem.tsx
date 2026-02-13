@@ -18,7 +18,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   onClick,
   onDeleteClick,
 }) => {
-  const isFolder = item.tipo === 'carpeta';
+  const isFolder = isFolderItem(item);
   const canOpen = item.puede_leer;
   
   const capabilities: ICapabilities = useMemo(() => {
@@ -130,6 +130,18 @@ export const FolderItem: React.FC<FolderItemProps> = ({
     </div>
   );
 };
+
+function isFolderItem(item: ContentItem): boolean {
+  if (item.tipo === 'carpeta') {
+    return true;
+  }
+
+  if (item.tipo === 'documento') {
+    return false;
+  }
+
+  return 'num_subcarpetas' in item || 'num_documentos' in item;
+}
 
 /**
  * Formatea fecha ISO a formato humano

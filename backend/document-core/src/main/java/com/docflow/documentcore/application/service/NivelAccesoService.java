@@ -27,19 +27,6 @@ public class NivelAccesoService {
     }
 
     /**
-     * Retrieve an access level by ID
-     * @param id Access level Long
-     * @return NivelAcceso domain object
-     * @throws IllegalArgumentException if not found
-     */
-    public NivelAcceso getById(Long id) {
-        log.debug("Fetching access level by ID: {}", id);
-        return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Access level not found with ID: " + id));
-    }
-
-    /**
      * Retrieve an access level by codigo
      * @param codigo Access level code enum
      * @return NivelAcceso domain object
@@ -59,26 +46,5 @@ public class NivelAccesoService {
     public List<NivelAcceso> listAllActive() {
         log.debug("Listing all active access levels");
         return repository.findAllActiveOrderByOrden();
-    }
-
-    /**
-     * List all access levels (including inactive) ordered by 'orden'
-     * @return List of all access levels
-     */
-    public List<NivelAcceso> listAll() {
-        log.debug("Listing all access levels");
-        return repository.findAllOrderByOrden();
-    }
-
-    /**
-     * Check if a specific action is permitted for a given access level
-     * @param nivelId Access level Long
-     * @param accion Action name to check
-     * @return true if permitted, false otherwise
-     */
-    public boolean isAccionPermitida(Long nivelId, String accion) {
-        log.debug("Checking if action '{}' is permitted for nivel ID: {}", accion, nivelId);
-        NivelAcceso nivel = getById(nivelId);
-        return nivel.puedeRealizarAccion(accion);
     }
 }

@@ -2,13 +2,14 @@
  * FoldersPage - Página principal de gestión de carpetas
  * Incluye layout con sidebar, acciones rápidas y estadísticas
  */
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@features/dashboard/components';
 import { FolderExplorer } from '../components/FolderExplorer';
 import { useFolderContent } from '../hooks/useFolderContent';
 import { DocumentUploadModal } from '@features/documents/components/DocumentUploadModal';
 import { Button } from '@ui/forms/Button';
+import { apiClient } from '@core/shared/api/axiosInstance';
 
 /**
  * Página principal de gestión de carpetas
@@ -16,7 +17,30 @@ import { Button } from '@ui/forms/Button';
  */
 export const FoldersPage: React.FC = () => {
     const { id: folderId } = useParams<{ id: string }>();
-    const { data: content, isLoading, refetch } = useFolderContent(folderId);
+    const navigate = useNavigate();
+    const { data: content, isPending, refetch } = useFolderContent(folderId);
+    const [loadingRoot, setLoadingRoot] = useState(!folderId);
+
+    // Redirigir a carpeta raíz si no hay ID
+    useEffect(() => {
+        const redirectToRoot = async () => {
+            if (!folderId && loadingRoot) {
+                try {
+                    const { data } = await apiClient.get<{ id: number }>('/doc/carpetas/raiz');
+                    if (data?.id) {
+                        navigate(`/carpetas/${data.id}`, { replace: true });
+                        return;
+                    }
+                    console.warn('Carpeta raiz sin id. Verificar respuesta del backend.');
+                } catch (error) {
+                    console.error('Error al obtener carpeta raíz:', error);
+                } finally {
+                    setLoadingRoot(false);
+                }
+            }
+        };
+        redirectToRoot();
+    }, [folderId, navigate, loadingRoot]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -26,7 +50,7 @@ export const FoldersPage: React.FC = () => {
     const permisos = content?.permisos || { puede_leer: false, puede_escribir: false, puede_administrar: false };
 
     // Estado de carga
-    if (isLoading) {
+    if (isPending || loadingRoot) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center py-16">
@@ -46,7 +70,6 @@ export const FoldersPage: React.FC = () => {
                     <FolderExplorer
                         isCreateModalOpen={isCreateModalOpen}
                         onCreateModalChange={setIsCreateModalOpen}
-                        hideCreateButton={false}
                     />
                 </div>
 

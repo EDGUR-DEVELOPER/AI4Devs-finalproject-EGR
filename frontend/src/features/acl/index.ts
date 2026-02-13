@@ -48,6 +48,9 @@ export type { UseMiPermisoCarpetaReturn } from './hooks/useMiPermisoCarpeta';
 export { useAclDocumento } from './hooks/useAclDocumento';
 export type { UseAclDocumentoReturn } from './hooks/useAclDocumento';
 
+export { useMiPermisoDocumento } from './hooks/useMiPermisoDocumento';
+export type { UseMiPermisoDocumentoReturn } from './hooks/useMiPermisoDocumento';
+
 export { usePermissionCapabilities } from './hooks/usePermissionCapabilities';
 export type { UsePermissionCapabilitiesResult } from './hooks/usePermissionCapabilities';
 

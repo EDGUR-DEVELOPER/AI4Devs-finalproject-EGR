@@ -18,15 +18,16 @@ import type {
 
 /**
  * Base endpoint templates for folder ACL operations
+ * All routes go through gateway: /api/doc/** -> document-core /api/**
  */
 const ACL_CARPETA_ENDPOINTS = {
-  LIST: (carpetaId: number) => `/api/carpetas/${carpetaId}/permisos`,
-  CREATE: (carpetaId: number) => `/api/carpetas/${carpetaId}/permisos`,
+  LIST: (carpetaId: number) => `/doc/carpetas/${carpetaId}/permisos`,
+  CREATE: (carpetaId: number) => `/doc/carpetas/${carpetaId}/permisos`,
   UPDATE: (carpetaId: number, usuarioId: number) =>
-    `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
+    `/doc/carpetas/${carpetaId}/permisos/${usuarioId}`,
   DELETE: (carpetaId: number, usuarioId: number) =>
-    `/api/carpetas/${carpetaId}/permisos/${usuarioId}`,
-  MI_PERMISO: (carpetaId: number) => `/api/permisos/carpetas/${carpetaId}/mi-permiso`,
+    `/doc/carpetas/${carpetaId}/permisos/${usuarioId}`,
+  MI_PERMISO: (carpetaId: number) => `/doc/permisos/carpetas/${carpetaId}/mi-permiso`,
 } as const;
 
 /**

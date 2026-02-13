@@ -9,6 +9,7 @@ import { apiClient } from '@core/shared/api/axiosInstance';
 import type {
   IAclDocumento,
   CreateAclDocumentoDTO,
+  IPermisoEfectivo,
   AclDocumentoApiResponse,
   ListAclDocumentoApiResponse,
   AclErrorResponse,
@@ -16,12 +17,14 @@ import type {
 
 /**
  * Base endpoint templates for document ACL operations
+ * All routes go through gateway: /api/doc/** -> document-core /api/**
  */
 const ACL_DOCUMENTO_ENDPOINTS = {
-  LIST: (documentoId: number) => `/api/documentos/${documentoId}/permisos`,
-  CREATE: (documentoId: number) => `/api/documentos/${documentoId}/permisos`,
+  LIST: (documentoId: number) => `/doc/documentos/${documentoId}/permisos`,
+  CREATE: (documentoId: number) => `/doc/documentos/${documentoId}/permisos`,
   REVOKE: (documentoId: number, usuarioId: number) =>
-    `/api/documentos/${documentoId}/permisos/${usuarioId}`,
+    `/doc/documentos/${documentoId}/permisos/${usuarioId}`,
+  MI_PERMISO: (documentoId: number) => `/doc/permisos/documentos/${documentoId}/mi-permiso`,
 } as const;
 
 /**
@@ -68,6 +71,26 @@ const extractErrorMessage = (error: unknown): string => {
  * Provides methods for managing explicit user permissions on documents
  */
 export const aclDocumentoApi = {
+  /**
+   * Fetch effective permission for the current user on a document
+   * Returns direct or inherited permission details
+   *
+   * @param documentoId - The document ID
+   * @returns IPermisoEfectivo
+   * @throws Error with user-friendly message if request fails
+   */
+  getMiPermisoDocumento: async (documentoId: number): Promise<IPermisoEfectivo> => {
+    try {
+      const response = await apiClient.get<IPermisoEfectivo>(
+        ACL_DOCUMENTO_ENDPOINTS.MI_PERMISO(documentoId)
+      );
+      return response.data;
+    } catch (error: unknown) {
+      const message = extractErrorMessage(error);
+      throw new Error(message);
+    }
+  },
+
   /**
    * Fetch all explicit ACLs for a specific document
    * Returns the list of user permissions granted on this document

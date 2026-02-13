@@ -30,6 +30,9 @@ public class ContenidoCarpetaDTO {
     @JsonProperty("total_paginas")
     private int totalPaginas;
 
+    @JsonProperty("permisos")
+    private CapacidadesDTO permisos;
+
     public ContenidoCarpetaDTO() {
     }
 
@@ -39,13 +42,15 @@ public class ContenidoCarpetaDTO {
             int totalSubcarpetas,
             int totalDocumentos,
             int paginaActual,
-            int totalPaginas) {
+            int totalPaginas,
+            CapacidadesDTO permisos) {
         this.subcarpetas = subcarpetas;
         this.documentos = documentos;
         this.totalSubcarpetas = totalSubcarpetas;
         this.totalDocumentos = totalDocumentos;
         this.paginaActual = paginaActual;
         this.totalPaginas = totalPaginas;
+        this.permisos = permisos;
     }
 
     // ========================================================================
@@ -98,5 +103,13 @@ public class ContenidoCarpetaDTO {
 
     public void setTotalPaginas(int totalPaginas) {
         this.totalPaginas = totalPaginas;
+    }
+
+    public CapacidadesDTO getPermisos() {
+        return permisos;
+    }
+
+    public void setPermisos(CapacidadesDTO permisos) {
+        this.permisos = permisos;
     }
 }

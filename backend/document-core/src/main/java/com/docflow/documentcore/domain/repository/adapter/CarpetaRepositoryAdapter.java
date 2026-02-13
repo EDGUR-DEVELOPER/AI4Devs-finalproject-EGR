@@ -158,4 +158,26 @@ public class CarpetaRepositoryAdapter implements ICarpetaRepository {
     public int contarDocumentosActivos(Long carpetaId, Long organizacionId) {
         return jpaRepository.countDocumentosActivos(carpetaId, organizacionId);
     }
+
+    @Override
+    public int contarSubcarpetasDeSubcarpetaConPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId) {
+        return jpaRepository.countSubcarpetasDeSubcarpetaConPermiso(
+                carpetaId,
+                usuarioId,
+                organizacionId);
+    }
+
+    @Override
+    public int contarDocumentosDeSubcarpetaConPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId) {
+        return jpaRepository.countDocumentosDeSubcarpetaConPermiso(
+                carpetaId,
+                usuarioId,
+                organizacionId);
+    }
 }

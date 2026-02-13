@@ -175,78 +175,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/acl/niveles/all:
-    get:
-      summary: List all access levels
-      description: Returns all access levels including inactive ones, ordered by 'orden' field. Used for administrative views.
-      tags:
-        - ACL - Access Levels
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of all access levels retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/NivelAccesoDTO'
-        '401':
-          description: Unauthorized - missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/acl/niveles/{id}:
-    get:
-      summary: Get access level by ID
-      description: Retrieve a specific access level by its ID identifier
-      tags:
-        - ACL - Access Levels
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: Long
-          description: Access level unique identifier
-      responses:
-        '200':
-          description: Access level retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NivelAccesoDTO'
-        '400':
-          description: Bad request - invalid Long or access level not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized - missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /api/acl/niveles/codigo/{codigo}:
     get:
       summary: Get access level by codigo
@@ -272,55 +200,6 @@ paths:
                 $ref: '#/components/schemas/NivelAccesoDTO'
         '400':
           description: Bad request - invalid or unknown codigo
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized - missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/acl/niveles/{id}/permisos/{accion}:
-    get:
-      summary: Check if action is permitted
-      description: Verifies whether a specific action is allowed for the given access level
-      tags:
-        - ACL - Access Levels
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: Long
-          description: Access level Long
-        - in: path
-          name: accion
-          required: true
-          schema:
-            type: string
-          description: Action name to check (e.g., "ver", "eliminar", "administrar_permisos")
-      responses:
-        '200':
-          description: Permission check completed
-          content:
-            application/json:
-              schema:
-                type: boolean
-                description: true if action is permitted, false otherwise
-        '400':
-          description: Bad request - invalid parameters
           content:
             application/json:
               schema:

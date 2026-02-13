@@ -13,6 +13,7 @@ interface DeleteFolderDialogProps {
   onClose: () => void;
   folderId: string;
   folderName: string;
+  onFolderDeleted?: () => Promise<void>;
 }
 
 export const DeleteFolderDialog: React.FC<DeleteFolderDialogProps> = ({
@@ -20,6 +21,7 @@ export const DeleteFolderDialog: React.FC<DeleteFolderDialogProps> = ({
   onClose,
   folderId,
   folderName,
+  onFolderDeleted,
 }) => {
   const deleteFolderMutation = useDeleteFolder();
   const { showNotification } = useNotificationStore();
@@ -29,6 +31,11 @@ export const DeleteFolderDialog: React.FC<DeleteFolderDialogProps> = ({
       await deleteFolderMutation.mutateAsync(folderId);
 
       showNotification(`Carpeta "${folderName}" eliminada exitosamente`, 'success');
+
+      // Refetchar el contenido después de eliminar
+      if (onFolderDeleted) {
+        await onFolderDeleted();
+      }
 
       onClose();
     } catch (error: any) {

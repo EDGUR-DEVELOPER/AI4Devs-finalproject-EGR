@@ -13,7 +13,7 @@ import { CreateFolderModal } from './CreateFolderModal';
 import { DeleteFolderDialog } from './DeleteFolderDialog';
 import { Button } from '@ui/forms/Button';
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { PermissionAwareButton, usePermissionCapabilities } from '@features/acl';
+import { usePermissionCapabilities } from '@features/acl';
 import type { ICapabilities } from '@features/acl';
 
 interface FolderExplorerProps {
@@ -23,24 +23,18 @@ interface FolderExplorerProps {
    */
   isCreateModalOpen?: boolean;
   onCreateModalChange?: (isOpen: boolean) => void;
-  /**
-   * Ocultar botón de nueva carpeta en header (opcional)
-   * Útil cuando se controla desde componente padre
-   */
-  hideCreateButton?: boolean;
 }
 
 export const FolderExplorer: React.FC<FolderExplorerProps> = ({
   isCreateModalOpen: externalIsCreateModalOpen,
   onCreateModalChange,
-  hideCreateButton = false,
 }) => {
   const { id: folderId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { userId } = useAuth();
 
   // Server state
-  const { data: content, isLoading, error } = useFolderContent(folderId);
+  const { data: content, isPending, error, refetch } = useFolderContent(folderId);
   const { breadcrumb } = useBreadcrumb(folderId);
 
   const parsedUserId = Number(userId);
@@ -80,7 +74,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
   };
 
   // Loading state
-  if (isLoading || (folderId && permissionState.isLoading)) {
+  if (isPending || (folderId && permissionState.isLoading)) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -94,7 +88,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
       <div className="p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
         <h3 className="text-lg font-semibold text-red-800 mb-2">Error al cargar carpeta</h3>
         <p className="text-sm text-red-700">
-          {error instanceof Error ? error.message : 'Error desconocido'}
+          {error.message || 'Error desconocido'}
         </p>
         <Button
           onClick={() => navigate('/carpetas')}
@@ -135,24 +129,12 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Header: Breadcrumb + Botón Nueva carpeta */}
+      {/* Header: Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
         <Breadcrumb
           segments={breadcrumb}
           onNavigate={handleBreadcrumbNavigate}
         />
-
-        {!hideCreateButton && (
-          <PermissionAwareButton
-            onClick={() => setIsCreateModalOpen(true)}
-            action="crear_carpeta"
-            capabilities={capabilities}
-            variant="primary"
-            fullWidth={false}
-          >
-            + Nueva carpeta
-          </PermissionAwareButton>
-        )}
       </div>
 
       {/* Contenido o estado vacío */}
@@ -180,6 +162,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
         onClose={() => setIsCreateModalOpen(false)}
         parentFolderId={folderId || null}
         canWrite={capabilities.canWrite}
+        onFolderCreated={async () => { void refetch(); }}
       />
 
       {deleteTarget && (
@@ -188,6 +171,7 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
           onClose={() => setDeleteTarget(null)}
           folderId={deleteTarget.id}
           folderName={deleteTarget.nombre}
+          onFolderDeleted={async () => { void refetch(); }}
         />
       )}
     </div>
