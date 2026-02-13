@@ -39,7 +39,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
           AND d.organizacion_id = :organizacionId
           AND d.fecha_eliminacion IS NULL
           AND EXISTS (
-              SELECT 1 FROM permisos_documento_usuario pdu
+              SELECT 1 FROM permiso_documento_usuario pdu
               WHERE pdu.documento_id = d.id
                 AND pdu.usuario_id = :usuarioId
                 AND pdu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')
@@ -68,7 +68,7 @@ public interface DocumentoJpaRepository extends JpaRepository<Documento, Long> {
           AND d.organizacion_id = :organizacionId
           AND d.fecha_eliminacion IS NULL
           AND EXISTS (
-              SELECT 1 FROM permisos_documento_usuario pdu
+              SELECT 1 FROM permiso_documento_usuario pdu
               WHERE pdu.documento_id = d.id
                 AND pdu.usuario_id = :usuarioId
                 AND pdu.nivel_acceso IN ('LECTURA', 'ESCRITURA', 'ADMINISTRACION')

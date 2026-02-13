@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import { DashboardLayout } from '@features/dashboard/components';
 import { FolderExplorer } from '../components/FolderExplorer';
 import { useFolderContent } from '../hooks/useFolderContent';
+import { DocumentUploadModal } from '@features/documents/components/DocumentUploadModal';
 import { Button } from '@ui/forms/Button';
 
 /**
@@ -15,9 +16,8 @@ import { Button } from '@ui/forms/Button';
  */
 export const FoldersPage: React.FC = () => {
     const { id: folderId } = useParams<{ id: string }>();
-    const { data: content, isLoading } = useFolderContent(folderId);
+    const { data: content, isLoading, refetch } = useFolderContent(folderId);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    // @ts-expect-error - isUploadModalOpen se usará cuando se implemente DocumentUploadModal (US-DOC-006)
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
     // Datos para estadísticas (con valores por defecto seguros)
@@ -145,6 +145,16 @@ export const FoldersPage: React.FC = () => {
                     </div>
                 </aside>
             </div>
+
+            {/* DocumentUploadModal */}
+            <DocumentUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                folderId={folderId!}
+                onUploadSuccess={() => {
+                    refetch();
+                }}
+            />
                             
         </DashboardLayout>
     );
