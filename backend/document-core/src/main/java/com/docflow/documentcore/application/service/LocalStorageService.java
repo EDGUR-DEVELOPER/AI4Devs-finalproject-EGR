@@ -4,6 +4,7 @@ import com.docflow.documentcore.domain.exception.StorageException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,11 +17,13 @@ import java.nio.file.StandardCopyOption;
 /**
  * Implementación de almacenamiento en sistema de archivos local.
  * 
- * US-DOC-001: Almacenamiento por defecto para desarrollo/MVP.
- * Para producción, reemplazar con adaptador S3/MinIO/Azure manteniendo la interfaz.
+ * US-DOC-001: Almacenamiento para desarrollo/MVP.
+ * Activo cuando docflow.storage.type=local
+ * Para producción, usar MinioStorageService configurando docflow.storage.type=minio (valor por defecto)
  */
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "docflow.storage.type", havingValue = "local", matchIfMissing = false)
 public class LocalStorageService implements StorageService {
     
     private final Path rootLocation;
