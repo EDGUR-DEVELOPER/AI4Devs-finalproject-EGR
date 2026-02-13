@@ -4,6 +4,7 @@
  */
 import React, { useMemo } from 'react';
 import { PermissionAwareMenu } from '@features/acl';
+import { DocumentDownloadButton } from '@features/documents/components/DocumentDownloadButton';
 import type { ICapabilities } from '@features/acl';
 import type { ContentItem } from '../types/folder.types';
 
@@ -57,6 +58,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
+      data-testid={isFolder ? `folder-item-${item.id}` : `document-item-${item.id}`}
       className={`relative bg-white border border-gray-200 rounded-lg p-4 transition-shadow group ${
         canOpen ? 'hover:shadow-md cursor-pointer' : 'cursor-not-allowed opacity-80'
       }`}
@@ -112,6 +114,17 @@ export const FolderItem: React.FC<FolderItemProps> = ({
           <PermissionAwareMenu
             actions={folderActions}
             capabilities={capabilities}
+          />
+        )}
+
+        {/* Botón de descarga para documentos */}
+        {!isFolder && (
+          <DocumentDownloadButton
+            documentId={item.id}
+            fileName={item.nombre}
+            canDownload={capabilities.canDownload}
+            size="sm"
+            showLabel={false}
           />
         )}
       </div>

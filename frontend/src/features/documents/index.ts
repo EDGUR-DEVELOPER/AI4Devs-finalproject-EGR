@@ -8,11 +8,13 @@ export { DocumentUpload } from './components/DocumentUpload';
 export { VersionHistory } from './components/VersionHistory';
 export { UploadProgress } from './components/UploadProgress';
 export { UploadError } from './components/UploadError';
+export { DocumentDownloadButton } from './components/DocumentDownloadButton';
 
 // Hooks
 export { useDocumentUpload } from './hooks/useDocumentUpload';
 export { useDocumentVersions } from './hooks/useDocumentVersions';
 export { usePermissions } from './hooks/usePermissions';
+export { useDocumentDownload } from './hooks/useDocumentDownload';
 
 // Types
 export type {
@@ -39,4 +41,5 @@ export {
   getDocumentMetadata,
   getDocumentVersions,
   downloadDocumentVersion,
+  downloadCurrentDocument,
 } from './api/documentService';

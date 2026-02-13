@@ -184,3 +184,34 @@ export async function uploadNewVersion(
 
   return response.data;
 }
+
+/**
+ * Descarga la versión actual de un documento
+ * 
+ * US-DOC-007: Descarga directo desde lista de documentos
+ * 
+ * @param documentId - ID del documento a descargar
+ * @returns Blob del archivo para descarga
+ * @throws Error si falla la descarga (403, 404, 500, etc.)
+ * 
+ * @example
+ * const blob = await downloadCurrentDocument('doc-123');
+ * // crear descarga en navegador
+ * const url = URL.createObjectURL(blob);
+ * const link = document.createElement('a');
+ * link.href = url;
+ * link.download = 'documento.pdf';
+ * link.click();
+ * URL.revokeObjectURL(url);
+ */
+export async function downloadCurrentDocument(
+  documentId: string
+): Promise<Blob> {
+  const response = await apiClient.get<Blob>(
+    `/doc/documentos/${documentId}/download`,
+    {
+      responseType: 'blob',
+    }
+  );
+  return response.data;
+}
