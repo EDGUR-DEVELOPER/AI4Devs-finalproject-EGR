@@ -210,6 +210,88 @@
     - *Scenario 1:* Dado permisos, Cuando subo desde la UI, Entonces el documento aparece en la carpeta.
     - *Scenario 2:* Dado un documento con versiones, Cuando abro “Versiones”, Entonces veo el listado y cuál es la actual.
 
+**[US-DOC-007] Descarga de documento actual desde lista de documentos**
+- **Narrativa:** Como administrador o usuario con permiso de lectura, quiero descargar la versión actual de un documento directamente desde la lista de documentos en la UI, para poder acceder al contenido del archivo sin navegar al historial de versiones.
+- **Cirterios de Aceptación:**
+    - **Escenario 1:** Descarga exitosa con permiso de lectura
+        Dado que soy un usuario autenticado con permiso de LECTURA sobre un documento
+        Cuando hago clic en el botón "Descargar" en la lista de documentos
+        Entonces el sistema descarga la versión actual del documento con el nombre original y extensión    correcta
+        Y se muestra una notificación de éxito "Descarga iniciada"
+        Y se emite un evento de auditoría DOCUMENTO_DESCARGADO
+
+    - **Escenario 2:** Descarga con permiso de escritura o administración
+        Dado que soy un usuario con permiso de ESCRITURA o ADMINISTRACION sobre un documento
+        Cuando hago clic en el botón "Descargar"
+        Entonces el sistema descarga el documento exitosamente
+        Y se comporta igual que en el escenario 1
+        
+    - **Escenario 3:** Botón deshabilitado sin permiso de lectura
+        Dado que soy un usuario sin permiso de LECTURA sobre un documento
+        Cuando visualizo la lista de documentos
+        Entonces el botón "Descargar" aparece deshabilitado o no visible para ese documento
+        Y si intento acceder directamente a la URL de descarga, recibo un error 403
+
+    - **Escenario 4:** Manejo de error en descarga
+        Dado que tengo permiso para descargar un documento
+        Cuando hago clic en descargar y ocurre un error (red, archivo no disponible, etc.)
+        Entonces se muestra una notificación de error detallando el problema
+        Y el botón vuelve a su estado normal permitiendo reintentar
+
+    - **Escenario 5:** Indicador visual durante descarga
+        Dado que inicio una descarga de documento
+        Cuando la descarga está en progreso
+        Entonces el botón muestra un spinner o indicador de carga
+        Y el botón queda deshabilitado hasta completar la operación
+
+**[US-DOC-008] Eliminación de Documento desde la UI**
+- **Narrativa:** Como administrador o usuario con permiso de escritura, quiero eliminar documentos desde la UI marcándolos como eliminados (soft delete), para mantener la organización del sistema sin perder trazabilidad ni historial para auditoría.
+- **Criterios de Aceptación:**
+
+    - **Escenario 1:** Eliminación exitosa con permiso de escritura
+    Dado que soy un usuario con permiso de ESCRITURA o ADMINISTRACION sobre un documento
+    Cuando hago clic en el botón "Eliminar" y confirmo la acción en el diálogo de confirmación
+    Entonces el documento queda marcado con fecha_eliminacion en la base de datos (soft delete)
+    Y el documento desaparece inmediatamente de la lista visible en la UI
+    Y se muestra una notificación "Documento eliminado exitosamente"
+    Y se emite un evento de auditoría DOCUMENTO_ELIMINADO
+
+    - **Escenario 2:** Diálogo de confirmación antes de eliminar
+    Dado que tengo permiso para eliminar un documento
+    Cuando hago clic en el botón "Eliminar"
+    Entonces aparece un diálogo modal de confirmación
+    Y el diálogo muestra el nombre del documento y advierte que la acción no es reversible en la UI
+    Y debo confirmar explícitamente antes de proceder
+
+    - **Escenario 3:** Cancelación de eliminación
+    Dado que he abierto el diálogo de confirmación de eliminación
+    Cuando hago clic en "Cancelar" o cierro el diálogo
+    Entonces el diálogo se cierra sin realizar cambios
+    Y el documento permanece visible en la lista
+
+    - **Escenario 4:** Botón no visible sin permiso de escritura
+    Dado que soy un usuario con solo permiso de LECTURA sobre un documento
+    Cuando visualizo la lista de documentos
+    Entonces el botón "Eliminar" no aparece o está claramente deshabilitado para ese documento
+
+    - **Escenario 5:** Error de permisos al eliminar
+    Dado que intento eliminar un documento sin permisos suficientes
+    Cuando el backend rechaza la operación
+    Entonces se muestra un error "No tiene permisos para eliminar este documento"
+    Y el documento permanece visible en la lista
+
+    - **Escenario 6:** Manejo de error en eliminación
+    Dado que tengo permisos para eliminar
+    Cuando ocurre un error durante la eliminación (error de red, BD, etc.)
+    Entonces se muestra una notificación de error descriptiva
+    Y el documento permanece visible en la lista
+    Y puedo reintentar la operación
+
+    - **Escenario 7:** Validación de tenant isolation
+    Dado que un usuario intenta eliminar un documento de otra organización
+    Cuando se procesa la solicitud
+    Entonces el backend retorna 404 (no 403) para no filtrar existencia
+    Y la UI muestra "Documento no encontrado"
 ---
 
 ### P5 — Historias de Usuario (Auditoría: logs inmutables + UI mínima)
