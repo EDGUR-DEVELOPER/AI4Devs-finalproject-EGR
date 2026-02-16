@@ -10,9 +10,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
@@ -35,7 +33,6 @@
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/ui": "^1.0.4",
     "autoprefixer": "^10.4.23",
-    "cypress": "^13.6.6",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

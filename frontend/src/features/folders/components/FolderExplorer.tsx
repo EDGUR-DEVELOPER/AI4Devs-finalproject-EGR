@@ -10,7 +10,6 @@ import { Breadcrumb } from './Breadcrumb';
 import { FolderList } from './FolderList';
 import { EmptyFolderState } from './EmptyFolderState';
 import { CreateFolderModal } from './CreateFolderModal';
-import { DeleteFolderDialog } from './DeleteFolderDialog';
 import { Button } from '@ui/forms/Button';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { usePermissionCapabilities } from '@features/acl';
@@ -54,15 +53,9 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
   const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
   const setIsCreateModalOpen = onCreateModalChange ?? setInternalIsCreateModalOpen;
 
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
-
   // Handlers
   const handleFolderClick = (id: string) => {
     navigate(`/carpetas/${id}`);
-  };
-
-  const handleDeleteClick = (id: string, nombre: string) => {
-    setDeleteTarget({ id, nombre });
   };
 
   const handleBreadcrumbNavigate = (targetId: string | undefined) => {
@@ -147,10 +140,22 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
         <FolderList
           content={content}
           onFolderClick={handleFolderClick}
-          onDeleteClick={(folderId) => {
-            const folder = content.subcarpetas.find((f) => f.id === folderId);
-            if (folder) {
-              handleDeleteClick(folderId, folder.nombre);
+          onDeleteClick={(deletedFolderId) => {
+            // Si se elimina la carpeta actual, navegar al padre
+            if (deletedFolderId === folderId) {
+              // Obtener el ID padre del breadcrumb
+              const parentId = breadcrumb.length > 1 
+                ? breadcrumb[breadcrumb.length - 2]?.id 
+                : undefined;
+              
+              if (parentId) {
+                navigate(`/carpetas/${parentId}`);
+              } else {
+                navigate('/carpetas');
+              }
+            } else {
+              // Si es una subcarpeta, solo refrescar
+              void refetch();
             }
           }}
         />
@@ -164,16 +169,6 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
         canWrite={capabilities.canWrite}
         onFolderCreated={async () => { void refetch(); }}
       />
-
-      {deleteTarget && (
-        <DeleteFolderDialog
-          isOpen={true}
-          onClose={() => setDeleteTarget(null)}
-          folderId={deleteTarget.id}
-          folderName={deleteTarget.nombre}
-          onFolderDeleted={async () => { void refetch(); }}
-        />
-      )}
     </div>
   );
 };

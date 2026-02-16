@@ -215,3 +215,33 @@ export async function downloadCurrentDocument(
   );
   return response.data;
 }
+
+/**
+ * Elimina (soft delete) un documento del sistema.
+ * 
+ * US-DOC-008: Eliminación de documento desde la UI
+ * 
+ * Marca el documento con fecha_eliminacion sin eliminar físicamente
+ * el registro ni los archivos de versiones.
+ * 
+ * @param documentId ID del documento a eliminar
+ * @throws AxiosError con códigos:
+ *   - 401: No autenticado (token JWT expirado o inválido)
+ *   - 403: Sin permisos de ESCRITURA o ADMINISTRACION
+ *   - 404: Documento no encontrado o pertenece a otra organización
+ *   - 409: Documento ya está eliminado
+ *   - 500: Error interno del servidor
+ * 
+ * @example
+ * try {
+ *   await deleteDocument("123");
+ *   console.log("Documento eliminado exitosamente");
+ * } catch (error) {
+ *   if (error.response?.status === 403) {
+ *     console.error("Sin permisos para eliminar");
+ *   }
+ * }
+ */
+export async function deleteDocument(documentId: string): Promise<void> {
+  await apiClient.delete(`/doc/documentos/${documentId}`);
+}

@@ -1,33 +1,31 @@
 /**
  * Hook mutation para eliminar carpeta vacía
  */
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { folderApi } from '../api/folderApi';
+import { useMutation } from '@tanstack/react-query';
 
-interface UseDeleteFolderReturn {
-  mutateAsync: (folderId: string) => Promise<void>;
-  isPending: boolean;
-  error: Error | null;
-}
+type UseDeleteFolderReturn = ReturnType<typeof useMutation>;
 
-export const useDeleteFolder = (): UseDeleteFolderReturn => {
-  const [isPending, setIsPending] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export const useDeleteFolder = () => {
+  const queryClient = useQueryClient();
 
-  const mutateAsync = useCallback(async (folderId: string) => {
-    setIsPending(true);
-    setError(null);
-
-    try {
+  return useMutation({
+    mutationFn: async (folderId: string) => {
       await folderApi.deleteFolder(folderId);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Error al eliminar carpeta');
-      setError(error);
-      throw error;
-    } finally {
-      setIsPending(false);
-    }
-  }, []);
-
-  return { mutateAsync, isPending, error };
+    },
+    onSuccess: () => {
+      // Invalidar todas las consultas de contenido de carpetas
+      // para que se refresquen cuando sea necesario
+      queryClient.invalidateQueries({
+        queryKey: ['folderContent'],
+      });
+      
+      // También invalidar breadcrumb
+      queryClient.invalidateQueries({
+        queryKey: ['breadcrumb'],
+      });
+    },
+  });
 };

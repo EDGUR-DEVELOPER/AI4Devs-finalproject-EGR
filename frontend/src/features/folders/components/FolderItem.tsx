@@ -3,8 +3,9 @@
  * Diferenciación visual por tipo, con acciones contextuales
  */
 import React, { useMemo } from 'react';
-import { PermissionAwareMenu } from '@features/acl';
 import { DocumentDownloadButton } from '@features/documents/components/DocumentDownloadButton';
+import { DocumentDeleteButton } from '@features/documents/components/DocumentDeleteButton';
+import { FolderDeleteButton } from './FolderDeleteButton';
 import type { ICapabilities } from '@features/acl';
 import type { ContentItem } from '../types/folder.types';
 
@@ -40,21 +41,6 @@ export const FolderItem: React.FC<FolderItemProps> = ({
       canChangeVersion: !isFolder && canWrite,
     };
   }, [isFolder, item.capacidades]);
-
-  const folderActions = useMemo(() => {
-    if (!isFolder) {
-      return [];
-    }
-
-    return [
-      {
-        id: 'eliminar_carpeta',
-        label: 'Eliminar carpeta',
-        variant: 'danger' as const,
-        onClick: () => onDeleteClick(item.id),
-      },
-    ];
-  }, [isFolder, item.id, onDeleteClick]);
 
   return (
     <div
@@ -109,23 +95,38 @@ export const FolderItem: React.FC<FolderItemProps> = ({
           </div>
         </div>
 
-        {/* Menú contextual */}
-        {isFolder && (
-          <PermissionAwareMenu
-            actions={folderActions}
-            capabilities={capabilities}
-          />
-        )}
-
-        {/* Botón de descarga para documentos */}
-        {!isFolder && (
-          <DocumentDownloadButton
-            documentId={item.id}
-            fileName={item.nombre}
-            canDownload={capabilities.canDownload}
-            size="sm"
-            showLabel={false}
-          />
+        {/* Menú contextual o botones de acción */}
+        {isFolder ? (
+          <div className="flex items-center gap-1">
+            <FolderDeleteButton
+              folderId={item.id}
+              folderName={item.nombre}
+              canDelete={capabilities.canAdminister}
+              onDeleteSuccess={() => onDeleteClick(item.id)}
+              size="sm"
+              variant="ghost"
+              showLabel={false}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <DocumentDownloadButton
+              documentId={item.id}
+              fileName={item.nombre}
+              canDownload={capabilities.canDownload}
+              size="sm"
+              showLabel={false}
+            />
+            <DocumentDeleteButton
+              documentId={item.id}
+              documentName={item.nombre}
+              canDelete={capabilities.canWrite || capabilities.canAdminister}
+              onDeleteSuccess={() => onDeleteClick(item.id)}
+              size="sm"
+              variant="ghost"
+              showLabel={false}
+            />
+          </div>
         )}
       </div>
 
