@@ -145,6 +145,106 @@ public class DocumentoController {
         log.info("REST: Document moved successfully - documentoId={}", id);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Elimina (soft delete) un documento del sistema.
+     * 
+     * <p>Marca el documento con fecha_eliminacion sin eliminar físicamente
+     * el registro ni los archivos de versiones. Esto mantiene trazabilidad
+     * y auditoría completa.</p>
+     * 
+     * <p><b>Validaciones:</b></p>
+     * <ul>
+     *   <li>Documento debe existir y pertenecer a la organización del usuario</li>
+     *   <li>Usuario debe tener permiso de ESCRITURA o ADMINISTRACION</li>
+     *   <li>Documento no debe estar ya eliminado</li>
+     * </ul>
+     * 
+     * <p><b>Auditoría:</b> Emite evento DOCUMENTO_ELIMINADO para trazabilidad.</p>
+     * 
+     * <p><b>US-DOC-008:</b> Eliminación de documento desde la UI.</p>
+     * 
+     * @param id ID del documento a eliminar
+     * @return ResponseEntity sin contenido (204) si exitoso
+     */
+    @DeleteMapping("/{id}")
+    @Operation(
+        summary = "Eliminar documento (soft delete)",
+        description = """
+            Marca un documento como eliminado sin borrar físicamente los datos.
+            
+            La operación requiere:
+            - Documento debe existir y pertenecer a la organización del usuario (tenant isolation)
+            - Usuario debe tener permiso de ESCRITURA o ADMINISTRACION sobre el documento
+            - Documento no debe estar ya eliminado
+            
+            La eliminación es lógica (soft delete) mediante campo fecha_eliminacion.
+            Se emite un evento de auditoría DOCUMENTO_ELIMINADO.
+            
+            Importante para seguridad:
+            - HTTP 404 en lugar de 403 para documentos de otras organizaciones
+            - HTTP 403 solo cuando el usuario está autenticado pero sin permisos en su propia organización
+            - HTTP 409 si el documento ya está eliminado
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Documento eliminado exitosamente"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado - Token JWT ausente o inválido",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Sin permiso de ESCRITURA o ADMINISTRACION sobre el documento",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Documento no encontrado o pertenece a otra organización",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Documento ya está eliminado",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)
+            )
+        )
+    })
+    public ResponseEntity<Void> deleteDocument(
+            @PathVariable
+            @Parameter(description = "ID del documento a eliminar", required = true, example = "100")
+            Long id
+    ) {
+        log.info("REST: DELETE /api/documentos/{}", id);
+
+        documentService.deleteDocument(id);
+
+        log.info("REST: Document deleted successfully - documentoId={}", id);
+        return ResponseEntity.noContent().build();
+    }
     
     /**
      * Descarga la versión actual de un documento.

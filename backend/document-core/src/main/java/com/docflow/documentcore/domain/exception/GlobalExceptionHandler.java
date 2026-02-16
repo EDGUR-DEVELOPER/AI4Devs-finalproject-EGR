@@ -328,6 +328,29 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja DocumentAlreadyDeletedException y retorna HTTP 409.
+     *
+     * @param ex la excepción lanzada
+     * @return ProblemDetail con status 409
+     */
+    @ExceptionHandler(DocumentAlreadyDeletedException.class)
+    public ProblemDetail handleDocumentAlreadyDeleted(DocumentAlreadyDeletedException ex) {
+        log.debug("Documento ya eliminado: {}", ex.getMessage());
+
+        var problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+
+        problem.setTitle("Documento Ya Eliminado");
+        problem.setType(URI.create("https://docflow.com/errors/document-already-deleted"));
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("errorCode", "DOCUMENT_ALREADY_DELETED");
+
+        return problem;
+    }
+
+    /**
      * Maneja CarpetaRaizNoEliminableException y retorna HTTP 400.
      *
      * @param ex la excepción lanzada

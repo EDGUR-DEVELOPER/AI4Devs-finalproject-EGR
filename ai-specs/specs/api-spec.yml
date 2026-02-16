@@ -1400,6 +1400,84 @@ paths:
                 $ref: '#/components/schemas/ProblemDetail'
 
   # Document Operations
+  /api/documentos/{id}:
+    delete:
+      summary: Eliminar documento (soft delete)
+      description: |
+        Marca un documento como eliminado sin borrar físicamente los datos.
+
+        **Requisitos:**
+        - Documento debe existir y pertenecer a la organización del usuario (tenant isolation)
+        - Usuario debe tener permiso de ESCRITURA o ADMINISTRACION sobre el documento
+        - Documento no debe estar ya eliminado
+
+        **Comportamiento:**
+        - Elimina lógicamente mediante `fecha_eliminacion`
+        - Emite evento de auditoría DOCUMENTO_ELIMINADO
+        - Retorna 404 si el documento pertenece a otra organización
+      tags:
+        - Documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID del documento a eliminar
+          example: 100
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID del usuario autenticado (inyectado por gateway)
+          example: 1
+        - name: X-Organization-Id
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID de la organización del usuario (inyectado por gateway)
+          example: 1
+      responses:
+        '204':
+          description: Documento eliminado exitosamente
+        '401':
+          description: No autenticado - token ausente o inválido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Sin permisos para eliminar el documento
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Documento no encontrado o pertenece a otra organización
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Documento ya está eliminado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
   /api/documentos/{id}/mover:
     patch:
       summary: Move document to another folder

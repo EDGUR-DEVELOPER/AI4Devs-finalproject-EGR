@@ -2,10 +2,12 @@ package com.docflow.documentcore.domain.repository;
 
 import com.docflow.documentcore.domain.model.Documento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +32,41 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
      */
     @Query("SELECT d FROM Documento d WHERE d.id = :id AND d.organizacionId = :organizacionId AND d.fechaEliminacion IS NULL")
     Optional<Documento> findByIdAndOrganizacionId(@Param("id") Long id, @Param("organizacionId") Long organizacionId);
+
+    /**
+     * Busca un documento por ID y organización, incluyendo eliminados lógicamente.
+     * 
+     * @param id ID del documento
+     * @param organizacionId ID de la organización
+     * @return Optional con el documento si existe (eliminado o activo)
+     */
+    @Query("SELECT d FROM Documento d WHERE d.id = :id AND d.organizacionId = :organizacionId")
+    Optional<Documento> findByIdAndOrganizacionIdIncludingEliminados(
+        @Param("id") Long id,
+        @Param("organizacionId") Long organizacionId
+    );
+
+    /**
+     * Elimina lógicamente un documento estableciendo fecha_eliminacion.
+     * 
+     * @param id ID del documento
+     * @param organizacionId ID de la organización
+     * @param fechaEliminacion fecha de eliminación
+     * @return número de registros actualizados (0 o 1)
+     */
+    @Modifying
+    @Query("""
+        UPDATE Documento d
+        SET d.fechaEliminacion = :fechaEliminacion
+        WHERE d.id = :id
+          AND d.organizacionId = :organizacionId
+          AND d.fechaEliminacion IS NULL
+        """)
+    int softDeleteByIdAndOrganizacionId(
+        @Param("id") Long id,
+        @Param("organizacionId") Long organizacionId,
+        @Param("fechaEliminacion") OffsetDateTime fechaEliminacion
+    );
     
     /**
      * Busca todos los documentos en una carpeta.

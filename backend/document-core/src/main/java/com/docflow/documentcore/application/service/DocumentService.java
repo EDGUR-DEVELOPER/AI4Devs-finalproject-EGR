@@ -7,11 +7,13 @@ import com.docflow.documentcore.application.dto.DownloadDocumentDto;
 import com.docflow.documentcore.application.dto.VersionResponse;
 import com.docflow.documentcore.application.mapper.DocumentoMapper;
 import com.docflow.documentcore.application.validator.DocumentValidator;
+import com.docflow.documentcore.domain.event.DocumentDeletedEvent;
+import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
+import com.docflow.documentcore.domain.exception.DocumentAlreadyDeletedException;
 import com.docflow.documentcore.domain.exception.DocumentValidationException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
-import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.model.Documento;
 import com.docflow.documentcore.domain.model.NivelAcceso;
 import com.docflow.documentcore.domain.model.PermisoEfectivo;
@@ -326,6 +328,89 @@ public class DocumentService {
             log.error("Error al crear nueva versión: documentoId={}", documentId, e);
             throw new RuntimeException("Error al crear nueva versión: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Elimina lógicamente un documento (soft delete).
+     * 
+     * <p>Este método implementa US-DOC-008 y realiza las siguientes validaciones:</p>
+     * <ol>
+     *   <li>Validar que el documento existe y pertenece a la organización</li>
+     *   <li>Validar que el documento no esté ya eliminado</li>
+     *   <li>Validar que el usuario tiene permiso de ESCRITURA sobre el documento</li>
+     *   <li>Actualizar fecha_eliminacion en base de datos</li>
+     *   <li>Registrar evento de auditoría DOCUMENTO_ELIMINADO</li>
+     * </ol>
+     *
+     * @param documentId ID del documento a eliminar
+     * @throws ResourceNotFoundException si el documento no existe o no pertenece a la organización (404)
+     * @throws DocumentAlreadyDeletedException si el documento ya está eliminado (409)
+     * @throws AccessDeniedException si el usuario no tiene permiso de ESCRITURA (403)
+     */
+    @Transactional
+    public void deleteDocument(Long documentId) {
+        Long organizacionId = securityContext.getOrganizacionId();
+        Long usuarioId = securityContext.getUsuarioId();
+
+        log.info("Iniciando eliminación de documento - documentoId={}, usuarioId={}, organizacionId={}",
+            documentId, usuarioId, organizacionId);
+
+        Documento documento = documentoRepository
+            .findByIdAndOrganizacionIdIncludingEliminados(documentId, organizacionId)
+            .orElseThrow(() -> {
+                log.warn("Documento no encontrado o no pertenece a la organización: documentoId={}, organizacionId={}",
+                    documentId, organizacionId);
+                return new ResourceNotFoundException("Documento", documentId);
+            });
+
+        if (documento.getFechaEliminacion() != null) {
+            log.warn("Documento ya eliminado: documentoId={}, organizacionId={}", documentId, organizacionId);
+            throw new DocumentAlreadyDeletedException(documentId);
+        }
+
+        boolean tienePermiso = evaluadorPermisos.tieneAcceso(
+            usuarioId,
+            documentId,
+            TipoRecurso.DOCUMENTO,
+            CodigoNivelAcceso.ESCRITURA,
+            organizacionId
+        );
+
+        if (!tienePermiso) {
+            log.warn("Acceso denegado: usuarioId={} no tiene permiso de ESCRITURA sobre documentoId={}",
+                usuarioId, documentId);
+            throw new AccessDeniedException("No tiene permisos para eliminar este documento");
+        }
+
+        int updated = documentoRepository.softDeleteByIdAndOrganizacionId(
+            documentId,
+            organizacionId,
+            OffsetDateTime.now()
+        );
+
+        if (updated == 0) {
+            log.warn("No se pudo eliminar documento (posible eliminación concurrente): documentoId={}, organizacionId={}",
+                documentId, organizacionId);
+            throw new DocumentAlreadyDeletedException(documentId);
+        }
+
+        try {
+            DocumentDeletedEvent event = new DocumentDeletedEvent(
+                this,
+                documentId,
+                usuarioId,
+                organizacionId
+            );
+            eventPublisher.publishEvent(event);
+            log.debug("Evento de auditoría DOCUMENTO_ELIMINADO publicado: documentoId={}, usuarioId={}",
+                documentId, usuarioId);
+        } catch (Exception e) {
+            log.error("Error al publicar evento de auditoría para eliminación: documentoId={}, usuarioId={}",
+                documentId, usuarioId, e);
+        }
+
+        log.info("Documento eliminado lógicamente: documentoId={}, usuarioId={}, organizacionId={}",
+            documentId, usuarioId, organizacionId);
     }
     
     /**

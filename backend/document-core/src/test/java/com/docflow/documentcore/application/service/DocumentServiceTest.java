@@ -19,8 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.docflow.documentcore.application.dto.DownloadDocumentDto;
+import com.docflow.documentcore.domain.event.DocumentDeletedEvent;
 import com.docflow.documentcore.domain.event.DocumentDownloadedEvent;
 import com.docflow.documentcore.domain.exception.AccessDeniedException;
+import com.docflow.documentcore.domain.exception.DocumentAlreadyDeletedException;
 import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
 import com.docflow.documentcore.domain.exception.StorageException;
 import com.docflow.documentcore.domain.model.Documento;
@@ -550,6 +552,98 @@ class DocumentServiceTest {
         
         // Verificar que no se guardó la versión
         verify(versionRepository, never()).save(any());
+    }
+
+    // ========================================================================
+    // ELIMINACION LOGICA DE DOCUMENTO (US-DOC-008)
+    // ========================================================================
+
+    @Test
+    @DisplayName("should_DeleteDocument_When_UserHasWritePermission")
+    void shouldDeleteDocumentWhenUserHasWritePermission() {
+        // Arrange
+        Documento documento = crearDocumento();
+
+        when(documentoRepository.findByIdAndOrganizacionIdIncludingEliminados(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+        when(evaluadorPermisos.tieneAcceso(
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            .thenReturn(true);
+        when(documentoRepository.softDeleteByIdAndOrganizacionId(
+            eq(DOCUMENTO_ID), eq(ORGANIZACION_ID), any(OffsetDateTime.class)))
+            .thenReturn(1);
+
+        // Act
+        service.deleteDocument(DOCUMENTO_ID);
+
+        // Assert
+        ArgumentCaptor<OffsetDateTime> fechaCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
+        verify(documentoRepository).softDeleteByIdAndOrganizacionId(
+            eq(DOCUMENTO_ID), eq(ORGANIZACION_ID), fechaCaptor.capture());
+        assertThat(fechaCaptor.getValue()).isNotNull();
+
+        ArgumentCaptor<DocumentDeletedEvent> eventCaptor = ArgumentCaptor.forClass(DocumentDeletedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+        DocumentDeletedEvent event = eventCaptor.getValue();
+        assertThat(event.getDocumentoId()).isEqualTo(DOCUMENTO_ID);
+        assertThat(event.getUsuarioId()).isEqualTo(USUARIO_ID);
+        assertThat(event.getOrganizacionId()).isEqualTo(ORGANIZACION_ID);
+        assertThat(event.getEventTimestamp()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("should_ThrowResourceNotFoundException_When_DocumentNotFound_OnDelete")
+    void shouldThrowResourceNotFoundExceptionWhenDocumentNotFoundOnDelete() {
+        // Arrange
+        when(documentoRepository.findByIdAndOrganizacionIdIncludingEliminados(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.deleteDocument(DOCUMENTO_ID))
+            .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(documentoRepository, never()).softDeleteByIdAndOrganizacionId(anyLong(), anyLong(), any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("should_ThrowDocumentAlreadyDeletedException_When_DocumentAlreadyDeleted_OnDelete")
+    void shouldThrowDocumentAlreadyDeletedExceptionWhenDocumentAlreadyDeletedOnDelete() {
+        // Arrange
+        Documento documento = crearDocumento();
+        documento.setFechaEliminacion(OffsetDateTime.now());
+
+        when(documentoRepository.findByIdAndOrganizacionIdIncludingEliminados(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.deleteDocument(DOCUMENTO_ID))
+            .isInstanceOf(DocumentAlreadyDeletedException.class);
+
+        verify(documentoRepository, never()).softDeleteByIdAndOrganizacionId(anyLong(), anyLong(), any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("should_ThrowAccessDeniedException_When_UserLacksWritePermission_OnDelete")
+    void shouldThrowAccessDeniedExceptionWhenUserLacksWritePermissionOnDelete() {
+        // Arrange
+        Documento documento = crearDocumento();
+
+        when(documentoRepository.findByIdAndOrganizacionIdIncludingEliminados(DOCUMENTO_ID, ORGANIZACION_ID))
+            .thenReturn(Optional.of(documento));
+        when(evaluadorPermisos.tieneAcceso(
+            USUARIO_ID, DOCUMENTO_ID, TipoRecurso.DOCUMENTO, CodigoNivelAcceso.ESCRITURA, ORGANIZACION_ID))
+            .thenReturn(false);
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.deleteDocument(DOCUMENTO_ID))
+            .isInstanceOf(AccessDeniedException.class)
+            .hasMessageContaining("No tiene permisos para eliminar este documento");
+
+        verify(documentoRepository, never()).softDeleteByIdAndOrganizacionId(anyLong(), anyLong(), any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
     
     // ========================================================================
