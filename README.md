@@ -1,4 +1,4 @@
-# DocFlow
+# DocFlow - Sistema de Gestión Documental Inteligente
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-90%25-green)
@@ -7,110 +7,103 @@
 ![React](https://img.shields.io/badge/React-19-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
 
-**Sistema de Gestión Documental Inteligente con Control de Versiones y ACL Granular**
+---
+
+## Índice
+
+0. [Ficha del proyecto](#0-ficha-del-proyecto)
+1. [Descripción general del producto](#1-descripción-general-del-producto)
+2. [Arquitectura del sistema](#2-arquitectura-del-sistema)
+3. [Modelo de datos](#3-modelo-de-datos)
+4. [Especificación de la API](#4-especificación-de-la-api)
+5. [Historias de usuario](#5-historias-de-usuario)
+6. [Tickets de trabajo](#6-tickets-de-trabajo)
+7. [Pull requests](#7-pull-requests)
 
 ---
 
-## 📋 Tabla de Contenidos
+## 0. Ficha del Proyecto
 
-- [¿Qué es DocFlow?](#-qué-es-docflow)
-- [✨ Features Principales](#-features-principales)
-- [🗺 Estado del Proyecto y Roadmap](#-estado-del-proyecto-y-roadmap)
-- [📦 Quick Start](#-quick-start)
-- [🚀 Para Nuevos Desarrolladores](#-para-nuevos-desarrolladores)
-- [🛠 Stack Tecnológico](#-stack-tecnológico)
-- [🏗 Arquitectura del Sistema](#-arquitectura-del-sistema)
-- [📚 Documentación Técnica](#-documentación-técnica)
-- [🔧 Guías Rápidas](#-guías-rápidas)
-- [🛠 Resolución de Problemas](#-resolución-de-problemas)
-- [👥 Ficha del Proyecto](#-ficha-del-proyecto)
-- [Reglas de Desarrollo](#reglas-de-desarrollo)
+### **0.1. Tu nombre completo:**
+
+Eduardo Guardado Ruiz
+
+### **0.2. Nombre del proyecto:**
+
+DocFlow
+
+### **0.3. Descripción breve del proyecto:**
+
+Sistema modular de gestión documental (DMS) con enfoque **API-First**, que combina control de versiones lineal, permisos granulares (RBAC/ACL), autenticación multi-organización y capacidad de integración con sistemas externos (ERP/CRM). Versión MVP: 0.1.0.
+
+### **0.4. URL del proyecto:**
+
+https://docflow.balam.mx
 
 ---
 
-## 🎯 ¿Qué es DocFlow?
+## 1. Descripción general del producto
 
-DocFlow es un **sistema modular de gestión documental (DMS)** diseñado con enfoque **API-First**, que combina control de versiones lineal, permisos granulares (RBAC/ACL) y capacidad de integración con sistemas externos (ERP/CRM).
+### **1.1. Objetivo:**
 
-**Problema que resuelve:** Elimina la dicotomía entre seguridad básica y facilidad de uso operativa en la gestión documental, permitiendo colaboración eficiente sin sacrificar control de acceso ni auditoría forense.
+DocFlow resuelve la dicotomía entre seguridad básica y facilidad de uso operativa en la gestión documental, permitiendo colaboración eficiente sin sacrificar control de acceso granular ni auditoría forense. 
 
-**Propuesta de valor:**
+**Propósito core:** Ser una plataforma escalable de gestión documental que actúe como infraestructura modular para que otros sistemas (ERPs, CRMs, aplicaciones custom) hereden capacidades documentales avanzadas.
+
+**Valor aportado:**
 - **Para Administradores:** Control total de permisos, auditoría inmutable y métricas de seguridad
 - **Para Desarrolladores:** APIs RESTful documentadas (OpenAPI), webhooks y arquitectura modular
 - **Para Usuarios Finales:** Interfaz intuitiva tipo explorador, búsqueda rápida y versionado automático
 
-**Visión futura:** Motor de búsqueda semántica basado en IA como plugin opcional (RAG/Vectorial), permitiendo deployments ligeros sin sobrecarga computacional para empresas con recursos limitados.
+### **1.2. Características y funcionalidades principales:**
 
----
-
-## ✨ Features Principales
-
-### Core MVP (v0.1.0)
-- ✅ **Autenticación multi-organización** - OAuth2/JWT con soporte para usuarios en múltiples organizaciones
-- ✅ **RBAC Granular** - Control de acceso basado en roles (Ver, Editar, Administrar)
-- ✅ **ACL por Carpeta/Documento** - Permisos específicos a nivel de carpeta y archivo
-- ✅ **Gestión de Carpetas Jerárquica** - Estructura tipo árbol con soft delete
-- ✅ **Control de Versiones Lineal** - Versionado automático (v1.0 → v1.1) con rollback
+**Core MVP (v0.1.0) - Completado:**
+- ✅ **Autenticación multi-organización** - OAuth2/JWT con aislamiento de datos por organización
+- ✅ **RBAC Granular** - Roles con asignación de permisos por administrador
+- ✅ **ACL Granular por Carpeta/Documento** - Permisos específicos a nivel de objeto (Ver, Editar, Administrar)
+- ✅ **Gestión de Carpetas Jerárquica** - Estructura tipo árbol con soft delete y herencia de permisos
+- ✅ **Control de Versiones Lineal** - Versionado automático con rollback a versiones anteriores
 - ✅ **Almacenamiento Escalable** - Integración con MinIO/S3 para objetos binarios
-- ✅ **Audit Trails** - Registro forense inmutable de todas las operaciones
+- ✅ **Audit Trails** - Registro forense inmutable de todas las operaciones críticas
+- ✅ **Administración de Usuarios** - CRUD de usuarios, asignación de roles, desactivación sin borrado físico
 
-### Planificado (v2.0)
+**Planificado (v2.0):**
 - 🔮 **Búsqueda Semántica con IA** - Motor RAG/Vectorial que respeta ACL
 - 🔮 **OCR Automático** - Extracción de texto de documentos escaneados
 - 🔮 **Webhooks** - Notificaciones push a sistemas terceros
 - 🔮 **API Keys Management** - Panel para gestión de integraciones externas
-- 🔮 **Infraestructura Cloud** - Despliegue en Kubernetes con HA
+- 🔮 **Infraestructura Cloud** - Despliegue en Kubernetes con múltiples zonas y HA
 
----
+### **1.3. Diseño y experiencia de usuario:**
 
-## 🗺 Estado del Proyecto y Roadmap
+**Interfaz de Usuario:**
+- **Dashboard Admin:** Gestión centralizada de usuarios, roles y permisos con visualización drag-and-drop
+- **Interfaz de Documentos:** Explorador de archivos tipo Windows/Mac con navegación jerárquica
+- **Búsqueda:** Búsqueda rápida por nombre, metadatos y propiedades de documento
+- **Versionado:** Timeline visual de versiones con vista previa y comparación de cambios
 
-**Versión Actual:** `v0.1.0-MVP` (Febrero 2026)
+**Flujos principales:**
+1. **Login → Selección de Organización → Dashboard Principal**
+2. **Navegación jeráquica de carpetas → Visualización/Descarga de documentos**
+3. **Subida de documentos → Gestión de permisos → Auditoría de operaciones**
 
-**Trabajo completado:**
+**Experiencia responsive:** Adaptada a navegadores modernos (Chrome, Safari, Firefox)
 
-| Épica | Estado | Descripción |
-|-------|--------|-------------|
-| ✅ **P0: Autenticación y Organización** | Completado | Login multi-org, JWT, cambio de organización |
-| ✅ **P1: Administración de Usuarios** | Completado | CRUD de usuarios, asignación de roles |
-| ✅ **P2: Permisos (ACL)** | Completado | ACL granular por carpeta/documento, herencia recursiva |
-| ✅ **P3: Gestión de Carpetas** | Completado | Estructura jerárquica, soft delete, búsqueda |
-| ✅ **P4: Documentos y Versionado** | Completado | Carga, versionado lineal, descarga, metadatos JSONB |
+### **1.4. Instrucciones de instalación:**
 
-**En desarrollo (con bugs conocidos):**
-
-| Épica | Estado | Notas |
-|-------|--------|-------|
-| 🚧 **P5: Auditoría** | En desarrollo | Logs de auditoría, pendiente UI de visualización |
-| 🚧 **P6: Búsqueda Básica** | En desarrollo | Búsqueda por metadatos, bugs en filtros complejos |
-
-**Backlog futuro:**
-- 📋 **P7: Búsqueda Semántica IA** (Plugin opcional)
-- 📋 **P8: Webhooks y Notificaciones**
-- 📋 **P9: API Keys Management**
-- 📋 **P10: Despliegue Cloud K8s**
-
-> **Ver roadmap completo:** [US/Storys.md](US/Storys.md)  
-> **Ver tickets en progreso:** [US/tickets/](US/tickets/)
-
----
-
-## 📦 Quick Start
-
-### Requisitos Previos
-
-- **Java 21** (opcional si ejecutas servicios fuera de Docker)
-- **Maven** 3.8+ (para builds backend)
-- **Node** 18+ (para frontend local con Vite)
+#### Requisitos previos:
+- **Java 21** (para backend)
+- **Maven 3.8+** (para build backend)
+- **Node 18+** (para frontend con Vite)
 - **Docker** y **Docker Compose**
 
-### Levantar Entorno Local (3 minutos)
+#### Instalación paso a paso:
 
 ```bash
-# 1. Clonar variables de entorno
+# 1. Clonar variables de entorno y personalizar
 cp .env.example .env
 
-# 2. Levantar infraestructura (PostgreSQL, MinIO, servicios backend)
+# 2. Levantar infraestructura completa (PostgreSQL, MinIO, servicios backend)
 docker compose up --build -d
 
 # 3. Verificar estado de servicios
@@ -120,412 +113,645 @@ docker compose ps
 docker cp db/QueryTest.sql docflow-postgres:/tmp/QueryTest.sql
 docker compose exec -T postgres psql -U docflow -d docflow -f /tmp/QueryTest.sql
 
-# 5. Frontend (opcional - desarrollo local)
+# 5. Frontend (desarrollo local con Vite)
 cd frontend
 npm install
-npm run dev
+npm run dev       # Accesible en http://localhost:5173
 ```
 
-**Acceso a la aplicación:**
-- Frontend: `http://localhost:80` (Docker) o `http://localhost:5173` (Vite local)
-- API Gateway: `http://localhost:8080`
-- MinIO Console: `http://localhost:9001` (admin/admin123)
-- PostgreSQL: `localhost:5432` (docflow/docflow_secret)
+#### Acceso a la aplicación:
 
-**Usuario de prueba:**
-- Email: `una-org@test.com`
-- Password: `password`
+- **Frontend:** `http://localhost:80` (Docker) o `http://localhost:5173` (Vite local)
+- **API Gateway:** `http://localhost:8080`
+- **MinIO Console:** `http://localhost:9001` (credenciales: admin/admin123)
+- **PostgreSQL:** `localhost:5432` (usuario: docflow, contraseña: docflow_secret)
+- **Swagger UI (Identity Service):** `http://localhost:8081/swagger-ui.html`
+- **Swagger UI (Document Core):** `http://localhost:8082/swagger-ui.html`
 
-> **Detalles de infraestructura:** Ver [README-docker.md](README-docker.md)
+#### Credenciales de prueba:
 
----
+- **Email:** `una-org@test.com`
+- **Password:** `password`
 
-## 🚀 Para Nuevos Desarrolladores
+#### Base de datos:
 
-### Checklist de Setup
+- Migraciones automáticas ejecutadas por Spring Boot
+- Seeds incluidos en `db/QueryTest.sql` para ambiente de desarrollo
+- Tablas principales: `usuario`, `organizacion`, `carpeta`, `documento`, `version`, `permiso_*`, `audit_*`
 
-1. ✅ Copiar `.env.example` → `.env` y ajustar si es necesario
-2. ✅ Ejecutar `docker compose up -d` y verificar servicios con `docker compose ps`
-3. ✅ Cargar datos de prueba con script `db/QueryTest.sql`
-4. ✅ Revisar logs: `docker compose logs -f gateway`
-5. ✅ Leer [Guía de Desarrollo](ai-specs/specs/development_guide.md)
-6. ✅ Familiarizarse con [Estándares de Código](.github/copilot-instructions.md)
-
-### Recursos de Onboarding
-
-- **Arquitectura Hexagonal explicada:** [ai-specs/specs/backend-standards.md](ai-specs/specs/backend-standards.md#hexagonal)
-- **Estructura de Features (Frontend):** [ai-specs/specs/frontend-standards.md](ai-specs/specs/frontend-standards.md)
-- **Modelo de Datos completo:** [docs/DATABASE.md](docs/DATABASE.md)
-- **Ejemplos de API:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
-
-### Primer Ticket Recomendado
-
-Busca issues etiquetados como `good-first-issue` en las épicas P5 o P6 (bugs simples de UI/API) para familiarizarte con el flujo de desarrollo.
+> **Detalles técnicos de infraestructura:** Ver [README-docker.md](README-docker.md)
 
 ---
 
-## 🛠 Stack Tecnológico
+## 2. Arquitectura del Sistema
 
-| Capa | Tecnologías | Versión/Detalles |
-|------|-------------|------------------|
-| **Frontend** | React, TypeScript, Vite, TailwindCSS, Zustand | React 19, Vite 6.x |
-| **API Gateway** | Spring Cloud Gateway | Spring Boot 3.x |
-| **Backend** | Spring Boot, Java, MapStruct, Lombok | Java 21, Spring Boot 3.x |
-| **Base de Datos** | PostgreSQL | 15+ (JSONB, LTREE) |
-| **Almacenamiento** | MinIO (S3-compatible) | Latest |
-| **Testing** | JUnit 5, Mockito, Vitest, Cypress | Cobertura 90%+ |
-| **Build** | Maven, npm | Maven 3.8+, npm 9+ |
-| **Containerización** | Docker, Docker Compose | Docker 24+ |
-| **Futuros** | Redis, MongoDB, Kafka, K8s | Planificado v2.0 |
+### **2.1. Diagrama de arquitectura:**
 
-**Patrones arquitectónicos:**
-- Backend: Arquitectura Hexagonal (Ports & Adapters) + Clean Architecture
-- Frontend: Feature-Driven Development (FDD) con Atomic Design
-- Eventos: Event-Driven Architecture (planificado con Kafka)
-
----
-
-## 🏗 Arquitectura del Sistema
-
-### Diagrama de Componentes (MVP Actual)
+**MVP Actual (Docker Compose Local):**
 
 ```mermaid
 graph TD
-    Browser[Frontend React] --> Gateway[API Gateway :8080]
-    Gateway --> Identity[Identity Service]
-    Gateway --> DocCore[Document Core]
+    Browser[Frontend React]
+    Gateway["API Gateway<br/>(Spring Cloud Gateway :8080)"]
+    Identity["Identity Service<br/>(IAM + RBAC :8081)"]
+    DocCore["Document Core<br/>(Gestión Documental :8082)"]
+    PostgreSQL["PostgreSQL<br/>(Metadatos)"]
+    MinIO["MinIO S3<br/>(Almacenamiento)"]
     
-    Identity --> PostgreSQL[(PostgreSQL)]
+    Browser --> Gateway
+    Gateway --> Identity
+    Gateway --> DocCore
+    Identity --> PostgreSQL
     DocCore --> PostgreSQL
-    DocCore --> MinIO[(MinIO S3)]
+    DocCore --> MinIO
+```
+
+**Visión Futura (Kubernetes v2.0):**
+
+```mermaid
+graph TD
+    subgraph Cliente["Cliente"]
+        Browser[React SPA]
+        ExternalSys[Sistemas ERP/CRM]
+    end
     
-    style Gateway fill:#4CAF50
-    style Identity fill:#2196F3
-    style DocCore fill:#2196F3
+    subgraph Ingress_Layer["Capa de Borde"]
+        LB[Load Balancer]
+        WAF[Web Application Firewall]
+    end
+    
+    subgraph K8s["Kubernetes Cluster"]
+        APIG["API Gateway"]
+        IAM["Identity Service"]
+        DocCore["Document Core"]
+        Search["Search &amp; Intelligence"]
+        Audit["Audit Service"]
+        
+        Redis[(Redis Cache)]
+        PostgreSQL[(PostgreSQL)]
+        MongoDB[(MongoDB)]
+        VectorDB[(Vector DB)]
+    end
+    
+    subgraph Infra["Infraestructura"]
+        S3[(Object Storage<br/>MinIO/S3)]
+        Kafka[Message Broker<br/>Kafka]
+        Vault[HashiCorp Vault]
+    end
+    
+    Browser --> LB
+    ExternalSys --> WAF
+    LB --> APIG
+    WAF --> APIG
+    
+    APIG --> IAM
+    APIG --> DocCore
+    APIG --> Search
+    APIG --> Audit
+    
+    DocCore --> PostgreSQL
+    DocCore --> S3
+    DocCore --> Redis
+    DocCore --> Kafka
+    
+    Search --> VectorDB
+    Search --> Kafka
+    Audit --> MongoDB
+    Audit --> Kafka
+    
+    IAM --> PostgreSQL
 ```
 
-**⚠️ Nota de Arquitectura:**  
-El diagrama completo muestra servicios adicionales (Redis, MongoDB, Kafka, Search Service) que están **planificados para v2.0**. El MVP actual utiliza **Docker Compose local** en lugar de Kubernetes.
+**Justificación arquitectónica:**
+- **Hexagonal/Ports & Adapters:** Separación clara entre dominio, aplicación e infraestructura
+- **Microservicios:** Escalabilidad independiente, despliegue aislado
+- **API-First:** Contrato claro, documentación automática (OpenAPI)
+- **Event-Driven (v2.0):** Desacoplamiento temporal, facilita auditabilidad
 
-**Componentes implementados (MVP):**
-- ✅ API Gateway (Spring Cloud Gateway)
-- ✅ Identity Service (Autenticación, RBAC)
-- ✅ Document Core Service (Gestión documental, ACL)
-- ✅ PostgreSQL (Metadatos relacionales)
-- ✅ MinIO (Almacenamiento de blobs)
+**Beneficios:**
+- Modularidad y reutilización
+- Testabilidad e independencia
+- Escalabilidad horizontal
+- Resiliencia de fallos
 
-### Ver Arquitectura Completa
-
-Para diagramas detallados de despliegue, flujos de secuencia y decisiones arquitectónicas:  
-**→ [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+**Sacrificios:**
+- Mayor complejidad operacional
+- Latencia por múltiples hops de red
+- Eventual consistency en eventos distribuidos
 
 ---
 
-## 📚 Documentación Técnica
+### **2.2. Descripción de componentes principales:**
 
-### Por Audiencia
-
-**Para Desarrolladores Backend:**
-- [Estándares de Código Backend](.github/rules-backend.md)
-- [Arquitectura Hexagonal Explicada](ai-specs/specs/backend-standards.md)
-- [Modelo de Datos Completo](docs/DATABASE.md)
-
-**Para Desarrolladores Frontend:**
-- [Estándares de Código Frontend](.github/rules-frontend.md)
-- [Guía de Features y Hooks](ai-specs/specs/frontend-standards.md)
-- [Componentes UI y Atomic Design](frontend/src/common/)
-
-**Para DevOps/Infraestructura:**
-- [Guía de Docker Compose](README-docker.md)
-- [Reglas de Infraestructura](.github/rules-infra-docker.md)
-- [Despliegue Cloud (Visión)](docs/ARCHITECTURE.md#infraestructura-y-despliegue-visión-v20)
-
-**Para Product Managers:**
-- [Historias de Usuario (US)](US/Storys.md)
-- [Roadmap y Épicas](US/Storys.md#épicas-priorizadas-mvp)
-- [Estado del Proyecto](#-estado-del-proyecto-y-roadmap)
-
-### Especificaciones Técnicas
-
-- **API Reference:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
-- **OpenAPI Spec:** [ai-specs/specs/api-spec.yml](ai-specs/specs/api-spec.yml)
-- **Data Model:** [ai-specs/specs/data-model.md](ai-specs/specs/data-model.md)
-- **Development Guide:** [ai-specs/specs/development_guide.md](ai-specs/specs/development_guide.md)
+| Componente | Tecnología | Puerto | Responsabilidad |
+|-----------|-----------|--------|-----------------|
+| **Frontend** | React 19, TypeScript, Vite | 5173/80 | UI responsiva, formularios, navegación |
+| **API Gateway** | Spring Cloud Gateway | 8080 | Enrutamiento, autenticación, rate limiting |
+| **Identity Service** | Spring Boot 3, Java 21 | 8081 | Autenticación JWT, RBAC, gestión de roles |
+| **Document Core** | Spring Boot 3, Java 21 | 8082 | Gestión de documentos, ACL, versionado |
+| **PostgreSQL** | PostgreSQL 15+ | 5432 | Datos relacionales, metadatos, índices |
+| **MinIO** | S3-compatible | 9000/9001 | Almacenamiento binario de documentos |
 
 ---
 
-## 🔧 Guías Rápidas
-
-### Comandos de Desarrollo
-
-**Backend (por servicio):**
-```bash
-cd backend/gateway
-mvn clean package          # Build
-mvn spring-boot:run        # Run local
-mvn test                   # Tests unitarios
-# Reportes en: target/surefire-reports
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install                # Instalar dependencias
-npm run dev                # Dev server (Vite) en :5173
-npm run build              # Build producción
-npm run preview            # Preview build local
-npm run test               # Tests con Vitest
-```
-
-**Docker Compose:**
-```bash
-docker compose up -d       # Levantar servicios
-docker compose ps          # Ver estado
-docker compose logs -f gateway  # Logs en tiempo real
-docker compose down -v     # Parar y limpiar volúmenes
-```
-
-### Estructura de Proyecto
+### **2.3. Descripción de alto nivel del proyecto y estructura de ficheros**
 
 ```
 docflow/
-├── frontend/              # SPA React + TypeScript
-│   └── src/
-│       ├── features/      # Módulos funcionales (auth, folders, documents)
-│       ├── common/        # Componentes compartidos
-│       └── core/          # Servicios y configuración
-├── backend/               # Microservicios Spring Boot
-│   ├── gateway/           # API Gateway (Puerto 8080)
-│   ├── identity/          # Servicio IAM
-│   └── document-core/     # Servicio de documentos
-├── docs/                  # Documentación técnica especializada
+├── frontend/                          # SPA React + TypeScript (Vite)
+│   ├── src/
+│   │   ├── features/                 # Módulos funcionales
+│   │   ├── common/                   # Componentes compartidos
+│   │   ├── core/                     # Servicios globales
+│   │   └── App.tsx
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── Dockerfile
+│
+├── backend/                           # Microservicios Spring Boot
+│   ├── gateway/                      # API Gateway
+│   ├── identity/                     # Identity Service
+│   └── document-core/                # Document Core Service
+│
+├── db/                               # Scripts SQL
+│   ├── QueryTest.sql                # Seeds para desarrollo
+│   └── migrations/                  # Migraciones
+│
+├── docs/                             # Documentación técnica
 │   ├── ARCHITECTURE.md
 │   ├── DATABASE.md
 │   └── API_REFERENCE.md
-├── db/                    # Scripts SQL de setup/testing
-├── US/                    # Historias de usuario y tickets
-└── docker-compose.yml     # Orquestación de servicios
+│
+├── ai-specs/                         # Especificaciones y estándares
+│   ├── specs/
+│   └── changes/
+│
+├── US/                              # Gestión de historias y tickets
+│   ├── Storys.md
+│   └── tickets/
+│
+├── docker-compose.yml               # Orquestación local
+├── .env.example                     # Variables de entorno
+├── README.md                        # Este archivo
+└── README-docker.md                 # Guía de infraestructura
 ```
 
 ---
 
-##  🛠 Resolución de Problemas
+### **2.4. Infraestructura y despliegue**
 
-### Docker
+**Infraestructura Local (Docker Compose):**
+- PostgreSQL 15+ (volumen persistente)
+- MinIO S3 (volumen persistente)
+- Identity, Document Core, API Gateway (Spring Boot)
+- Frontend (Nginx/React SPA)
 
-**Puerto ocupado:**
+**Proceso local:**
+1. **Build:** `docker compose build --no-cache`
+2. **Deploy:** `docker compose up -d`
+3. **Verificación:** `docker compose ps`
+4. **Datos:** Scripts SQL en `db/`
+5. **Acceso:** Frontend en `http://localhost`, API en `http://localhost:8080`
+
+**Despliegue futuro (Kubernetes v2.0):**
+- Helm charts
+- ArgoCD para GitOps
+- Service mesh (Istio/Linkerd)
+- Prometheus + Grafana
+- Sealed Secrets
+
+---
+
+### **2.5. Seguridad**
+
+**Prácticas implementadas:**
+
+1. **Autenticación JWT:**
+   - Claims: usuario_id, organizacion_id, roles
+   - Expiration: 1 hora
+   - Refresh tokens: v2.0
+
+2. **Aislamiento por organización:**
+   - organizacion_id del token (no cliente)
+   - Queries filtran automáticamente
+   - Imposible accesar datos de otra org
+
+3. **ACL Granular:**
+   - Precedencia: Documento > Carpeta
+   - Evaluación en cada operación
+   - Audit de cambios
+
+4. **Validación de entrada:**
+   - Spring Validation decorators
+   - Sanitización de paths (LTREE)
+   - Prepared statements
+
+5. **Auditoría inmutable:**
+   - Tabla AuditLog append-only
+   - Registro: usuario, operación, recurso, timestamp, resultado
+   - No permite edición/borrado
+
+6. **HTTPS/TLS + Rate limiting**
+
+---
+
+### **2.6. Tests**
+
+**Cobertura: 90%+ en métodos críticos**
+
+**Backend:** JUnit 5, Mockito, TestContainers  
+**Frontend:** Vitest, React Testing Library  
+**BD:** Validación de constraints, índices, triggers
+
+Ejecutar:
 ```bash
-docker compose ps          # Ver qué está corriendo
-# Modificar puertos en .env si hay conflicto
-```
-
-**Servicios no inician:**
-```bash
-docker compose logs -f <servicio>
-docker compose down -v --remove-orphans
-docker compose up --build -d
-```
-
-### Base de Datos
-
-**Error de conexión a PostgreSQL:**
-```bash
-# Verificar que el contenedor esté corriendo
-docker compose ps postgres
-# Verificar credenciales en .env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=docflow
-DB_USER=docflow
-DB_PASSWORD=docflow_secret
-```
-
-**Resetear datos:**
-```bash
-docker compose down -v     # Elimina volúmenes
-docker compose up -d
-# Volver a cargar QueryTest.sql
-```
-
-### Frontend
-
-**Errores de CORS:**
-- Verificar `CORS_ALLOWED_ORIGINS` en backend (no permite `*`)
-- Configuración en `backend/gateway/src/main/resources/application.yml`
-
-**Build falla:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-### Backend
-
-**Maven build falla:**
-```bash
-mvn clean install -U      # Forzar actualización de dependencias
-mvn dependency:tree       # Ver árbol de dependencias
-```
-
-**Tokens JWT expiran:**
-- Validez por defecto: 1 hora (3600s)
-- Hacer login nuevamente para obtener nuevo token
-- Configurar refresh token (planificado v2.0)
-
-**MinIO permissions:**
-```bash
-# Verificar bucket existe
-# MinIO Console: http://localhost:9001
-# Usuario: admin / Password: admin123
-# Bucket requerido: docflow-documents
+cd backend/&lt;module&gt; && mvn clean test
+cd frontend && npm run test
 ```
 
 ---
 
-## 👥 Ficha del Proyecto
+## 3. Modelo de Datos
 
+### **3.1. Diagrama del modelo de datos:**
 
-* **Nombre:** Eduardo Guardado Ruiz
-* **Proyecto:** DocFlow
-* **Versión:** 0.1.0-MVP
-* **Fecha:** Febrero 2026
-* **Descripción:** Sistema modular de gestión documental (DMS) con enfoque API-First, control de versiones lineal y motor de búsqueda semántica basado en IA (plugin opcional), priorizando usabilidad, integración y accesibilidad para empresas de diversos tamaños.
-
----
-
-## Descripción General del Producto
-
-DocFlow es una **plataforma de gestión documental modular** diseñada como infraestructura backend que permite a otros sistemas heredar capacidades documentales avanzadas.
-
-### Segmentos de Usuario
-
-* **Administradores:** Configuración de roles, permisos y monitoreo del sistema
-* **Desarrolladores/Sistemas:** Integradores que usan APIs para conectar ERPs/CRMs
-* **Usuarios Finales:** Profesionales operativos que gestionan documentos diariamente
-
-### Funcionalidades Clave
-
-**Seguridad y Control de Acceso:**
-- RBAC Granular (Ver, Editar, Administrar)
-- ACL por carpeta y documento con herencia recursiva
-- Audit Trails inmutables
-
-**Gestión Documental:**
-- Control de versiones lineal con rollback
-- Estructura de carpetas jerárquica
-- Metadatos JSONB personalizables
-- Almacenamiento escalable (S3/MinIO)
-
-**Inteligencia Artificial (Futuro):**
-- Búsqueda semántica RAG/Vectorial
-- OCR automático
-- Filtros de seguridad que respetan ACL
-
-**Integración:**
-- API RESTful documentada (OpenAPI)
-- Webhooks (planificado)
-- API Keys management (planificado)
-
-### Diseño de Experiencia
-
-- **Administradores:** Dashboard con métricas de seguridad y gestión drag-and-drop de permisos
-- **Desarrolladores:** Portal de documentación con Swagger UI interactivo
-- **Usuarios Finales:** Interfaz tipo explorador nativo con búsqueda intuitiva
-
----
-
-## Reglas de Desarrollo
-
-Las reglas de desarrollo están centralizadas por área:
-
-- **Índice General:** [.github/RULES.md](.github/RULES.md)
-- **Backend:** [.github/rules-backend.md](.github/rules-backend.md)
-- **Frontend:** [.github/rules-frontend.md](.github/rules-frontend.md)
-- **Base de Datos:** [.github/rules-database.md](.github/rules-database.md)
-- **Infraestructura:** [.github/rules-infra-docker.md](.github/rules-infra-docker.md)
-
-**Principios clave:**
-- TDD obligatorio (cobertura 90%+)
-- Arquitectura Hexagonal en backend
-- Feature-Driven Development en frontend
-- Domain-Driven Design (DDD)
-
----
-
-## Documentación Avanzada
-
-### Arquitectura y Diseño
-- **Arquitectura Completa:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Diagramas detallados, patrones, seguridad
-- **Modelo de Datos:** [docs/DATABASE.md](docs/DATABASE.md) - ERD completo, diccionario de tablas, índices
-- **API Reference:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md) - OpenAPI spec, ejemplos de uso, códigos de error
-
-### Especificaciones Técnicas
-- **OpenAPI YAML:** [ai-specs/specs/api-spec.yml](ai-specs/specs/api-spec.yml)
-- **Data Model Spec:** [ai-specs/specs/data-model.md](ai-specs/specs/data-model.md)
-- **Backend Standards:** [ai-specs/specs/backend-standards.md](ai-specs/specs/backend-standards.md)
-- **Frontend Standards:** [ai-specs/specs/frontend-standards.md](ai-specs/specs/frontend-standards.md)
-- **Development Guide:** [ai-specs/specs/development_guide.md](ai-specs/specs/development_guide.md)
-
-### READMEs de Componentes
-- **Docker Compose:** [README-docker.md](README-docker.md)
-- **Frontend:** [frontend/README.md](frontend/README.md)
-- **API Gateway:** [backend/gateway/README.md](backend/gateway/README.md)
-- **Document Core:** [backend/document-core/README.md](backend/document-core/README.md)
-- **Identity Service:** [backend/identity/README.md](backend/identity/README.md)
-
----
-
-## Historias de Usuario y Tickets
-
-- **Historias de Usuario (Épicas P0-P6):** [US/Storys.md](US/Storys.md)
-- **Tickets de Trabajo:** [US/tickets/](US/tickets/)
-  - [P0: Autenticación](US/tickets/P0-Autenticacion/)
-  - [P1: Administración](US/tickets/P1-Administracion/)
-  - [P2: Permisos ACL](US/tickets/P2-Permisos/)
-  - [P3: Gestión de Carpetas](US/tickets/P3-Gestion/)
-  - [P4: Documentos](US/tickets/P4-Documentos/)
-  - [P5: Auditoría](US/tickets/P5-Auditoria/)
-  - [P6: Búsqueda](US/tickets/P6-Busqueda_sin_IA/)
-
----
-
-## Diagrama Resumido de Arquitectura
-
-**Visión v2.0 (Kubernetes - Futuro):**
-
-Los diagramas detallados de arquitectura cloud, despliegue en K8s, flujos de secuencia y decisiones técnicas están disponibles en:
-
-**→ [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
-
-**MVP Actual (Docker Compose):**
-
-```
-Frontend (React) → API Gateway :8080 → Identity Service → PostgreSQL
-                                      → Document Core → PostgreSQL + MinIO
+```mermaid
+erDiagram
+    Organizacion ||--o{ Usuario_Organizacion : ""
+    Usuario ||--o{ Usuario_Organizacion : ""
+    Organizacion ||--o{ Rol : ""
+    Usuario ||--o{ Usuario_Rol : ""
+    Rol ||--o{ Usuario_Rol : ""
+    Rol ||--o{ Rol_Tiene_Permiso : ""
+    Permiso_Catalogo ||--o{ Rol_Tiene_Permiso : ""
+    Organizacion ||--o{ Carpeta : ""
+    Carpeta ||--o{ Carpeta : ""
+    Carpeta ||--o{ Documento : ""
+    Documento ||--o{ Version : ""
+    Carpeta ||--o{ Permiso_Carpeta : ""
+    Usuario ||--o{ Permiso_Carpeta : ""
+    Documento ||--o{ Permiso_Documento : ""
+    Usuario ||--o{ Permiso_Documento : ""
+    
+    Organizacion {
+        int id PK
+        string nombre
+        jsonb configuracion
+    }
+    
+    Usuario {
+        bigint id PK
+        string email UK
+        string hash_contrasena
+        string nombre_completo
+    }
+    
+    Usuario_Organizacion {
+        bigint usuario_id PK,FK
+        int organizacion_id PK,FK
+        string estado
+        boolean es_predeterminada
+    }
+    
+    Rol {
+        int id PK
+        int organizacion_id FK
+        string nombre
+        string descripcion
+    }
+    
+    Permiso_Catalogo {
+        int id PK
+        string slug UK
+        string nombre_legible
+    }
+    
+    Carpeta {
+        bigint id PK
+        string nombre
+        string ruta_jerarquia UK
+        bigint carpeta_padre_id FK
+    }
+    
+    Documento {
+        bigint id PK
+        string nombre
+        bigint carpeta_id FK
+        jsonb metadatos_globales
+    }
+    
+    Version {
+        bigint id PK
+        bigint documento_id FK
+        int numero_secuencial
+        string ruta_almacenamiento
+    }
+    
+    Permiso_Carpeta {
+        bigint id PK
+        bigint carpeta_id FK
+        bigint usuario_id FK
+        string nivel
+        boolean herencia_recursiva
+    }
+    
+    Permiso_Documento {
+        bigint id PK
+        bigint documento_id FK
+        bigint usuario_id FK
+        string nivel
+    }
 ```
 
-**Servicios MVP:**
-- ✅ API Gateway (Spring Cloud Gateway)
-- ✅ Identity Service (IAM, RBAC)
-- ✅ Document Core (Gestión documental, ACL)
-- ✅ PostgreSQL (Metadatos)
-- ✅ MinIO (Almacenamiento S3)
+---
 
-**Servicios planificados v2.0:**  
-Redis, MongoDB, Kafka, Search & Intelligence (IA), Vault
+### **3.2. Descripción de entidades principales:**
 
-Para diagramas completos de arquitectura, componentes, flujos de secuencia y decisiones técnicas:
-
-**→ Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+| Entidad | Atributos | Restricciones | Descripción |
+|---------|-----------|--------------|------------|
+| **Organizacion** | id (PK), nombre, estado | Silo independiente | Contexto de aislamiento de datos |
+| **Usuario** | id (PK), email (UK), hash_contrasena | Email único globally | No borrado físico |
+| **Usuario_Organizacion** | usuario_id (PK,FK), organizacion_id (PK,FK), es_predeterminada | Membresía M:N | Define pertenencia y org predeterminada |
+| **Rol** | id (PK), organizacion_id (FK), nombre | Nombres únicos por org | Conjunto de permisos |
+| **Permiso_Catalogo** | id (PK), slug (UK), nombre_legible | Catálogo global | Ej: docs.crear, carpetas.eliminar |
+| **Carpeta** | id (PK), ruta_jerarquia (UK,LTREE), carpeta_padre_id (FK) | Estructura jerárquica | Soft delete, auditable |
+| **Documento** | id (PK), nombre, carpeta_id (FK), metadatos_globales (JSONB) | Pertenece a carpeta | Versiones inmutables |
+| **Version** | id (PK), documento_id (FK), numero_secuencial, ruta_almacenamiento | Append-only | Path: /org/{id}/doc/{id}/v{n} |
+| **Permiso_Carpeta** | carpeta_id (FK), usuario_id (FK), nivel, herencia_recursiva | LECTURA\|ESCRITURA\|ADMINISTRACION | Hereda en subcarpetas si recursiva=true |
+| **Permiso_Documento** | documento_id (FK), usuario_id (FK), nivel | Sobreescribe carpeta | Precedencia: Documento > Carpeta |
 
 ---
 
-## Contribución al Proyecto
+## 4. Especificación de la API
 
-**Este es un proyecto privado con fines educativos.**
+### **4.1. Endpoints principales (OpenAPI 3.0)**
 
-Para contribuir o reportar issues, contacta directamente al propietario del proyecto.
+#### **Autenticación**
+
+```yaml
+POST /auth/login
+  Request:
+    - email (string)
+    - password (string)
+  Response (200):
+    token: JWT
+    usuario_id: number
+    organizacion_id: number
+    roles: string[]
+  Errores:
+    - 401: Credenciales inválidas
+    - 409: Múltiples orgs sin predeterminada
+
+POST /auth/switch
+  Request:
+    organizacion_id: number
+  Response (200):
+    token: JWT_new
+```
+
+#### **Gestión de Carpetas**
+
+```yaml
+POST /folders
+  Request:
+    nombre: string
+    carpeta_padre_id: number (opcional)
+  Response (201)
+
+GET /folders/{folder_id}
+  Response (200)
+
+DELETE /folders/{folder_id}
+  Response (204)
+```
+
+#### **Gestión de Documentos**
+
+```yaml
+POST /documents
+  Request: multipart/form-data
+    file: binary
+    nombre: string
+    carpeta_id: number
+  Response (201)
+
+PUT /documents/{document_id}/versions
+  Request: multipart/form-data
+  Response (201)
+
+GET /documents/{document_id}/versions
+  Response (200)
+```
+
+#### **Control de Acceso (ACL)**
+
+```yaml
+POST /permissions/folders/{folder_id}
+  Request:
+    usuario_id: number
+    nivel: LECTURA|ESCRITURA|ADMINISTRACION
+    herencia_recursiva: boolean
+  Response (201)
+
+GET /permissions/folders/{folder_id}
+  Response (200)
+
+DELETE /permissions/folders/{folder_id}/{permission_id}
+  Response (204)
+```
+
+> **OpenAPI completo:** [ai-specs/specs/api-spec.yml](ai-specs/specs/api-spec.yml)
+
+---
+
+## 5. Historias de Usuario
+
+### **Historia 1: Autenticación Multi-Organización (US-AUTH-001)**
+
+**Épica:** P0 - Autenticación | **Puntos:** 13
+
+**Narrativa:**  
+Como usuario, quiero iniciar sesión con mis credenciales y acceder automáticamente a mi organización predeterminada, para usar el sistema de forma simple.
+
+**Criterios:**
+- ✅ Login exitoso con JWT si org predeterminada
+- ✅ Error 409 si múltiples orgs sin predeterminada
+- ✅ Error 401 si credenciales inválidas
+- ✅ Error 403 si usuario inactivo
+
+---
+
+### **Historia 2: ACL Granular por Carpeta/Documento (US-ACL-002)**
+
+**Épica:** P2 - Permisos ACL | **Puntos:** 21
+
+**Narrativa:**  
+Como administrador, quiero conceder permisos granulares (Lectura, Escritura, Administración) a nivel de carpeta y documento, para controlar acceso específico a información sensible.
+
+**Criterios:**
+- ✅ Conceder LECTURA/ESCRITURA/ADMINISTRACION
+- ✅ Herencia recursiva en subcarpetas
+- ✅ Precedencia: Documento > Carpeta
+- ✅ Revocar permiso
+
+---
+
+### **Historia 3: Gestión de Carpetas Jerárquica (US-FOLDER-001)**
+
+**Épica:** P3 - Gestión de Carpetas | **Puntos:** 13
+
+**Narrativa:**  
+Como usuario con permisos de escritura, quiero crear y organizar carpetas en estructura jerárquica, para clasificar documentos de forma lógica.
+
+**Criterios:**
+- ✅ Crear carpeta en raíz
+- ✅ Crear subcarpeta con herencia de ruta
+- ✅ Navegar jerarquía
+- ✅ Soft delete
+- ✅ Error 409 si nombre duplicado
+
+---
+
+## 6. Tickets de Trabajo
+
+### **Ticket 1: Backend - Endpoint de Login (TICKET-001)**
+
+**Servicio:** Identity Service | **Prioridad:** P0 | **Puntos:** 13
+
+**Descripción:**  
+Implementar `POST /auth/login` con autenticación multi-organización, validación de org predeterminada y emisión de JWT.
+
+**Tareas:**
+- [ ] Revisar estándares hexagonal
+- [ ] Crear dominio: Usuario, Rol, Permiso
+- [ ] Implementar LoginUseCase
+- [ ] Crear AutenticacionAdapter (JWT)
+- [ ] Tests unitarios (5 scenarios)
+- [ ] Tests integración
+- [ ] Actualizar OpenAPI
+
+**Definición de Hecho:**
+- PR mergeada (2+ aprobaciones)
+- Cobertura >= 90%
+- Sin warnings SonarQube
+
+---
+
+### **Ticket 2: Frontend - Componente Login (TICKET-002)**
+
+**Aplicación:** Frontend React | **Prioridad:** P0 | **Puntos:** 13
+
+**Descripción:**  
+Implementar página de login con formulario email/password, validación, almacenamiento JWT, redirección a dashboard.
+
+**Tareas:**
+- [ ] Crear hook useAuth() (Zustand)
+- [ ] Crear servicio authService (axios)
+- [ ] Componente LoginForm.tsx
+- [ ] Componente LoginPage.tsx
+- [ ] HOC ProtectedRoute
+- [ ] Tests (>= 80%)
+
+**Definición de Hecho:**
+- PR mergeada
+- Cobertura >= 80%
+- Funciona en navegadores modernos
+
+---
+
+### **Ticket 3: Base de Datos - Schema Inicial (TICKET-003)**
+
+**Tipo:** Infraestructura | **Prioridad:** P0 | **Puntos:** 21
+
+**Descripción:**  
+Implementar schema PostgreSQL con todas las tablas base, índices, constraints y migraciones Flyway.
+
+**Tareas:**
+- [ ] Crear V001__initial_schema.sql
+- [ ] Definir PK/FK/UK/constraints
+- [ ] Crear índices
+- [ ] Crear seeds en db/QueryTest.sql
+- [ ] Documentar en DATABASE.md
+
+**Definición de Hecho:**
+- Migration en código
+- Schema se crea con `docker compose up`
+- Seeds ejecutan sin errores
+
+---
+
+## 7. Pull Requests
+
+### **PR #42: JWT Authentication Multi-Org Support ✅**
+
+**Estado:** Merged | **Fecha:** 2026-02-15
+
+Implementa autenticación JWT en Identity Service con soporte multi-organización, validación de org predeterminada, tokens con claims de usuario/org/roles.
+
+**Cambios principales:**
+- Domain: Usuario, Rol, Permiso
+- Application: LoginUseCase
+- Infrastructure: JwtProvider, AuthFilter
+- Tests: 90% cobertura
+
+---
+
+### **PR #43: Frontend Login UI and Auth Flow ✅**
+
+**Estado:** Merged | **Fecha:** 2026-02-16
+
+Implementa página de login React con formulario email/password, hook useAuth() con Zustand, JWT en localStorage, rutas protegidas.
+
+**Cambios principales:**
+- LoginPage, LoginForm, useAuth hook
+- authService con axios interceptors
+- ProtectedRoute HOC
+- Tests: 85% cobertura
+
+---
+
+### **PR #41: PostgreSQL Schema & Flyway Migrations ✅**
+
+**Estado:** Merged | **Fecha:** 2026-02-14
+
+Crea schema PostgreSQL completo con Flyway: tablas base, índices, constraints, triggers de auditoría.
+
+**Cambios principales:**
+- V001__initial_schema.sql (Flyway)
+- QueryTest.sql (seeds)
+- Índices y constraints
+- Documentación DATABASE.md
+
+---
+
+## Enlaces y Referencias
+
+**Documentación técnica:**
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [DATABASE.md](docs/DATABASE.md)
+- [API_REFERENCE.md](docs/API_REFERENCE.md)
+- [README-docker.md](README-docker.md)
+
+**Estándares:**
+- [Backend Standards](ai-specs/specs/backend-standards.md)
+- [Frontend Standards](ai-specs/specs/frontend-standards.md)
+- [Development Guide](ai-specs/specs/development_guide.md)
+
+**Gestión:**
+- [Historias de Usuario](US/Storys.md)
+- [Tickets](US/tickets/)
+
+**Reglas:**
+- [Backend Rules](.github/rules-backend.md)
+- [Frontend Rules](.github/rules-frontend.md)
+- [DB Rules](.github/rules-database.md)
+- [Infra Rules](.github/rules-infra-docker.md)
+
+---
+
+## Contribución
+
+Proyecto privado con fines educativos. Para contribuir, contacta al propietario.
 
 ---
 
