@@ -1,178 +1,105 @@
 ## P4 — Documentos + Versionado Lineal
 
-### [US-DOC-001] Subir documento (API) crea documento + versión 1
+### [US-DOC-001] Subir documento (API) crea documento + version 1
 
----
+**Narrativa:** Como usuario con permisos, quiero subir un documento a una carpeta, para centralizarlo y compartirlo.
 
-## 1. Resumen de alcance detectado
+### Alcance funcional
+- Crear registro de `Document` con metadatos basicos y asociarlo a la `Folder` del `organizacion_id` del token.
+- Crear `DocumentVersion` inicial con `numero_secuencial = 1` y actualizar `version_actual_id`.
+- Persistir el binario mediante un `StorageService` (implementacion local por defecto).
+- Validar permisos `ESCRITURA` (o `ADMINISTRACION`) sobre la carpeta destino (directo o heredado).
+- Emitir evento de auditoria `DOCUMENTO_CREADO` tras commit exitoso.
 
-### Capacidades encontradas:
-- Subida de documentos a una carpeta específica
-- Creación automática del registro de documento con metadatos
-- Creación automática de la primera versión (numero_secuencial=1)
-- Almacenamiento del binario del archivo
-- Validación de permisos de ESCRITURA en la carpeta destino
-- Respuesta estructurada con documento_id y version_actual
+### No alcance
+- UI de carga (ver US-DOC-006).
+- Versionado adicional (US-DOC-003).
+- Descarga de documentos (US-DOC-002).
 
-### Restricciones implícitas:
-- El usuario debe tener permiso de ESCRITURA en la carpeta destino
-- El documento debe pertenecer al organizacion_id del token
-- La versión inicial siempre es numero_secuencial=1
-- El binario debe almacenarse de forma segura (filesystem o blob storage)
+### API
+**Endpoint:** `POST /api/v1/folders/{folderId}/documents`
 
-### Riesgos o ambigüedades:
-- No se especifica límite de tamaño de archivo
-- No se definen tipos de archivo permitidos/bloqueados
-- No se define estrategia de nombrado de archivos en storage
-- No se especifica si se debe validar contenido malicioso
+**Seguridad:** `Authorization: Bearer <token>`
 
----
+**Request (multipart/form-data):**
+- `file` (required): archivo binario.
 
-## 2. Lista de tickets necesarios
+**Response 201 (application/json):**
+```json
+{
+    "documento_id": 123,
+    "nombre": "contrato.pdf",
+    "version_actual": {
+        "id": 456,
+        "numero_secuencial": 1
+    }
+}
+```
 
----
-### Base de datos
----
+**Errores:**
+- `400` archivo invalido (tamano, extension) o payload mal formado.
+- `401` token invalido o ausente.
+- `403` sin permiso `ESCRITURA` en la carpeta.
+- `404` carpeta inexistente o fuera del `organizacion_id` del token.
 
-* **Título:** Crear modelo de Documento con metadatos básicos
-* **Objetivo:** Persistir la información principal del documento para su gestión.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar la tabla `Documento` con campos mínimos: `id`, `nombre`, `extension`, `carpeta_id`, `organizacion_id`, `version_actual_id`, `creado_por`, `fecha_creacion`, `fecha_eliminacion` (soft delete).
-* **Entregables:**
-    - Migración SQL para tabla `Documento`.
-    - Índices para búsquedas por `carpeta_id` y `organizacion_id`.
-    - Constraint de FK hacia `Carpeta` y `Organizacion`.
+### Reglas de negocio
+- `organizacion_id` siempre se toma del token; nunca del cliente.
+- `numero_secuencial` inicial siempre es `1` y unico por `documento_id`.
+- `version_actual_id` debe apuntar a la version creada.
+- Si falla el storage, se revierte la transaccion (no se crea `Document` ni `DocumentVersion`).
 
----
+### Validaciones de archivo (configurables por entorno)
+- `maxFileSize` (bytes) en configuracion.
+- Lista de extensiones permitidas o bloqueadas (por configuracion).
+- Rechazar archivos vacios.
 
-* **Título:** Crear modelo de Version_Documento para versionado lineal
-* **Objetivo:** Almacenar cada versión del documento con su secuencia.
-* **Tipo:** Tarea
-* **Descripción corta:** Implementar la tabla `Version_Documento` con: `id`, `documento_id`, `numero_secuencial`, `ruta_almacenamiento`, `tamanio_bytes`, `hash_contenido`, `creado_por`, `fecha_creacion`.
-* **Entregables:**
-    - Migración SQL para tabla `Version_Documento`.
-    - Índice único compuesto `(documento_id, numero_secuencial)`.
-    - Constraint de FK hacia `Documento`.
+### Persistencia (modelo de datos)
+- `Document`: `id`, `nombre`, `extension`, `carpeta_id`, `organizacion_id`, `version_actual_id`, `creado_por`, `fecha_creacion`, `fecha_eliminacion`.
+- `DocumentVersion`: `id`, `documento_id`, `numero_secuencial`, `ruta_almacenamiento`, `tamanio_bytes`, `hash_contenido`, `creado_por`, `fecha_creacion`.
+- Indices: `documento_id + numero_secuencial` unico; `carpeta_id`, `organizacion_id`, `version_actual_id`.
 
----
+### Storage
+- Interfaz `StorageService` con `upload`, `download`, `delete`.
+- Implementacion local: `/{organizacion_id}/{carpeta_id}/{documento_id}/{numero_secuencial}/`.
+- Guardar `ruta_almacenamiento` resultante en `DocumentVersion`.
 
-* **Título:** Crear índices y constraints para integridad de documentos
-* **Objetivo:** Garantizar integridad referencial y rendimiento en consultas.
-* **Tipo:** Tarea
-* **Descripción corta:** Agregar constraints para evitar documentos huérfanos, índices para consultas frecuentes y trigger/validación para numero_secuencial incremental.
-* **Entregables:**
-    - Constraint de integridad documento-carpeta-organizacion.
-    - Índice para `version_actual_id` en `Documento`.
-    - Documentación de reglas de integridad.
+### Auditoria
+- Emitir `DOCUMENTO_CREADO` con `documento_id`, `usuario_id`, `organizacion_id` despues del commit.
 
----
+### Archivos y capas a modificar (Document-Core)
+- **Domain:** `Document`, `DocumentVersion` y repositorios.
+- **Application:** `DocumentService.createDocument(...)` y DTOs request/response.
+- **Infrastructure:** entidades JPA, repositorios Spring Data, `LocalStorageService`.
+- **Presentation:** controlador REST para `POST /api/v1/folders/{folderId}/documents`.
+- **Config:** propiedades de storage y validaciones de archivo en `application.yml`.
 
-* **Título:** Datos semilla para pruebas de documentos
-* **Objetivo:** Facilitar pruebas automatizadas y manuales con datos realistas.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear datos de ejemplo: carpetas con y sin permisos, usuarios con diferentes niveles de acceso para probar subida de documentos.
-* **Entregables:**
-    - Script de seed con escenarios de prueba.
-    - Documentación de datos de prueba.
+### Criterios de aceptacion
+- *Scenario 1:* Dado `ESCRITURA` en la carpeta, Cuando subo un archivo valido, Entonces recibo `201` con `documento_id` y `version_actual.numero_secuencial = 1`.
+- *Scenario 2:* Dado sin permisos, Cuando subo, Entonces recibo `403`.
+- *Scenario 3:* Dado archivo invalido (tamano o extension), Cuando subo, Entonces recibo `400`.
+- *Scenario 4:* Dado carpeta fuera de la organizacion, Cuando subo, Entonces recibo `404`.
 
----
-### Backend
----
+### Pruebas
+- **Unitarias (min 6):**
+    - Creacion exitosa con permisos.
+    - Rechazo por falta de permisos.
+    - Rechazo por archivo invalido.
+    - Rollback ante fallo de storage.
+    - `numero_secuencial = 1` y `version_actual_id` actualizado.
+    - Validacion de organizacion (token vs carpeta).
+- **Integracion:**
+    - `POST /api/v1/folders/{folderId}/documents` -> `201` y persistencia en BD.
+    - `403` sin permiso.
+    - `400` por archivo invalido.
 
-* **Título:** Implementar servicio de almacenamiento de archivos
-* **Objetivo:** Abstraer la persistencia física del binario del documento.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear servicio/interfaz `StorageService` con método `upload(file, path)` que retorne la ruta de almacenamiento. Implementación inicial en filesystem local con estructura `/{organizacion_id}/{carpeta_id}/{documento_id}/{version}/`.
-* **Entregables:**
-    - Interface `IStorageService` con métodos `upload`, `download`, `delete`.
-    - Implementación `LocalStorageService`.
-    - Configuración de directorio base por entorno.
+### Documentacion
+- Actualizar `api-spec.yml` con el endpoint y esquemas de respuesta.
+- Documentar variables de entorno de storage y validaciones en README del servicio.
 
----
-
-* **Título:** Implementar validador de permisos de carpeta para escritura
-* **Objetivo:** Verificar que el usuario tiene ESCRITURA en la carpeta destino.
-* **Tipo:** Tarea
-* **Descripción corta:** Crear método que dado `usuario_id`, `carpeta_id` y `organizacion_id`, verifique si existe permiso de ESCRITURA (directo o heredado).
-* **Entregables:**
-    - Método `hasWritePermission(userId, folderId, orgId)`.
-    - Integración con sistema ACL existente (P2).
-
----
-
-* **Título:** Implementar servicio de creación de documento
-* **Objetivo:** Lógica de negocio para crear documento con su primera versión.
-* **Tipo:** Historia
-* **Descripción corta:** Crear `DocumentService.create()` que: valide permisos, persista metadatos en `Documento`, suba el binario, cree `Version_Documento` con `numero_secuencial=1`, actualice `version_actual_id`.
-* **Entregables:**
-    - Método `createDocument(file, folderId, userId, orgId)`.
-    - Transacción atómica (rollback si falla storage).
-    - DTO de respuesta con `documento_id` y `version_actual`.
-
----
-
-* **Título:** Implementar endpoint `POST /api/folders/{folderId}/documents`
-* **Objetivo:** Exponer API REST para subida de documentos.
-* **Tipo:** Historia
-* **Descripción corta:** Endpoint que recibe archivo multipart, valida token y permisos, invoca servicio de creación y retorna respuesta estructurada con `201` o `403`.
-* **Entregables:**
-    - Controlador con ruta `POST /api/folders/{folderId}/documents`.
-    - Validación de multipart/form-data.
-    - Respuesta JSON con `documento_id`, `nombre`, `version_actual`.
-
----
-
-* **Título:** Implementar validaciones de archivo (tamaño, tipo)
-* **Objetivo:** Prevenir subidas inválidas o potencialmente peligrosas.
-* **Tipo:** Tarea
-* **Descripción corta:** Agregar validaciones configurables: tamaño máximo de archivo, extensiones permitidas/bloqueadas. Retornar `400` con mensaje descriptivo si no cumple.
-* **Entregables:**
-    - Configuración de límites por entorno.
-    - Middleware/validador de archivos.
-    - Mensajes de error claros.
-
----
-
-* **Título:** Emitir evento de auditoría al crear documento
-* **Objetivo:** Registrar la acción para trazabilidad (P5).
-* **Tipo:** Tarea
-* **Descripción corta:** Al completar la creación exitosa, emitir evento de auditoría con `codigo_evento=DOCUMENTO_CREADO`, `documento_id`, `usuario_id`, `organizacion_id`.
-* **Entregables:**
-    - Integración con servicio de auditoría.
-    - Evento emitido tras commit de transacción.
-
----
-
-* **Título:** Pruebas unitarias del servicio de documentos
-* **Objetivo:** Asegurar lógica de negocio correcta y prevenir regresiones.
-* **Tipo:** QA
-* **Descripción corta:** Tests unitarios para `DocumentService.create()` cubriendo: creación exitosa, fallo por permisos, fallo por storage, validaciones de archivo.
-* **Entregables:**
-    - Suite de tests unitarios (mínimo 6 casos).
-    - Mocks de storage y repositorios.
-
----
-
-* **Título:** Pruebas de integración del endpoint de subida
-* **Objetivo:** Verificar flujo completo HTTP a base de datos.
-* **Tipo:** QA
-* **Descripción corta:** Tests de integración para `POST /api/folders/{folderId}/documents` validando: 201 con datos correctos, 403 sin permisos, 400 con archivo inválido.
-* **Entregables:**
-    - Tests de integración para escenarios de aceptación.
-    - Verificación de persistencia en BD.
-    - Verificación de archivo en storage.
-
----
-### Frontend
----
-
-* **Título:** Sin cambios de UI para US-DOC-001
-* **Objetivo:** Aclarar alcance: esta historia define comportamiento de API.
-* **Tipo:** Tarea
-* **Descripción corta:** No se implementa UI en esta historia. La interfaz de carga corresponde a `US-DOC-006`. Se puede crear colección de requests para testing manual.
-* **Entregables:**
-    - Confirmación de "no aplica" en planning.
-    - (Opcional) Colección Postman/HTTP para probar la API.
+### Requisitos no funcionales
+- **Seguridad:** no loguear contenido ni rutas sensibles; validar pertenencia a organizacion.
+- **Performance:** usar streaming para el upload y evitar cargar archivos completos en memoria.
+- **Observabilidad:** logs estructurados con `documento_id` y `organizacion_id`.
 
 ---
 
@@ -248,14 +175,3 @@ Feature: Subir documento a carpeta
 ```
 
 ---
-
-## 5. Archivos generados
-
-| Archivo | Contenido |
-|---------|-----------|
-| `US-DOC-001.md` | Este archivo - Subir documento (API) |
-| `US-DOC-002.md` | Descargar versión actual (API) |
-| `US-DOC-003.md` | Subir nueva versión (API) |
-| `US-DOC-004.md` | Listar versiones (API) |
-| `US-DOC-005.md` | Cambiar versión actual - rollback (API) |
-| `US-DOC-006.md` | UI mínima de carga y ver historial |

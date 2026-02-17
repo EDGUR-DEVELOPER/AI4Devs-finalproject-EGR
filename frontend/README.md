@@ -148,6 +148,254 @@ Las reglas detalladas para el desarrollo de la aplicación frontend se encuentra
 - [.github/rules-frontend.md](../.github/rules-frontend.md)
 - Índice general de reglas del proyecto: [.github/RULES.md](../.github/RULES.md)
 
+## ACL (Access Control List) Patterns
+
+### Feature Structure
+The ACL feature demonstrates the recommended patterns for implementing dropdown selectors with backend data:
+
+```
+features/acl/
+├── components/        # UI-specific components
+│   └── NivelAccesoSelect.tsx   # Reusable dropdown selector component
+├── hooks/            # Custom React hooks
+│   └── useNivelesAcceso.ts     # Hook with caching & data fetching
+├── services/         # API communication layer
+│   └── nivelAccesoService.ts   # HTTP service with error handling
+├── types/            # TypeScript interfaces
+│   └── index.ts      # Domain models (INivelAcceso, CodigoNivelAcceso)
+└── __tests__/        # Comprehensive test coverage
+    ├── useNivelesAcceso.test.ts
+    ├── NivelAccesoSelect.test.tsx
+    └── acl.integration.test.ts
+```
+
+### Data Fetching with Caching
+
+**Custom Hook Pattern** (`useNivelesAcceso.ts`):
+```typescript
+interface UseNivelesAccesoReturn {
+  niveles: INivelAcceso[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export const useNivelesAcceso = (
+  enableCache: boolean = true,
+  cacheTTL: number = 24 * 60 * 60 * 1000 // 24 hours default
+): UseNivelesAccesoReturn => {
+  // Auto-fetch on mount
+  // localStorage caching with configurable TTL
+  // Graceful error handling
+  // Manual refetch capability
+};
+```
+
+**Key Features:**
+- **Automatic fetching** on component mount via `useEffect`
+- **localStorage caching** with configurable time-to-live (TTL)
+- **Cache expiration** logic to prevent stale data
+- **Manual refetch** function to invalidate cache and reload
+- **Optimized** to prevent unnecessary API calls
+- **Typed return** with loading and error states
+
+### API Service Pattern
+
+**HTTP Service** (`nivelAccesoService.ts`):
+```typescript
+export const aclApi = {
+  getNivelesAcceso: async (): Promise<INivelAcceso[]> => {
+    // GET /api/acl/niveles
+    // Extract data from envelope: response.data.data
+    // Handle errors with Spanish messages
+  },
+
+  getNivelAccesoByCodigo: async (codigo: CodigoNivelAcceso): Promise<INivelAcceso> => {
+    // GET /api/acl/niveles/{codigo}
+  }
+};
+```
+
+**Service Characteristics:**
+- **Object-based export** (not class-based)
+- **Async methods** with Promise return types
+- **Error handling** with user-friendly Spanish messages
+- **Type-safe** with full TypeScript support
+- **Centralized axios instance** from `@core/shared/api/axiosInstance`
+
+### Component Implementation
+
+**Reusable Dropdown** (`NivelAccesoSelect.tsx`):
+```typescript
+export interface NivelAccesoSelectProps {
+  value: CodigoNivelAcceso | '';
+  onChange: (codigo: CodigoNivelAcceso) => void;
+  label?: string;
+  disabled?: boolean;
+  required?: boolean;
+  error?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  placeholder?: string;
+  showDefaultOption?: boolean;
+}
+
+export const NivelAccesoSelect: React.FC<NivelAccesoSelectProps> = ({
+  value,
+  onChange,
+  label,
+  disabled,
+  required,
+  error,
+  size,
+  className,
+  placeholder,
+  showDefaultOption
+}) => {
+  const { niveles, loading, error: fetchError, refetch } = useNivelesAcceso();
+  // Component implementation with:
+  // - Integrated hook for data management
+  // - Tailwind CSS styling with size variants
+  // - Error handling with retry capability
+  // - Full accessibility support
+  // - Loading and empty states
+};
+```
+
+**Component Features:**
+- **Integrated hook usage** for automatic data fetching
+- **Multiple error sources** (validation + API)
+- **Loading state** with visual feedback
+- **Disabled state** support
+- **Size variants** (sm, md, lg)
+- **Accessibility**: labels, aria-invalid, aria-describedby
+- **Empty state** messaging
+- **Retry functionality** for API errors
+
+### Testing Strategy
+
+**Hook Testing** (40+ test cases):
+- Data fetching and initial state
+- Cache validation and TTL expiration
+- Error handling and recovery
+- Refetch functionality
+- State transitions
+- Configuration options
+
+**Component Testing** (30+ test cases):
+- Rendering and option display
+- Selection change handling
+- Loading states
+- Error display and retry
+- Disabled state
+- Size and styling variants
+- Accessibility compliance
+- Keyboard navigation
+
+**Integration Testing** (15+ scenarios):
+- Complete user flows
+- Form integration
+- Multi-component interactions
+- Performance with caching
+- Error recovery workflows
+
+```typescript
+// Example: Hook test for caching
+it('should use cached data on subsequent calls', async () => {
+  const { result: result1 } = renderHook(() => useNivelesAcceso());
+  await waitFor(() => expect(result1.current.loading).toBe(false));
+  
+  const { result: result2 } = renderHook(() => useNivelesAcceso());
+  await waitFor(() => expect(result2.current.loading).toBe(false));
+  
+  // Should return cached data without additional API calls
+  expect(result2.current.niveles).toEqual(mockNiveles);
+});
+```
+
+### Constants Organization
+
+**Permission Constants** (`src/common/constants/permissions.ts`):
+```typescript
+export const PERMISSION_CODES = {
+  LECTURA: 'LECTURA',
+  ESCRITURA: 'ESCRITURA',
+  ADMINISTRACION: 'ADMINISTRACION',
+} as const;
+
+export const PERMISSION_LABELS: Record<CodigoNivelAcceso, string> = {
+  LECTURA: 'Lectura',
+  ESCRITURA: 'Escritura',
+  ADMINISTRACION: 'Administración',
+};
+
+export type PermissionCodeKey = keyof typeof PERMISSION_CODES;
+```
+
+### Revocación de Permisos y Control de Acceso
+
+**Control Basado en Roles** (`AclCarpetaList.tsx`):
+
+La lista de permisos de carpeta implementa control de acceso basado en roles para las acciones de edición y revocación:
+
+```typescript
+interface AclCarpetaListProps {
+  acls: IAclCarpeta[];
+  isLoading: boolean;
+  onEdit: (acl: IAclCarpeta) => void;
+  onDelete: (acl: IAclCarpeta) => void;
+  canManage?: boolean;  // Controla visibilidad de acciones
+}
+```
+
+**Características:**
+- **Prop `canManage`**: Controla si el usuario puede editar/revocar permisos (por defecto: `false`)
+- **Columna condicional**: La columna de acciones solo se muestra si `canManage === true`
+- **Confirmación mejorada**: Diálogo de confirmación con texto descriptivo que incluye el nombre del usuario
+
+**Ejemplo de uso en `AclCarpetaSection.tsx`:**
+```typescript
+const { isAdmin } = useAclCarpeta();
+
+<AclCarpetaList
+  acls={acls}
+  isLoading={isLoading}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  canManage={isAdmin}  // Solo administradores pueden gestionar permisos
+/>
+```
+
+**Manejo de Errores en Revocación:**
+
+El servicio `aclCarpetaApi.deleteAcl()` distingue entre diferentes códigos de error HTTP:
+
+- **403 Forbidden**: El usuario no tiene permiso `ADMINISTRACION` en la carpeta
+- **404 Not Found**: La carpeta, usuario o permiso específico no existe
+- **409 Conflict**: Conflicto en el estado del recurso (por ejemplo, intentar revocar un permiso heredado)
+
+```typescript
+// Mensajes de error localizados en español
+const message = extractErrorMessage(error);
+// "No tienes permiso para realizar esta acción." (403)
+// "Recurso no encontrado (carpeta, usuario o permiso)." (404)
+// "Este usuario ya tiene un permiso en la carpeta." (409)
+```
+
+**Flujo de Revocación:**
+1. Usuario con permisos `ADMINISTRACION` hace clic en botón "Eliminar"
+2. Se muestra confirmación: "¿Revocar acceso de {nombre_usuario}?"
+3. Al confirmar, se ejecuta `DELETE /api/carpetas/{carpetaId}/permisos/{usuarioId}`
+4. El backend valida autorización y existencia del permiso
+5. Se realiza hard delete en la base de datos con aislamiento por organización
+6. Se dispara evento de auditoría `PermisoCarpetaUsuarioRevokedEvent`
+7. El frontend actualiza la lista de permisos tras respuesta exitosa (204 No Content)
+
+**Seguridad:**
+- Validación en backend mediante `PermisoCarpetaUsuarioValidator.validarAdministrador()`
+- Aislamiento multi-tenant estricto por `organizacion_id`
+- Tokens JWT extraídos de headers `X-User-Id` y `X-Organization-Id`
+
 ## 📝 Licencia
 
 Proyecto privado - Todos los derechos reservados

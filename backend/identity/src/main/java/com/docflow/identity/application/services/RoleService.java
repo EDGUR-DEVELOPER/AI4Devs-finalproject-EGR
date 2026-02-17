@@ -1,9 +1,10 @@
 package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.RoleSummaryDto;
-import com.docflow.identity.application.dto.UserDtoMapper;
-import com.docflow.identity.application.ports.RolRepository;
+import com.docflow.identity.application.mapper.UserDtoMapper;
 import com.docflow.identity.domain.model.Rol;
+import com.docflow.identity.domain.repository.RolRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

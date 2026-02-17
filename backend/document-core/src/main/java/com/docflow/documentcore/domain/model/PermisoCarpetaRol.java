@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 
@@ -40,10 +38,10 @@ public class PermisoCarpetaRol {
     private Long carpetaId;
     
     @Column(name = "rol_id", nullable = false)
-    private Integer rolId;
+    private Long rolId;
     
     @Column(name = "organizacion_id", nullable = false)
-    private Integer organizacionId;
+    private Long organizacionId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "nivel_acceso", nullable = false, length = 20)

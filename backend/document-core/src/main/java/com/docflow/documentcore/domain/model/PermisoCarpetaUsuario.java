@@ -3,12 +3,11 @@ package com.docflow.documentcore.domain.model;
 import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 
@@ -28,6 +27,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PermisoCarpetaUsuario {
     
     @Id
@@ -41,15 +41,17 @@ public class PermisoCarpetaUsuario {
     private Long usuarioId;
     
     @Column(name = "organizacion_id", nullable = false)
-    private Integer organizacionId;
+    private Long organizacionId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "nivel_acceso", nullable = false, length = 20)
     private NivelAcceso nivelAcceso;
     
     @Column(nullable = false)
-    private Boolean recursivo = true;
+    @Builder.Default
+    private Boolean recursivo = false;
     
     @Column(name = "fecha_asignacion", nullable = false)
+    @Builder.Default
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();
 }

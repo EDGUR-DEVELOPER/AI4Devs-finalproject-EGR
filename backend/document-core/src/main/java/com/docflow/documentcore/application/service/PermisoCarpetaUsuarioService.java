@@ -1,0 +1,294 @@
+package com.docflow.documentcore.application.service;
+
+import com.docflow.documentcore.application.dto.UsuarioResumenDTO;
+import com.docflow.documentcore.application.validator.PermisoCarpetaUsuarioValidator;
+import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioCreatedEvent;
+import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioUpdatedEvent;
+import com.docflow.documentcore.domain.event.PermisoCarpetaUsuarioRevokedEvent;
+import com.docflow.documentcore.domain.exception.ResourceNotFoundException;
+import com.docflow.documentcore.domain.exception.AclNotFoundException;
+import com.docflow.documentcore.domain.model.NivelAcceso;
+import com.docflow.documentcore.domain.model.PermisoCarpetaUsuario;
+import com.docflow.documentcore.domain.model.acl.CodigoNivelAcceso;
+import com.docflow.documentcore.domain.model.entity.UsuarioEntity;
+import com.docflow.documentcore.domain.repository.IPermisoCarpetaUsuarioRepository;
+import com.docflow.documentcore.domain.repository.UsuarioJpaRepository;
+import com.docflow.documentcore.application.dto.UpdatePermisoCarpetaUsuarioDTO;
+import com.docflow.documentcore.application.dto.CreatePermisoCarpetaUsuarioDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Servicio de aplicación para permisos explícitos de usuarios sobre carpetas.
+ */
+@Service
+@Transactional
+public class PermisoCarpetaUsuarioService {
+
+    private static final Logger log = LoggerFactory.getLogger(PermisoCarpetaUsuarioService.class);
+
+    private final IPermisoCarpetaUsuarioRepository permisoRepository;
+    private final PermisoCarpetaUsuarioValidator validator;
+    private final UsuarioJpaRepository usuarioRepository;
+    private final NivelAccesoService nivelAccesoService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public PermisoCarpetaUsuarioService(
+            IPermisoCarpetaUsuarioRepository permisoRepository,
+            PermisoCarpetaUsuarioValidator validator,
+            UsuarioJpaRepository usuarioRepository,
+            NivelAccesoService nivelAccesoService,
+            ApplicationEventPublisher eventPublisher
+    ) {
+        this.permisoRepository = permisoRepository;
+        this.validator = validator;
+        this.usuarioRepository = usuarioRepository;
+        this.nivelAccesoService = nivelAccesoService;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public PermisoCarpetaUsuario crearPermiso(
+            Long carpetaId,
+            CreatePermisoCarpetaUsuarioDTO dto,
+            Long organizacionId,
+            Long usuarioAdminId
+    ) {
+        log.info("Creando permiso de carpeta para usuario {} en carpeta {}", dto.getUsuarioId(), carpetaId);
+
+        validator.validarAdministrador(usuarioAdminId, carpetaId, organizacionId);
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+        validator.validarUsuarioPerteneceOrganizacion(dto.getUsuarioId(), organizacionId);
+        CodigoNivelAcceso codigoNivel = validator.validarNivelAccesoCodigo(dto.getNivelAccesoCodigo());
+        validator.validarNoDuplicado(carpetaId, dto.getUsuarioId());
+
+        NivelAcceso nivelAcceso = NivelAcceso.valueOf(codigoNivel.name());
+
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(dto.getUsuarioId());
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(nivelAcceso);
+        permiso.setRecursivo(dto.getRecursivo());
+        permiso.setFechaAsignacion(OffsetDateTime.now());
+
+        PermisoCarpetaUsuario creado = permisoRepository.save(permiso);
+
+        publicarEventoCreado(creado, codigoNivel, usuarioAdminId);
+
+        return creado;
+    }
+
+    public PermisoCarpetaUsuario crearPermisoInicial(
+            Long carpetaId,
+            Long usuarioId,
+            NivelAcceso nivelAcceso,
+            Long organizacionId
+    ) {
+        log.info("Registrando permiso inicial de carpeta para usuario {} en carpeta {}",
+                usuarioId, carpetaId);
+
+        PermisoCarpetaUsuario existente = permisoRepository
+                .findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElse(null);
+
+        if (existente != null) {
+            return existente;
+        }
+
+        PermisoCarpetaUsuario permiso = new PermisoCarpetaUsuario();
+        permiso.setCarpetaId(carpetaId);
+        permiso.setUsuarioId(usuarioId);
+        permiso.setOrganizacionId(organizacionId);
+        permiso.setNivelAcceso(nivelAcceso);
+        permiso.setRecursivo(false);
+        permiso.setFechaAsignacion(OffsetDateTime.now());
+
+        PermisoCarpetaUsuario creado = permisoRepository.save(permiso);
+
+        publicarEventoCreado(creado, CodigoNivelAcceso.valueOf(nivelAcceso.name()), usuarioId);
+
+        return creado;
+    }
+
+    public PermisoCarpetaUsuario actualizarPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            UpdatePermisoCarpetaUsuarioDTO dto,
+            Long organizacionId,
+            Long usuarioAdminId
+    ) {
+        log.info("Actualizando permiso de carpeta para usuario {} en carpeta {}", usuarioId, carpetaId);
+
+        validator.validarAdministrador(usuarioAdminId, carpetaId, organizacionId);
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+        validator.validarUsuarioPerteneceOrganizacion(usuarioId, organizacionId);
+        CodigoNivelAcceso nuevoCodigo = validator.validarNivelAccesoCodigo(dto.getNivelAccesoCodigo());
+
+        PermisoCarpetaUsuario permiso = permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Permiso de carpeta", carpetaId + ":" + usuarioId));
+
+        NivelAcceso nivelAnterior = permiso.getNivelAcceso();
+
+        permiso.setNivelAcceso(NivelAcceso.valueOf(nuevoCodigo.name()));
+        if (dto.getRecursivo() != null) {
+            permiso.setRecursivo(dto.getRecursivo());
+        }
+
+        PermisoCarpetaUsuario actualizado = permisoRepository.save(permiso);
+
+        publicarEventoActualizado(actualizado, nivelAnterior, nuevoCodigo, usuarioAdminId);
+
+        return actualizado;
+    }
+
+    @Transactional(readOnly = true)
+    public List<PermisoCarpetaUsuario> listarPermisos(Long carpetaId, Long organizacionId) {
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+        return permisoRepository.findByCarpetaId(carpetaId);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, UsuarioResumenDTO> obtenerUsuariosResumen(List<PermisoCarpetaUsuario> permisos, Long organizacionId) {
+        Set<Long> usuarioIds = permisos.stream()
+                .map(PermisoCarpetaUsuario::getUsuarioId)
+                .collect(Collectors.toSet());
+
+        if (usuarioIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<UsuarioEntity> usuarios = usuarioRepository.findActiveByIdsAndOrganizacionId(
+                List.copyOf(usuarioIds),
+                organizacionId
+        );
+
+        return usuarios.stream()
+                .collect(Collectors.toMap(
+                        UsuarioEntity::getId,
+                        u -> new UsuarioResumenDTO(u.getId(), u.getEmail(), u.getNombreCompleto())
+                ));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<CodigoNivelAcceso, com.docflow.documentcore.domain.model.acl.NivelAcceso> obtenerNivelesAccesoActivos() {
+        List<com.docflow.documentcore.domain.model.acl.NivelAcceso> niveles = nivelAccesoService.listAllActive();
+        return niveles.stream()
+                .collect(Collectors.toMap(com.docflow.documentcore.domain.model.acl.NivelAcceso::getCodigo, n -> n));
+    }
+
+    /**
+     * Revokes (deletes) a permission entry for a user over a folder.
+     * This method ensures authorization (ADMIN or ADMINISTRACION role) and tenant isolation.
+     *
+     * @param carpetaId the ID of the folder
+     * @param usuarioId the ID of the user whose permission is being revoked
+     * @param organizacionId the ID of the organization (tenant isolation)
+     * @param usuarioAdminId the ID of the user performing the action (for audit trail)
+     * @throws AclNotFoundException if the permission entry is not found
+     */
+    public void revocarPermiso(
+            Long carpetaId,
+            Long usuarioId,
+            Long organizacionId,
+            Long usuarioAdminId
+    ) {
+        log.info("Revocando permiso de carpeta para usuario {} en carpeta {}", usuarioId, carpetaId);
+
+        // Validate that parameters are not null
+        if (carpetaId == null || usuarioId == null || organizacionId == null) {
+            throw new IllegalArgumentException("All parameters (carpetaId, usuarioId, organizacionId) are required");
+        }
+
+        // Validate authorization (admin or folder administration permission)
+        validator.validarAdministrador(usuarioAdminId, carpetaId, organizacionId);
+        validator.validarCarpetaExiste(carpetaId, organizacionId);
+
+        // Find the permission to verify it exists before deletion
+        PermisoCarpetaUsuario permiso = permisoRepository.findByCarpetaIdAndUsuarioId(carpetaId, usuarioId)
+                .orElseThrow(() -> new AclNotFoundException(carpetaId, usuarioId));
+
+        // Verify tenant isolation - the permission should belong to the same organization
+        if (!permiso.getOrganizacionId().equals(organizacionId)) {
+            throw new AclNotFoundException(carpetaId, usuarioId);
+        }
+
+        // Delete the permission
+        int deletedCount = permisoRepository.revokePermission(carpetaId, usuarioId, organizacionId);
+
+        if (deletedCount == 0) {
+            throw new AclNotFoundException(carpetaId, usuarioId);
+        }
+
+        // Publish revocation event for audit trail
+        publicarEventoRevocado(permiso, usuarioAdminId);
+    }
+
+    private void publicarEventoCreado(PermisoCarpetaUsuario permiso, CodigoNivelAcceso codigo, Long usuarioAdminId) {
+        try {
+            PermisoCarpetaUsuarioCreatedEvent event = new PermisoCarpetaUsuarioCreatedEvent(
+                    permiso.getId(),
+                    permiso.getCarpetaId(),
+                    permiso.getUsuarioId(),
+                    permiso.getOrganizacionId(),
+                    codigo.getCodigo(),
+                    permiso.getRecursivo(),
+                    usuarioAdminId,
+                    Instant.now()
+            );
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("Error al emitir evento de permiso creado", e);
+        }
+    }
+
+    private void publicarEventoActualizado(
+            PermisoCarpetaUsuario permiso,
+            NivelAcceso nivelAnterior,
+            CodigoNivelAcceso nuevoCodigo,
+            Long usuarioAdminId
+    ) {
+        try {
+            PermisoCarpetaUsuarioUpdatedEvent event = new PermisoCarpetaUsuarioUpdatedEvent(
+                    permiso.getId(),
+                    permiso.getCarpetaId(),
+                    permiso.getUsuarioId(),
+                    permiso.getOrganizacionId(),
+                    nivelAnterior.name(),
+                    nuevoCodigo.getCodigo(),
+                    permiso.getRecursivo(),
+                    usuarioAdminId,
+                    Instant.now()
+            );
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("Error al emitir evento de permiso actualizado", e);
+        }
+    }
+
+    private void publicarEventoRevocado(PermisoCarpetaUsuario permiso, Long usuarioAdminId) {
+        try {
+            PermisoCarpetaUsuarioRevokedEvent event = new PermisoCarpetaUsuarioRevokedEvent(
+                    permiso.getId(),
+                    permiso.getCarpetaId(),
+                    permiso.getUsuarioId(),
+                    permiso.getOrganizacionId(),
+                    permiso.getNivelAcceso().name(),
+                    usuarioAdminId,
+                    Instant.now()
+            );
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("Error al emitir evento de permiso revocado", e);
+        }
+    }
+}

@@ -3,12 +3,11 @@ package com.docflow.documentcore.domain.model;
 import com.docflow.documentcore.infrastructure.multitenancy.TenantEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 
@@ -30,6 +29,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PermisoDocumentoUsuario {
     
     @Id
@@ -43,7 +43,7 @@ public class PermisoDocumentoUsuario {
     private Long usuarioId;
     
     @Column(name = "organizacion_id", nullable = false)
-    private Integer organizacionId;
+    private Long organizacionId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "nivel_acceso", nullable = false, length = 20)
@@ -53,5 +53,6 @@ public class PermisoDocumentoUsuario {
     private OffsetDateTime fechaExpiracion;
     
     @Column(name = "fecha_asignacion", nullable = false)
+    @Builder.Default
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();
 }

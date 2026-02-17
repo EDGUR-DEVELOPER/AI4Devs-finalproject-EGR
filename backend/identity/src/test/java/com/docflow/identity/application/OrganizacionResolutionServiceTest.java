@@ -1,11 +1,12 @@
 package com.docflow.identity.application;
 
-import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
 import com.docflow.identity.application.services.OrganizacionResolutionService;
-import com.docflow.identity.domain.exceptions.OrganizacionConfigInvalidaException;
-import com.docflow.identity.domain.exceptions.SinOrganizacionException;
-import com.docflow.identity.domain.model.EstadoMembresia;
+import com.docflow.identity.domain.exception.OrganizacionConfigInvalidaException;
+import com.docflow.identity.domain.exception.SinOrganizacionException;
+import com.docflow.identity.domain.model.object.EstadoMembresia;
 import com.docflow.identity.domain.model.UsuarioOrganizacion;
+import com.docflow.identity.domain.repository.UsuarioOrganizacionRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

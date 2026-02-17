@@ -16,13 +16,22 @@ export const SYSTEM_MODULES: SystemModule[] = [
         enabled: true,
     },
     {
+        id: 'folders',
+        name: 'Carpetas',
+        description: 'Organiza y gestiona carpetas de documentos',
+        icon: 'folders',
+        path: '/carpetas',
+        color: 'amber',
+        enabled: true,
+    },
+    {
         id: 'documents',
         name: 'Documentos',
         description: 'Gestiona el flujo de documentos',
         icon: 'documents',
         path: '/documents',
         color: 'green',
-        enabled: true,
+        enabled: false, // Próximamente
     },
     {
         id: 'workflow',
@@ -50,7 +59,7 @@ export const SYSTEM_MODULES: SystemModule[] = [
         path: '/audit',
         color: 'teal',
         requiredRoles: ['ADMIN', 'AUDITOR'],
-        enabled: true,
+        enabled: false, // Próximamente
     },
     {
         id: 'settings',

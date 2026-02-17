@@ -78,6 +78,7 @@ jwt*.json
 .env.test.local
 .env.production
 .env.production.local
+.env.prod
 .env.staging
 .env.staging.local
 !.env.example
@@ -102,6 +103,11 @@ secrets.properties
 secrets.json
 config.local.*
 local.settings.json
+
+# Production-specific configs
+*.prod.conf
+*-production.conf
+nginx.prod.conf
 
 # ####################################
 # BUILD & COMPILATION
@@ -322,6 +328,7 @@ cypress/screenshots/
 docker-compose.override.yml
 docker-compose.local.yml
 docker-compose.*.local.yml
+docker-compose.prod.yml
 *.tar
 .dockerignore.local
 Dockerfile.local
@@ -364,6 +371,9 @@ terraform.rc
 *.mv.db
 *.trace.db
 dump.sql
+backup*.sql
+*-prod*.sql
+*-production*.sql
 dump.rdb
 *.rdb
 *.aof
@@ -461,23 +471,6 @@ Icon?
 logs/
 log/
 *.out
-
-# ------------------------------------
-# Package Manager Locks (Optional)
-# ------------------------------------
-# Uncomment if you don't want to commit lock files
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
-
-# ------------------------------------
-# Debugging
-# ------------------------------------
-*.dmp
-*.stacktrace
-heapdump-*
-core
-core.*
 
 # ------------------------------------
 # AI/ML Models (if applicable)

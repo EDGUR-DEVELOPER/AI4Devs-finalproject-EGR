@@ -52,7 +52,7 @@ class HealthControllerTest {
                 .jsonPath("$.status").exists()
                 .jsonPath("$.*").value(list -> {
                     
-                    List<Object> values = (java.util.List<Object>) list;
+                    List<Object> values = (List<Object>) list;
                     org.assertj.core.api.Assertions.assertThat(values).hasSize(1);
                 });
     }

@@ -18,7 +18,7 @@ export const DashboardHeader: React.FC = () => {
     // Enlaces de navegación
     const navLinks = [
         { path: '/dashboard', label: 'Inicio' },
-        { path: '/documents', label: 'Documentos' },
+        { path: '/carpetas', label: 'Carpetas' },
         ...(isAdmin ? [{ path: '/admin/users', label: 'Usuarios' }] : []),
     ];
 

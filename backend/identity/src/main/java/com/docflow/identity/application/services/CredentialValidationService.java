@@ -1,8 +1,9 @@
 package com.docflow.identity.application.services;
 
-import com.docflow.identity.application.ports.UsuarioRepository;
-import com.docflow.identity.domain.exceptions.InvalidCredentialsException;
+import com.docflow.identity.domain.exception.InvalidCredentialsException;
 import com.docflow.identity.domain.model.Usuario;
+import com.docflow.identity.domain.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;

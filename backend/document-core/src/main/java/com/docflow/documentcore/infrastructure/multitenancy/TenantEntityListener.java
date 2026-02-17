@@ -1,10 +1,11 @@
 package com.docflow.documentcore.infrastructure.multitenancy;
 
-import com.docflow.documentcore.domain.exceptions.TenantContextMissingException;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import com.docflow.documentcore.domain.exception.TenantContextMissingException;
 
 import java.lang.reflect.Field;
 
@@ -66,13 +67,23 @@ public class TenantEntityListener {
             
             if (field != null) {
                 field.setAccessible(true);
-                var currentValue = (Integer) field.get(entity);
+                var fieldType = field.getType();
+                var currentValue = field.get(entity);
                 
                 // 3. Inyectar tenant (sobrescribir cualquier valor existente)
-                field.set(entity, tenantId);
+                if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+                    field.set(entity, tenantId.longValue());
+                } else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+                    field.set(entity, tenantId);
+                } else {
+                    throw new IllegalStateException(
+                        "Tipo de organizacionId no soportado en " + entity.getClass().getSimpleName() +
+                        ": " + fieldType.getSimpleName()
+                    );
+                }
                 
                 // 4. Log de auditoría si el valor fue sobrescrito
-                if (currentValue != null && !currentValue.equals(tenantId)) {
+                if (currentValue != null && !currentValue.toString().equals(tenantId.toString())) {
                     log.warn(
                         "SEGURIDAD: Sobrescrito organizacion_id en {}. " +
                         "Valor del cliente: {}, Valor del token: {}. " +

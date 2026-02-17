@@ -36,6 +36,14 @@ spring:
         jdbc:
           time_zone: UTC
 
+  # Multipart/File Upload Configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+      file-size-threshold: 2KB
+
 # Server Configuration
 server:
   port: 8082
@@ -76,3 +84,23 @@ logging:
     com.docflow.documentcore: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# DocFlow Custom Configuration
+docflow:
+  storage:
+    # Tipo de almacenamiento: 'local' (desarrollo) o 'minio' (producción)
+    # Por defecto: 'minio' (usar DOCFLOW_STORAGE_TYPE=local para desarrollo)
+    type: ${DOCFLOW_STORAGE_TYPE:minio}
+    
+    local:
+      path: ${DOCFLOW_STORAGE_PATH:./storage}
+    
+    # MinIO Configuration (almacenamiento por defecto)
+    # Endpoint debe estar accesible desde el servicio
+    # En Docker: http://minio:9000
+    # En local: http://localhost:9000
+    minio:
+      endpoint: ${DOCFLOW_STORAGE_MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${DOCFLOW_STORAGE_MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${DOCFLOW_STORAGE_MINIO_SECRET_KEY:minioadmin123}
+      bucket-name: ${DOCFLOW_STORAGE_MINIO_BUCKET_NAME:docflow-documents}

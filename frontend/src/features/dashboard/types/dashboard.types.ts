@@ -26,7 +26,8 @@ export type ModuleIcon =
     | 'audit'
     | 'organization'
     | 'workflow'
-    | 'calendar';
+    | 'calendar'
+    | 'folders';
 
 /** Colores disponibles para módulos */
 export type ModuleColor =
@@ -37,7 +38,8 @@ export type ModuleColor =
     | 'red'
     | 'teal'
     | 'indigo'
-    | 'pink';
+    | 'pink'
+    | 'amber';
 
 /** Información del sistema para mostrar en dashboard */
 export interface SystemInfo {

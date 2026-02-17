@@ -1,17 +1,19 @@
 package com.docflow.identity.application.services;
 
 import com.docflow.identity.application.dto.*;
-import com.docflow.identity.application.ports.UserWithRolesProjection;
-import com.docflow.identity.application.ports.UsuarioOrganizacionRepository;
-import com.docflow.identity.application.ports.UsuarioRepository;
-import com.docflow.identity.domain.exceptions.AutoDeactivationNotAllowedException;
-import com.docflow.identity.domain.exceptions.EmailDuplicadoException;
-import com.docflow.identity.domain.exceptions.ResourceNotFoundException;
-import com.docflow.identity.domain.model.EstadoMembresia;
+import com.docflow.identity.application.mapper.UserDtoMapper;
+import com.docflow.identity.domain.exception.AutoDeactivationNotAllowedException;
+import com.docflow.identity.domain.exception.EmailDuplicadoException;
+import com.docflow.identity.domain.exception.ResourceNotFoundException;
+import com.docflow.identity.domain.model.object.EstadoMembresia;
+import com.docflow.identity.domain.model.object.UserWithRolesProjection;
 import com.docflow.identity.domain.model.Rol;
 import com.docflow.identity.domain.model.Usuario;
 import com.docflow.identity.domain.model.UsuarioOrganizacion;
 import com.docflow.identity.domain.model.UsuarioOrganizacionId;
+import com.docflow.identity.domain.repository.UsuarioOrganizacionRepository;
+import com.docflow.identity.domain.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

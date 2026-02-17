@@ -1,7 +1,18 @@
 import { useEffect } from 'react';
 import { BrowserRouter, useNavigate } from 'react-router-dom';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { AppRouter } from '@core/shared/router';
 import { ToastContainer } from '@ui/notifications/ToastContainer';
+
+// Crear instancia de QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 /**
  * App Component
@@ -10,11 +21,13 @@ import { ToastContainer } from '@ui/notifications/ToastContainer';
  */
 function App() {
   return (
-    <BrowserRouter>
-      <AuthLogoutListener />
-      <AppRouter />
-      <ToastContainer />
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthLogoutListener />
+        <AppRouter />
+        <ToastContainer />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

@@ -30,7 +30,8 @@ export function Toast({ notification }: ToastProps) {
 
   return (
     <div
-      className={`${typeStyles[notification.type]} rounded-lg shadow-lg p-4 mb-3 min-w-80 max-w-md animate-slide-in flex items-start gap-3`}
+      data-testid={`notification-${notification.type}`}
+      className={`toast-${notification.type} ${typeStyles[notification.type]} rounded-lg shadow-lg p-4 mb-3 min-w-80 max-w-md animate-slide-in flex items-start gap-3`}
       role="alert"
     >
       <span className="text-xl font-bold shrink-0">

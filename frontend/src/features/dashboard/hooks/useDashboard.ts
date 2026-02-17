@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { SYSTEM_MODULES, QUICK_ACTIONS, SYSTEM_INFO } from '../constants/modules';
-import type { SystemModule, QuickAction } from '../types/dashboard.types';
+import { SYSTEM_MODULES, SYSTEM_INFO } from '../constants/modules';
+import type { SystemModule } from '../types/dashboard.types';
 
 /**
  * Retorno del hook de dashboard
@@ -11,8 +11,6 @@ interface UseDashboardReturn {
     userName: string;
     /** Módulos disponibles para el usuario */
     availableModules: SystemModule[];
-    /** Acciones rápidas */
-    quickActions: QuickAction[];
     /** Información del sistema */
     systemInfo: typeof SYSTEM_INFO;
     /** Si el usuario tiene rol de admin */
@@ -54,7 +52,6 @@ export const useDashboard = (): UseDashboardReturn => {
     return {
         userName,
         availableModules,
-        quickActions: QUICK_ACTIONS,
         systemInfo: SYSTEM_INFO,
         isAdmin,
         userRoles: roles,

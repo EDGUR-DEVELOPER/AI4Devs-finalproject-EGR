@@ -1,0 +1,112 @@
+# ====================================
+# DocFlow - Docker Compose Full Stack
+# ====================================
+# Orquestación base de almacenamiento: Infraestructura
+# Para desarrollo local con hot-reload, ejecutar servicios fuera de Docker
+#
+# Uso:
+#   docker compose up --build -d     # Iniciar todos los servicios (primera vez)
+#   docker compose up -d             # Iniciar sin rebuild
+#   docker compose down              # Detener servicios (mantiene datos)
+#   docker compose down -v           # Detener y eliminar volúmenes
+#   docker compose logs -f <service> # Ver logs de un servicio
+#   docker compose ps                # Ver estado de servicios
+
+name: docflow
+
+services:
+  # ------------------------------------
+  # PostgreSQL - Base de Datos Relacional
+  # ------------------------------------
+  # Usado por: Identity Service, Document Core Service
+  # Bases de datos: docflow_identity, docflow_documents (crear manualmente)
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-16.1-alpine3.19}
+    container_name: docflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-docflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docflow_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-docflow}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - docflow-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-docflow} -d ${POSTGRES_DB:-docflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - docflow-network
+
+  # ------------------------------------
+  # MinIO - Object Storage (S3-Compatible)
+  # ------------------------------------
+  # Usado por: Document Core Service
+  # Bucket por defecto: docflow-documents
+  minio:
+    image: minio/minio:${MINIO_VERSION:-RELEASE.2025-01-10T16-00-47Z}
+    container_name: docflow-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"      # API S3
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"  # Console Web
+    volumes:
+      - docflow-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - docflow-network
+
+  # ------------------------------------
+  # MinIO Setup - Crear bucket inicial
+  # ------------------------------------
+  # Contenedor efímero que crea el bucket por defecto
+  minio-setup:
+    image: minio/mc:${MC_VERSION:-latest}
+    container_name: docflow-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_DEFAULT_BUCKET: ${MINIO_DEFAULT_BUCKET:-docflow-documents}
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set docflow http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+        mc mb docflow/$${MINIO_DEFAULT_BUCKET} --ignore-existing;
+        mc anonymous set download docflow/$${MINIO_DEFAULT_BUCKET};
+        echo 'Bucket $${MINIO_DEFAULT_BUCKET} creado exitosamente';
+        exit 0;
+      "
+    networks:
+      - docflow-network
+
+# ------------------------------------
+# Networks
+# ------------------------------------
+networks:
+  docflow-network:
+    name: docflow-network
+    driver: bridge
+
+# ------------------------------------
+# Volumes (Persistent Data)
+# ------------------------------------
+volumes:
+  docflow-postgres-data:
+    name: docflow-postgres-data
+  docflow-minio-data:
+    name: docflow-minio-data

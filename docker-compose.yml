@@ -159,11 +159,13 @@ services:
       DB_NAME: ${POSTGRES_DB:-docflow}
       DB_USER: ${POSTGRES_USER:-docflow}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-docflow_secret}
+      # Storage Configuration
+      DOCFLOW_STORAGE_TYPE: minio
       # MinIO/S3
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      MINIO_BUCKET: ${MINIO_DEFAULT_BUCKET:-docflow-documents}
+      DOCFLOW_STORAGE_MINIO_ENDPOINT: http://minio:9000
+      DOCFLOW_STORAGE_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      DOCFLOW_STORAGE_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      DOCFLOW_STORAGE_MINIO_BUCKET_NAME: ${MINIO_DEFAULT_BUCKET:-docflow-documents}
       # Server
       SERVER_PORT: 8082
       # Java opts
