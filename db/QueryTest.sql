@@ -1,4 +1,6 @@
 -- Insertar organización de prueba
+-- BEGIN
+
 select * from organizaciones;
 
 INSERT INTO organizaciones (id, fecha_creacion, nombre, estado, configuracion) VALUES
@@ -146,54 +148,14 @@ WHERE org.estado = 'ACTIVO'
 GROUP BY org.id, org.nombre
 ORDER BY org.id;
 
-SELECT * FROM carpetas
+SELECT * FROM carpetas;
 
--- ============================================================================
--- Query: Insertar nivel de acceso ADMINISTRACION para usuario una-org@test.com
--- Carpeta: RAIZ (carpeta_padre_id IS NULL)
--- Tipo: Permiso a nivel de usuario con herencia recursiva
--- ============================================================================
-
--- Paso 3: Insertar el permiso
--- INSERT INTO permiso_carpeta_usuario (
---     carpeta_id,
---     usuario_id,
---     organizacion_id,
---     nivel_acceso,
---     recursivo,
---     fecha_asignacion
--- )
--- SELECT 
---     cr.id,
---     ud.usuario_id,
---     ud.organizacion_id,
---     'ADMINISTRACION'::varchar,
---     true,  -- Recursivo: heredará a todas las subcarpetas
---     NOW()
--- FROM carpeta cr, user_data ud
--- WHERE NOT EXISTS (
---     -- Evitar duplicados
---     SELECT 1 FROM permiso_carpeta_usuario pcu
---     WHERE pcu.carpeta_id = cr.id
---         AND pcu.usuario_id = ud.usuario_id
--- )
-
--- SELECT u.id, u.email, o.id AS idOrganizacion, c.id AS idCarpeta
--- FROM usuarios u
--- JOIN usuarios_organizaciones uo
---     ON u.id = uo.usuario_id
--- JOIN organizaciones o
---     ON uo.organizacion_id = o.id
--- JOIN carpetas c
---     ON c.organizacion_id = o.id
-
-
-SELECT * FROM permiso_carpeta_usuario
+-- SELECT * FROM permiso_carpeta_usuario;
 
 INSERT INTO permiso_carpeta_usuario
 SELECT 1, id, NOW(), 'ADMINISTRACION', 1, TRUE, 2
 FROM carpetas
-WHERE organizacion_id = 1
+WHERE organizacion_id = 1;
 
 
 -- Paso 4: Verificar la inserción
@@ -213,4 +175,8 @@ WHERE u.email = 'una-org@test.com'
 ORDER BY pcu.fecha_asignacion DESC
 LIMIT 1;
 
+SELECT setval('permiso_carpeta_usuario_id_seq', (SELECT MAX(id) FROM permiso_carpeta_usuario));
+
 --COMMIT;
+
+-- ROLLBACK
