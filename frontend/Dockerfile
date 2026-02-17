@@ -22,6 +22,8 @@ RUN npm ci --only=production=false
 COPY . .
 
 # Build de producción
+# Asegurar permisos ejecutables en los binarios instalados (evita exit code 126)
+RUN if [ -d node_modules/.bin ]; then chmod -R a+rx node_modules/.bin || true; fi
 RUN npm run build
 
 # ----------------------------------------

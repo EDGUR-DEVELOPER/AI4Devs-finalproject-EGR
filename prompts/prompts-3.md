@@ -21,6 +21,6 @@ Se implemento ai-specs para el orden de desarrollo, para tener una orquestacion 
 Respetando las especificaciones del desarrollo.
 `Se actualizaron las especificaciones con el siguiente prompt:`
 ```prompt
-"Please read openspec/project.md and help me fill it out
+"Please read [select file] and help me fill it out
     with details about my project, tech stack, and conventions"
 ```
