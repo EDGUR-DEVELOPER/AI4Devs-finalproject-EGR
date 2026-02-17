@@ -15,13 +15,21 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ segments, onNavigate }) 
     return null;
   }
 
+  const hasRootSegment =
+    segments[0]?.id === undefined ||
+    segments[0]?.nombre === 'Raiz' ||
+    segments[0]?.nombre === 'Inicio';
+  const displaySegments = hasRootSegment
+    ? segments
+    : [{ id: undefined, nombre: 'Raiz' }, ...segments];
+
   return (
     <nav 
       className="flex items-center space-x-2 text-sm text-gray-600 mb-4 py-2" 
       aria-label="Breadcrumb"
     >
-      {segments.map((segment, index) => {
-        const isLast = index === segments.length - 1;
+      {displaySegments.map((segment, index) => {
+        const isLast = index === displaySegments.length - 1;
         const segmentKey = `${segment.id ?? 'root'}-${index}`;
         
         return (

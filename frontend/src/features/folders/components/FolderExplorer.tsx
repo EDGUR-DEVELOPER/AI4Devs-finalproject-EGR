@@ -104,7 +104,10 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
     documentos = [], 
     permisos = { puede_leer: false, puede_escribir: false, puede_administrar: false } 
   } = content;
-  const isEmpty = subcarpetas.length === 0 && documentos.length === 0;
+  const visibleSubfolders = subcarpetas.filter(
+    (folder) => folder.capacidades?.puede_leer
+  );
+  const isEmpty = visibleSubfolders.length === 0 && documentos.length === 0;
 
   const fallbackCapabilities: ICapabilities = {
     canRead: permisos.puede_leer,
@@ -138,7 +141,11 @@ export const FolderExplorer: React.FC<FolderExplorerProps> = ({
         />
       ) : (
         <FolderList
-          content={content}
+          content={{
+            ...content,
+            subcarpetas: visibleSubfolders,
+            total_subcarpetas: visibleSubfolders.length,
+          }}
           onFolderClick={handleFolderClick}
           onDeleteClick={(deletedFolderId) => {
             // Si se elimina la carpeta actual, navegar al padre

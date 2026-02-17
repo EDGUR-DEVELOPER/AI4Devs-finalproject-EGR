@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DashboardLayout } from '@features/dashboard/components';
 import { useAdminUsers } from '../hooks/useAdminUsers';
 import { useAdminRoles } from '../hooks/useAdminRoles';
 import { useCreateUser } from '../hooks/useCreateUser';
@@ -96,55 +97,55 @@ export const UsersManagementPage: React.FC = () => {
     const isProcessing = isDeactivating || isAssigning || isActivating;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header de página */}
-            <div className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                Gestión de Usuarios
-                            </h1>
-                            <p className="mt-1 text-sm text-gray-500">
-                                Administra los usuarios de tu organización
-                            </p>
+        <DashboardLayout>
+            <div className="flex flex-col gap-6">
+                {/* Header de página */}
+                <div className="bg-white shadow rounded-lg">
+                    <div className="px-4 sm:px-6 lg:px-8 py-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">
+                                    Gestión de Usuarios
+                                </h1>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Administra los usuarios de tu organización
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                {FORM_LABELS.CREATE_USER}
+                            </button>
                         </div>
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            {FORM_LABELS.CREATE_USER}
-                        </button>
                     </div>
                 </div>
-            </div>
 
-            {/* Filtros */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center gap-4">
-                        <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
-                            Filtrar por estado:
-                        </label>
-                        <select
-                            id="statusFilter"
-                            value={statusFilter || ''}
-                            onChange={(e) => setStatusFilter(e.target.value || undefined)}
-                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        >
-                            <option value="">Todos los usuarios</option>
-                            <option value="ACTIVOS">Solo Activos</option>
-                            <option value="INACTIVOS">Solo Inactivos</option>
-                        </select>
+                {/* Filtros */}
+                <div className="bg-white border border-gray-200 rounded-lg">
+                    <div className="px-4 sm:px-6 lg:px-8 py-4">
+                        <div className="flex items-center gap-4">
+                            <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
+                                Filtrar por estado:
+                            </label>
+                            <select
+                                id="statusFilter"
+                                value={statusFilter || ''}
+                                onChange={(e) => setStatusFilter(e.target.value || undefined)}
+                                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            >
+                                <option value="">Todos los usuarios</option>
+                                <option value="ACTIVOS">Solo Activos</option>
+                                <option value="INACTIVOS">Solo Inactivos</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Contenido principal */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Contenido principal */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                     <UsersTable
                         users={users}
@@ -158,7 +159,7 @@ export const UsersManagementPage: React.FC = () => {
                         isProcessing={isProcessing}
                     />
                 </div>
-            </main>
+            </div>
 
             {/* Modal de creación de usuario */}
             <CreateUserModal
@@ -180,6 +181,6 @@ export const UsersManagementPage: React.FC = () => {
                 isLoading={isDeactivating}
                 variant="danger"
             />
-        </div>
+        </DashboardLayout>
     );
 };

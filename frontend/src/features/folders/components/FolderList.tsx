@@ -17,7 +17,10 @@ export const FolderList: React.FC<FolderListProps> = ({
   onFolderClick,
   onDeleteClick,
 }) => {
-  const hasFolders = content.subcarpetas.length > 0;
+  const visibleFolders = content.subcarpetas.filter(
+    (folder) => folder.capacidades?.puede_leer
+  );
+  const hasFolders = visibleFolders.length > 0;
   const hasDocuments = content.documentos.length > 0;
 
   return (
@@ -26,10 +29,10 @@ export const FolderList: React.FC<FolderListProps> = ({
       {hasFolders && (
         <section>
           <h2 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-            Carpetas ({content.total_subcarpetas})
+            Carpetas ({visibleFolders.length})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {content.subcarpetas.map((folder) => (
+            {visibleFolders.map((folder) => (
               <FolderItem
                 key={folder.id}
                 item={folder}

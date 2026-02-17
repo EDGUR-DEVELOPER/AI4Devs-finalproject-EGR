@@ -71,6 +71,21 @@ export interface FolderContent {
 }
 
 /**
+ * Detalle de carpeta (GET /api/carpetas/{id})
+ */
+export interface FolderDetail {
+  id: number;
+  organizacion_id?: number;
+  carpeta_padre_id?: number | null;
+  nombre: string;
+  descripcion?: string | null;
+  creado_por?: number;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+  es_raiz: boolean;
+}
+
+/**
  * Segmento de breadcrumb para navegación
  */
 export interface BreadcrumbSegment {

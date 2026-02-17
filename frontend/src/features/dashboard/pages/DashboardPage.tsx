@@ -5,7 +5,6 @@ import {
     WelcomeCard,
     ModulesGrid,
     SystemInfoCard,
-    QuickActions,
 } from '../components';
 
 /**
@@ -17,7 +16,6 @@ export const DashboardPage: React.FC = () => {
     const {
         userName,
         availableModules,
-        quickActions,
         systemInfo,
         userRoles,
     } = useDashboard();
@@ -32,9 +30,6 @@ export const DashboardPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Columna principal - módulos y acciones */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Acciones rápidas */}
-                        <QuickActions actions={quickActions} />
-
                         {/* Grid de módulos */}
                         <ModulesGrid modules={availableModules} />
                     </div>

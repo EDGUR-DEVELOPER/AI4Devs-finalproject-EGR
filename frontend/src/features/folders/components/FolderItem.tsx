@@ -70,7 +70,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
     >
       {/* Icono */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 min-w-0">
           <div className="text-3xl" aria-hidden="true">
             {isFolder ? '📁' : '📄'}
           </div>

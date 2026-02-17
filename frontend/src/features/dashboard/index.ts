@@ -15,7 +15,6 @@ export {
     ModuleCard,
     ModulesGrid,
     SystemInfoCard,
-    QuickActions,
 } from './components';
 
 // Hooks
@@ -28,8 +27,7 @@ export type {
     ModuleColor,
     SystemInfo,
     QuickStat,
-    QuickAction,
 } from './types/dashboard.types';
 
 // Constantes
-export { SYSTEM_MODULES, QUICK_ACTIONS, SYSTEM_INFO, DASHBOARD_MESSAGES } from './constants/modules';
+export { SYSTEM_MODULES, SYSTEM_INFO, DASHBOARD_MESSAGES } from './constants/modules';

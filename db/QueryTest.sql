@@ -154,75 +154,47 @@ SELECT * FROM carpetas
 -- Tipo: Permiso a nivel de usuario con herencia recursiva
 -- ============================================================================
 
-BEGIN;
-
--- Paso 1: Obtener el ID del usuario y su organización
-SET search_path TO public;
-
-WITH user_data AS (
-    SELECT 
-        u.id AS usuario_id,
-        u.email,
-        uo.organizacion_id
-    FROM usuarios u
-    JOIN usuarios_organizaciones uo ON u.id = uo.usuario_id
-    WHERE u.email = 'una-org@test.com'
-        AND uo.estado = 'ACTIVO'
-    LIMIT 1
-),
-
--- Paso 2: Obtener la carpeta RAIZ de la organización del usuario
-carpeta_raiz AS (
-    SELECT 
-        c.id,
-        c.organizacion_id,
-        c.nombre
-    FROM carpetas c
-    WHERE c.organizacion_id = (SELECT organizacion_id FROM user_data)
-        AND c.carpeta_padre_id IS NULL  -- RAIZ
-        AND c.fecha_eliminacion IS NULL
-    LIMIT 1
-)
-
 -- Paso 3: Insertar el permiso
-INSERT INTO permiso_carpeta_usuario (
-    carpeta_id,
-    usuario_id,
-    organizacion_id,
-    nivel_acceso,
-    recursivo,
-    fecha_asignacion
-)
+-- INSERT INTO permiso_carpeta_usuario (
+--     carpeta_id,
+--     usuario_id,
+--     organizacion_id,
+--     nivel_acceso,
+--     recursivo,
+--     fecha_asignacion
+-- )
+-- SELECT 
+--     cr.id,
+--     ud.usuario_id,
+--     ud.organizacion_id,
+--     'ADMINISTRACION'::varchar,
+--     true,  -- Recursivo: heredará a todas las subcarpetas
+--     NOW()
+-- FROM carpeta cr, user_data ud
+-- WHERE NOT EXISTS (
+--     -- Evitar duplicados
+--     SELECT 1 FROM permiso_carpeta_usuario pcu
+--     WHERE pcu.carpeta_id = cr.id
+--         AND pcu.usuario_id = ud.usuario_id
+-- )
 
-SELECT 
-    cr.id,
-    ud.usuario_id,
-    ud.organizacion_id,
-    'ADMINISTRACION'::varchar,
-    true,  -- Recursivo: heredará a todas las subcarpetas
-    NOW()
-FROM carpeta cr, user_data ud
-WHERE NOT EXISTS (
-    -- Evitar duplicados
-    SELECT 1 FROM permiso_carpeta_usuario pcu
-    WHERE pcu.carpeta_id = cr.id
-        AND pcu.usuario_id = ud.usuario_id
-)
-
-SELECT u.id, u.email, o.id AS idOrganizacion, c.id AS idCarpeta
-FROM usuarios u
-JOIN usuarios_organizaciones uo
-    ON u.id = uo.usuario_id
-JOIN organizaciones o
-    ON uo.organizacion_id = o.id
-JOIN carpetas c
-    ON c.organizacion_id = o.id
+-- SELECT u.id, u.email, o.id AS idOrganizacion, c.id AS idCarpeta
+-- FROM usuarios u
+-- JOIN usuarios_organizaciones uo
+--     ON u.id = uo.usuario_id
+-- JOIN organizaciones o
+--     ON uo.organizacion_id = o.id
+-- JOIN carpetas c
+--     ON c.organizacion_id = o.id
 
 
 SELECT * FROM permiso_carpeta_usuario
 
 INSERT INTO permiso_carpeta_usuario
-VALUES (1, 1202497455, NOW(), 'ADMINISTRACION', 1, TRUE, 2)
+SELECT 1, id, NOW(), 'ADMINISTRACION', 1, TRUE, 2
+FROM carpetas
+WHERE organizacion_id = 1
+
 
 -- Paso 4: Verificar la inserción
 SELECT 
@@ -242,4 +214,3 @@ ORDER BY pcu.fecha_asignacion DESC
 LIMIT 1;
 
 --COMMIT;
-ROLLBACK

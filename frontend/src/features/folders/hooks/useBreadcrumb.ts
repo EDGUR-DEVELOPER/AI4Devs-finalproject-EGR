@@ -19,7 +19,7 @@ export const useBreadcrumb = (folderId: string | undefined): UseBreadcrumbReturn
   useEffect(() => {
     // Si es raíz, retornar breadcrumb manual
     if (!folderId) {
-      setBreadcrumb([{ id: undefined, nombre: 'Inicio' }]);
+      setBreadcrumb([{ id: undefined, nombre: 'Raiz' }]);
       setIsLoading(false);
       return;
     }
@@ -29,8 +29,28 @@ export const useBreadcrumb = (folderId: string | undefined): UseBreadcrumbReturn
       setError(null);
       
       try {
-        const path = await folderApi.getFolderPath(folderId);
-        setBreadcrumb(path);
+        const [path, folder] = await Promise.all([
+          folderApi.getFolderPath(folderId),
+          folderApi.getFolderById(folderId),
+        ]);
+
+        if (folder.es_raiz) {
+          setBreadcrumb([{ id: undefined, nombre: 'Raiz' }]);
+          return;
+        }
+
+        const rootToParent = [...path]
+          .reverse()
+          .map((segment, index) =>
+            index === 0
+              ? { ...segment, nombre: 'Raiz' }
+              : segment
+          );
+
+        setBreadcrumb([
+          ...rootToParent,
+          { id: folderId, nombre: folder.nombre },
+        ]);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Error desconocido'));
       } finally {

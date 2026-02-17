@@ -6,6 +6,7 @@
 import { apiClient } from '@core/shared/api/axiosInstance';
 import type {
   FolderContent,
+  FolderDetail,
   BreadcrumbSegment,
   CreateFolderRequest,
   CreateFolderResponse,
@@ -39,6 +40,17 @@ export const getRootContent = async (): Promise<FolderContent> => {
 export const getFolderContent = async (folderId: string): Promise<FolderContent> => {
   const { data } = await apiClient.get<FolderContent>(
     `${BASE_URL}/${folderId}/contenido`
+  );
+  return data;
+};
+
+/**
+ * Obtener carpeta por ID
+ * GET /api/carpetas/{id}
+ */
+export const getFolderById = async (folderId: string): Promise<FolderDetail> => {
+  const { data } = await apiClient.get<FolderDetail>(
+    `${BASE_URL}/${folderId}`
   );
   return data;
 };
@@ -78,6 +90,7 @@ export const folderApi = {
   getRootFolder,
   getRootContent,
   getFolderContent,
+  getFolderById,
   getFolderPath,
   createFolder,
   deleteFolder,
